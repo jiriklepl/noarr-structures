@@ -8,6 +8,7 @@ project(
 )
 
 include(CTest)
+include(CheckCXXCompilerFlag)
 enable_testing()
 
 # specify the C++ standard
@@ -19,6 +20,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 file(GLOB_RECURSE tests_source_files CONFIGURE_DEPENDS
     "*_test.cpp"
 )
+
+check_cxx_compiler_flag(-pipe HAS_PIPE)
 
 add_library(noarr_test STATIC noarr-test/src/noarr_test.cpp)
 target_include_directories(noarr_test PUBLIC noarr-test/include)
@@ -33,6 +36,11 @@ if(MSVC)
   target_compile_options(test-runner PRIVATE /W4)
 else()
   target_compile_options(test-runner PRIVATE -Wall -Wextra -Wno-parentheses -pedantic)
+endif()
+
+# enable the pipe flag if supported
+if(HAS_PIPE)
+  target_compile_options(test-runner PRIVATE -pipe)
 endif()
 
 add_test(NAME test-runner COMMAND test-runner)
