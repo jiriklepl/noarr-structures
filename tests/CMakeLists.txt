@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
 
 # set the project name
 project(
@@ -20,11 +20,18 @@ file(GLOB_RECURSE tests_source_files CONFIGURE_DEPENDS
     "*_test.cpp"
 )
 
+file(GLOB noarr_headers CONFIGURE_DEPENDS
+    "../include/noarr/structures/base/*.hpp"
+    "../include/noarr/structures/extra/*.hpp"
+    "../include/noarr/structures/structs/*.hpp"
+)
+
 add_library(noarr_test STATIC noarr-test/src/noarr_test.cpp)
 target_include_directories(noarr_test PUBLIC noarr-test/include)
 
 add_executable(test-runner ${tests_source_files})
 target_include_directories(test-runner PRIVATE ../include)
+target_precompile_headers(test-runner PRIVATE ${noarr_headers})
 
 target_link_libraries(test-runner PRIVATE noarr_test)
 
