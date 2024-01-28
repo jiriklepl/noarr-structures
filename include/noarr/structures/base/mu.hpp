@@ -14,6 +14,16 @@ namespace noarr::mu {
 template<class Left, class Right>
 struct definition_t;
 
+struct deleted_t {
+	[[nodiscard("evaluates to a deleted value")]]
+	constexpr auto evaluate([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
+		static_assert(always_false<deleted_t>, "Requested deleted value");
+		return constexpr_arithmetic::make_const<0>();
+	}
+};
+
+constexpr deleted_t deleted;
+
 // empty definition
 template<>
 struct definition_t<void, void> {
@@ -21,13 +31,26 @@ struct definition_t<void, void> {
 		return state;
 	}
 
+	constexpr bool has_size([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
+		return false;
+	}
+
 	constexpr auto size([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
 		return sub_structure.size(state);
+	}
+
+	constexpr bool has_length([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
+		return false;
 	}
 
 	template<IsDim auto Dim>
 	constexpr auto length([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
 		return sub_structure.template length<Dim>(state);
+	}
+
+
+	constexpr bool has_offset([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
+		return false;
 	}
 
 	constexpr auto offset([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
@@ -47,6 +70,7 @@ struct definable_t {
 struct size_t : public definable_t<size_t> {
 	using definable_t<size_t>::operator=;
 
+	[[nodiscard("evaluates to a size")]]
 	constexpr auto evaluate(auto sub_structure, IsState auto state) const {
 		return sub_structure.size(state);
 	}
@@ -61,13 +85,30 @@ struct definition_t<size_t, Right> : public flexible_contain<Right> {
 		return state;
 	}
 
-	constexpr auto size(auto sub_structure, IsState auto state) const {
-		return base::template get().evaluate(sub_structure, state);
+	constexpr bool has_size([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
+		return !std::is_same_v<Right, deleted_t>;
+	}
+
+	constexpr auto size([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
+		if constexpr (std::is_same_v<Right, deleted_t>) {
+			static_assert(always_false<definition_t>, "Requested deleted size");
+			return constexpr_arithmetic::make_const<0>();
+		} else {
+			return base::template get().evaluate(sub_structure, state);
+		}
+	}
+
+	constexpr bool has_length(auto sub_structure, IsState auto state) const {
+		return sub_structure.has_length(state);
 	}
 
 	template<IsDim auto Dim>
 	constexpr auto length(auto sub_structure, IsState auto state) const {
 		return sub_structure.template length<Dim>(state);
+	}
+
+	constexpr bool has_offset(auto sub_structure, IsState auto state) const {
+		return sub_structure.has_offset(state);
 	}
 
 	constexpr auto offset(auto sub_structure, IsState auto state) const {
@@ -78,6 +119,7 @@ struct definition_t<size_t, Right> : public flexible_contain<Right> {
 struct offset_t : public definable_t<offset_t> {
 	using definable_t<offset_t>::operator=;
 
+	[[nodiscard("evaluates to an offset")]]
 	constexpr auto evaluate(auto sub_structure, IsState auto state) const {
 		return sub_structure.offset(state);
 	}
@@ -92,8 +134,16 @@ struct definition_t<offset_t, Right> : public flexible_contain<Right> {
 		return state;
 	}
 
+	constexpr bool has_size(auto sub_structure, IsState auto state) const {
+		return sub_structure.has_size(state);
+	}
+
 	constexpr auto size(auto sub_structure, IsState auto state) const {
 		return sub_structure.size(state);
+	}
+
+	constexpr bool has_length(auto sub_structure, IsState auto state) const {
+		return sub_structure.has_length(state);
 	}
 
 	template<IsDim auto Dim>
@@ -101,8 +151,17 @@ struct definition_t<offset_t, Right> : public flexible_contain<Right> {
 		return sub_structure.template length<Dim>(state);
 	}
 
-	constexpr auto offset(auto sub_structure, IsState auto state) const {
-		return base::template get().evaluate(sub_structure, state);
+	constexpr bool has_offset([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
+		return !std::is_same_v<Right, deleted_t>;
+	}
+
+	constexpr auto offset([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
+		if constexpr (std::is_same_v<Right, deleted_t>) {
+			static_assert(always_false<definition_t>, "Requested deleted offset");
+			return constexpr_arithmetic::make_const<0>();
+		} else {
+			return base::template get().evaluate(sub_structure, state);
+		}
 	}
 };
 
@@ -110,6 +169,7 @@ template<IsDim auto Dim>
 struct length_t : public definable_t<length_t<Dim>> {
 	using definable_t<length_t<Dim>>::operator=;
 
+	[[nodiscard("evaluates to a length")]]
 	constexpr auto evaluate(auto sub_structure, IsState auto state) const {
 		return sub_structure.template length<Dim>(state);
 	}
@@ -124,22 +184,45 @@ struct definition_t<length_t<Dim>, Right> : public flexible_contain<Right> {
 		return state;
 	}
 
+	constexpr bool has_size(auto sub_structure, IsState auto state) const {
+		return sub_structure.has_size(state);
+	}
+
 	constexpr auto size(auto sub_structure, IsState auto state) const {
 		return sub_structure.size(state);
+	}
+
+	template<IsDim auto SubDim>
+	constexpr bool has_length([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
+		if constexpr (SubDim == Dim) {
+			return !std::is_same_v<Right, deleted_t>;
+		} else {
+			return sub_structure.template has_length<SubDim>(state);
+		}
+	}
+
+	template<IsDim auto SubDim>
+	constexpr auto length(auto sub_structure, IsState auto state) const {
+		if constexpr (SubDim == Dim) {
+			if constexpr (std::is_same_v<Right, deleted_t>) {
+				static_assert(always_false<definition_t>, "Requested deleted length");
+				return constexpr_arithmetic::make_const<0>();
+			} else {
+				return base::template get().evaluate(sub_structure, state);
+			}
+		} else {
+			return sub_structure.template length<SubDim>(state);
+		}
+	}
+
+	constexpr bool has_offset(auto sub_structure, IsState auto state) const {
+		return sub_structure.has_offset(state);
 	}
 
 	constexpr auto offset(auto sub_structure, IsState auto state) const {
 		return sub_structure.offset(state);
 	}
 
-	template<IsDim auto SubDim>
-	constexpr auto length(auto sub_structure, IsState auto state) const {
-		if constexpr (SubDim == Dim) {
-			return base::template get().evaluate(sub_structure, state);
-		} else {
-			return sub_structure.template length<SubDim>(state);
-		}
-	}
 };
 
 constexpr size_t size;
@@ -150,6 +233,7 @@ template<IsDim auto Dim>
 struct length_in_t : public definable_t<length_in_t<Dim>> {
 	using definable_t<length_in_t<Dim>>::operator=;
 
+	[[nodiscard("evaluates to a length")]]
 	constexpr auto evaluate([[maybe_unused]] auto sub_structure, IsState auto state) const {
 		if constexpr (state.template contains<noarr::length_in<Dim>>) {
 			return state.template get<noarr::length_in<Dim>>();
@@ -162,6 +246,7 @@ template<IsDim auto Dim>
 struct index_in_t : public definable_t<index_in_t<Dim>> {
 	using definable_t<index_in_t<Dim>>::operator=;
 
+	[[nodiscard("evaluates to an index")]]
 	constexpr auto evaluate([[maybe_unused]] auto sub_structure, IsState auto state) const {
 		if constexpr (state.template contains<noarr::index_in<Dim>>) {
 			return state.template get<noarr::index_in<Dim>>();
@@ -180,17 +265,30 @@ struct definition_t<index_in_t<Dim>, Right> : public flexible_contain<Right> {
 		return state.template with<noarr::index_in<Dim>>(base::template get().evaluate(sub_structure, state));
 	}
 
+	constexpr bool has_size(auto sub_structure, IsState auto state) const {
+		return sub_structure.has_size(state);
+	}
+
 	constexpr auto size(auto sub_structure, IsState auto state) const {
 		return sub_structure.size(state);
 	}
 
-	constexpr auto offset(auto sub_structure, IsState auto state) const {
-		return sub_structure.offset(state);
+	template<IsDim auto SubDim>
+	constexpr bool has_length(auto sub_structure, IsState auto state) const {
+		return sub_structure.template has_length<SubDim>(state);
 	}
 
 	template<IsDim auto SubDim>
 	constexpr auto length(auto sub_structure, IsState auto state) const {
 		return sub_structure.template length<SubDim>(state);
+	}
+
+	constexpr bool has_offset(auto sub_structure, IsState auto state) const {
+		return sub_structure.has_offset(state);
+	}
+
+	constexpr auto offset(auto sub_structure, IsState auto state) const {
+		return sub_structure.offset(state);
 	}
 };
 
@@ -203,6 +301,7 @@ struct param_t : public flexible_contain<T>, public definable_t<param_t<T>> {
 
 	constexpr auto param() const { return this->template get<0>(); }
 
+	[[nodiscard("evaluates to a parameter")]]
 	constexpr auto evaluate([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
 		return param();
 	}
@@ -239,7 +338,6 @@ struct add_t : public flexible_contain<Left, Right>, public definable_t<add_t<Le
 
 	constexpr auto evaluate(auto sub_structure, IsState auto state) const {
 		using namespace constexpr_arithmetic;
-
 		return left().evaluate(sub_structure, state) + right().evaluate(sub_structure, state);
 	}
 };
@@ -255,7 +353,6 @@ struct subtract_t : public flexible_contain<Left, Right>, public definable_t<sub
 
 	constexpr auto evaluate(auto sub_structure, IsState auto state) const {
 		using namespace constexpr_arithmetic;
-
 		return left().evaluate(sub_structure, state) - right().evaluate(sub_structure, state);
 	}
 };
@@ -271,7 +368,6 @@ struct multiply_t : public flexible_contain<Left, Right>, public definable_t<mul
 
 	constexpr auto evaluate(auto sub_structure, IsState auto state) const {
 		using namespace constexpr_arithmetic;
-
 		return left().evaluate(sub_structure, state) * right().evaluate(sub_structure, state);
 	}
 };
@@ -287,7 +383,6 @@ struct divide_t : public flexible_contain<Left, Right>, public definable_t<divid
 
 	constexpr auto evaluate(auto sub_structure, IsState auto state) const {
 		using namespace constexpr_arithmetic;
-
 		return left().evaluate(sub_structure, state) / right().evaluate(sub_structure, state);
 	}
 };
@@ -303,7 +398,6 @@ struct modulo_t : public flexible_contain<Left, Right>, public definable_t<modul
 
 	constexpr auto evaluate(auto sub_structure, IsState auto state) const {
 		using namespace constexpr_arithmetic;
-
 		return left().evaluate(sub_structure, state) % right().evaluate(sub_structure, state);
 	}
 };
@@ -479,13 +573,26 @@ struct mu_t<T, Ts...> : public flexible_contain<T, mu_t<Ts...>> {
 		return definition().sub_state(sub_structure(), state);
 	}
 
+	constexpr bool has_size(IsState auto state) const {
+		return definition().has_size(sub_structure(), sub_state(state));
+	}
+
 	constexpr auto size(IsState auto state) const {
 		return definition().size(sub_structure(), sub_state(state));
 	}
 
 	template<IsDim auto Dim>
+	constexpr bool has_length(IsState auto state) const {
+		return definition().template has_length<Dim>(sub_structure(), sub_state(state));
+	}
+
+	template<IsDim auto Dim>
 	constexpr auto length(IsState auto state) const {
 		return definition().template length<Dim>(sub_structure(), sub_state(state));
+	}
+
+	constexpr bool has_offset(IsState auto state) const {
+		return definition().has_offset(sub_structure(), sub_state(state));
 	}
 
 	constexpr auto offset(IsState auto state) const {
@@ -560,13 +667,20 @@ constexpr auto block(auto block_size) {
 	);
 }
 
-// template<IsDim auto Dim>
-// constexpr auto fix(auto value) {
-// 	return μ(
-// 		index_in<Dim> = param(value),
-// 		length<Dim> = is_set(legnth<Dim>)
-// 	);
-// }
+template<IsDim auto Dim>
+constexpr auto fix_index(auto value) {
+	return μ(
+		index_in<Dim> = param(value),
+		length<Dim> = deleted
+	);
+}
+
+template<IsDim auto Dim>
+constexpr auto fix_length(auto value) {
+	return μ(
+		length_in<Dim> = param(value)
+	);
+}
 
 } // namespace noarr::mu
 
@@ -633,6 +747,30 @@ inline void test() {
 	// expected: 8
 	constexpr auto Y_length2 = structure2.template length<'Y'>(state2);
 	static_assert(Y_length2 == 8);
+
+	// --------------------------------------------------------------------------------
+
+	constexpr auto structure3 = structure2 ^ fix_index<'x'>(lit<5>) ^ fix_index<'y'>(lit<10>) ^ fix_index<'X'>(lit<3>) ^ fix_index<'Y'>(lit<4>);
+
+	// expected: 4 * ((5 + 16 * 3) + 128 * (10 + 16 * 4)) = 4 * (5 + 48 + 1280 + 128 * 64) = 4 * (1333 + 8192) = 4 * 9525 = 38100
+	constexpr auto offset3 = structure3.offset(noarr::empty_state);
+	static_assert(offset3 == 38100);
+
+	// expected: false
+	constexpr auto has_x_length3 = structure3.template has_length<'x'>(noarr::empty_state);
+	static_assert(!has_x_length3);
+
+	// expected: false
+	constexpr auto has_y_length3 = structure3.template has_length<'y'>(noarr::empty_state);
+	static_assert(!has_y_length3);
+
+	// expected: false
+	constexpr auto has_X_length3 = structure3.template has_length<'X'>(noarr::empty_state);
+	static_assert(!has_X_length3);
+
+	// expected: false
+	constexpr auto has_Y_length3 = structure3.template has_length<'Y'>(noarr::empty_state);
+	static_assert(!has_Y_length3);
 }
 
 #endif // NOARR_STRUCTURES_MU_HPP
