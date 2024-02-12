@@ -172,9 +172,12 @@ struct state : strict_contain<typename StateItems::value_type...> {
 
 	static constexpr bool is_empty = sizeof...(StateItems) == 0;
 
-	template<class Tag> requires IsTag<Tag> && contains<Tag>
+	template<class Tag> requires IsTag<Tag>
 	constexpr auto get() const noexcept {
-		return base::template get<index_of<Tag>.value>();
+		static_assert(contains<Tag>, "State does not contain the specified tag");
+		if constexpr(contains<Tag>) {
+			return base::template get<index_of<Tag>.value>();
+		}
 	}
 
 	template<class ...KeptStateItems>

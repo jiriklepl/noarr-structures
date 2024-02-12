@@ -110,8 +110,10 @@ public:
 	}
 
 	template<class Sub>
-	constexpr void strict_state_at(IsState auto) const noexcept {
+	constexpr auto strict_state_at(IsState auto state) const noexcept -> decltype(state) {
 		static_assert(always_false<cuda_striped_t>, "A cuda_striped_t cannot be used in this context");
+
+		return state;
 	}
 
 	static __device__ inline std::size_t current_stripe_index() noexcept {

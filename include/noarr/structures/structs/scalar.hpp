@@ -29,18 +29,24 @@ struct scalar : strict_contain<> {
 	}
 
 	template<class Sub>
-	static constexpr void strict_offset_of(IsState auto) noexcept {
+	static constexpr std::size_t strict_offset_of(IsState auto) noexcept {
 		static_assert(always_false<Sub>, "Substructure was not found");
+
+		return {};
 	}
 
 	template<IsDim auto QDim>
-	static constexpr void length(IsState auto) noexcept {
+	static constexpr std::size_t length(IsState auto) noexcept {
 		static_assert(value_always_false<QDim>, "Index in this dimension is not accepted by any substructure");
+
+		return {};
 	}
 
 	template<class Sub>
-	static constexpr void strict_state_at(IsState auto) noexcept {
+	static constexpr auto strict_state_at(IsState auto state) noexcept -> decltype(state) {
 		static_assert(always_false<scalar<T>>, "A scalar cannot be used in this context");
+
+		return state;
 	}
 };
 

@@ -93,6 +93,8 @@ public:
 				return full_length / minor_length;
 			} else {
 				static_assert(value_always_false<QDim>, "Length has not been set (and cannot be computed from the total size because block size has also not been set)");
+
+				return std::size_t{};
 			}
 		} else {
 			static_assert(QDim != Dim, "Index in this dimension is overriden by a substructure");
@@ -216,6 +218,8 @@ public:
 				return (full_length + minor_length - make_const<1>()) / minor_length;
 			} else {
 				static_assert(value_always_false<QDim>, "Length has not been set (and cannot be computed from the total size because block size has also not been set)");
+
+				return std::size_t{};
 			}
 		} else {
 			static_assert(QDim != Dim, "Index in this dimension is overriden by a substructure");

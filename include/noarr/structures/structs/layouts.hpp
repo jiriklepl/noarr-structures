@@ -67,8 +67,10 @@ struct tuple_t : strict_contain<TS...> {
 	}
 
 	template<class Sub>
-	constexpr void strict_state_at(IsState auto) const noexcept {
+	constexpr auto strict_state_at(IsState auto state) const noexcept -> decltype(state) {
 		static_assert(value_always_false<Dim>, "A tuple cannot be used in this context");
+
+		return state;
 	}
 
 private:
@@ -128,17 +130,21 @@ struct vector_t : strict_contain<T> {
 	constexpr auto strict_offset_of(State state) const noexcept {
 		using namespace constexpr_arithmetic;
 		static_assert(State::template contains<index_in<Dim>>, "All indices must be set");
-		if constexpr(!std::is_same_v<decltype(state.template get<length_in<Dim>>()), std::integral_constant<std::size_t, 1>>) {
-			// offset = index * elem_size + offset_within_elem
-			const auto index = state.template get<index_in<Dim>>();
-			const auto sub_struct = sub_structure();
-			const auto sub_stat = sub_state(state);
-			return index * sub_struct.size(sub_stat) + offset_of<Sub>(sub_struct, sub_stat);
+		if constexpr(!State::template contains<index_in<Dim>>) {
+			return std::size_t{};
 		} else {
-			// Optimization: length is one, thus the only valid index is zero.
-			// Assume the index is valid (caller's responsibility).
-			// offset = 0 * elem_size + offset_within_elem = offset_within_elem
-			return offset_of<Sub>(sub_structure(), sub_state(state));
+			if constexpr(!std::is_same_v<decltype(state.template get<length_in<Dim>>()), std::integral_constant<std::size_t, 1>>) {
+				// offset = index * elem_size + offset_within_elem
+				const auto index = state.template get<index_in<Dim>>();
+				const auto sub_struct = sub_structure();
+				const auto sub_stat = sub_state(state);
+				return index * sub_struct.size(sub_stat) + offset_of<Sub>(sub_struct, sub_stat);
+			} else {
+				// Optimization: length is one, thus the only valid index is zero.
+				// Assume the index is valid (caller's responsibility).
+				// offset = 0 * elem_size + offset_within_elem = offset_within_elem
+				return offset_of<Sub>(sub_structure(), sub_state(state));
+			}
 		}
 	}
 
@@ -153,8 +159,10 @@ struct vector_t : strict_contain<T> {
 	}
 
 	template<class Sub>
-	constexpr void strict_state_at(IsState auto) const noexcept {
+	constexpr auto strict_state_at(IsState auto state) const noexcept -> decltype(state) {
 		static_assert(value_always_false<Dim>, "A vector cannot be used in this context");
+
+		return state;
 	}
 };
 

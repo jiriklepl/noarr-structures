@@ -217,7 +217,7 @@ private:
 	struct error { static_assert(always_false<merge_zcurve<AllDims...>>, "Do not instantiate this type directly, use merge_zcurve<'original dims', 'new dim'>::maxlen_alignment<len, alignment>()"); };
 
 public:
-	template<class = error>
+	template<class Error = error> requires (std::is_same_v<Error, error>)
 	merge_zcurve(error = {});
 
 	template<std::size_t MaxLen, std::size_t Alignment> requires (std::popcount((std::size_t)MaxLen) == 1 && std::popcount((std::size_t)Alignment) == 1) // must be powers of 2
