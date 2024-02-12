@@ -99,6 +99,10 @@ The file defining the structure must include at least `<noarr/structures/base/st
 
 A structure class must have at least the following public members:
 
+- `sub_structure` const-qualified member function that
+  - returns a structure that is a [sub-structure](Glossary.md#sub-structure) of the current structure
+- `sub_state` const-qualified member function template that
+  - can be called as `.sub_state(s)` where `s` is an instance of [`state`](State.md)
 - `signature` member type that
   - is a type alias to a [valid signature](Signature.md)
   - should describe the dimensions accepted in the `s` argument of the remaining members
@@ -115,12 +119,6 @@ A structure class must have at least the following public members:
   - can be called as `.length<QDim>(s)` where `QDim` is a dimension name (`char`) and `s` is an instance of [`state`](State.md)
   - returns a `std::size_t` or a `std::integral_constant<std::size_t, N>`
   - should return the [length](Glossary.md#length) in dimension `QDim`
-- `strict_state_at` const-qualified member function template that
-  - can be called as `.strict_state_at<Sub>(s)` where `Sub` is a structure type and `s` is an instance of [`state`](State.md)
-  - returns an instance of [`state`](State.md)
-  - should return the result of `state_at<Sub>(struct2, state2)` call, where
-    - `struct2` is the same [sub-structure](Glossary.md#sub-structure) that would be queried by `strict_offset_of<Sub>(s)`
-    - `state2` is the same argument that would be passed to that sub-structure by `strict_offset_of<Sub>(s)`
 
 All the member functions should fail to compile (either by `static_assert` or substitution failure) when:
 
@@ -128,8 +126,8 @@ All the member functions should fail to compile (either by `static_assert` or su
 - queried for a nonexistent sub-structure `Sub` or dimension `QDim` (or a sub-structure that just cannot be reached with the current state `s`)
 - any additional documented requirements are not met
 
-In the members `strict_offset_of` and `strict_state_at`, the word "strict" refers to the fact that the `Sub` template argument is expected to be strictly a **sub**structure, i.e. never the structure itself.
-Note that these two members should not be called directly, but only via `noarr::offset_of` and `noarr::state_at` respectively, which take care of the non-strict case.
+In the member `strict_offset_of`, the word "strict" refers to the fact that the `Sub` template argument is expected to be strictly a **sub**structure, i.e. never the structure itself.
+It should be called via `noarr::offset_of`, which take care of the non-strict case.
 
 If [mangling](other/Mangling.md) support is desired, the structure must additionally:
 
@@ -207,11 +205,6 @@ public:
 			// caller asked somebody else, forward to sub-structure
 			return sub_structure().template length<QDim>(sub_state(state));
 		}
-	}
-
-	template<class Sub>
-	constexpr auto strict_state_at(noarr::IsState auto state) const noexcept {
-		return noarr::state_at<Sub>(sub_structure(), sub_state(state));
 	}
 };
 ```

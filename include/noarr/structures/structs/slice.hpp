@@ -94,11 +94,6 @@ public:
 			return sub_structure().template length<QDim>(sub_state(state));
 		}
 	}
-
-	template<class Sub>
-	constexpr auto strict_state_at(IsState auto state) const noexcept {
-		return state_at<Sub>(sub_structure(), sub_state(state));
-	}
 };
 
 template<IsDim auto Dim, class StartT>
@@ -189,12 +184,6 @@ public:
 			return sub_structure().template length<QDim>(sub_state(state));
 		}
 	}
-
-	template<class Sub, IsState State>
-	constexpr auto strict_state_at(State state) const noexcept {
-		static_assert(!State::template contains<length_in<Dim>>, "Cannot set slice length");
-		return state_at<Sub>(sub_structure(), sub_state(state));
-	}
 };
 
 template<IsDim auto Dim, class StartT, class LenT>
@@ -279,12 +268,6 @@ public:
 		} else {
 			return sub_structure().template length<QDim>(sub_state(state));
 		}
-	}
-
-	template<class Sub, IsState State>
-	constexpr auto strict_state_at(State state) const noexcept {
-		static_assert(!State::template contains<length_in<Dim>>, "Cannot set span length");
-		return state_at<Sub>(sub_structure(), sub_state(state));
 	}
 };
 
@@ -372,12 +355,6 @@ public:
 			return sub_structure().template length<QDim>(sub_state(state));
 		}
 	}
-
-	template<class Sub, IsState State>
-	constexpr auto strict_state_at(State state) const noexcept {
-		static_assert(!State::template contains<length_in<Dim>>, "Cannot set length after step");
-		return state_at<Sub>(sub_structure(), sub_state(state));
-	}
 };
 
 template<IsDim auto Dim, class StartT, class StrideT>
@@ -464,11 +441,6 @@ public:
 	template<IsDim auto QDim, IsState State> requires (QDim != Dim || HasNotSetIndex<State, QDim>)
 	constexpr auto length(State state) const noexcept {
 		return sub_structure().template length<QDim>(state);
-	}
-
-	template<class Sub>
-	constexpr auto strict_state_at(IsState auto state) const noexcept {
-		return state_at<Sub>(sub_structure(), sub_state(state));
 	}
 };
 

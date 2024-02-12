@@ -37,11 +37,6 @@ struct scalar : strict_contain<> {
 	static constexpr void length(IsState auto) noexcept {
 		static_assert(value_always_false<QDim>, "Index in this dimension is not accepted by any substructure");
 	}
-
-	template<class Sub>
-	static constexpr void strict_state_at(IsState auto) noexcept {
-		static_assert(always_false<scalar<T>>, "A scalar cannot be used in this context");
-	}
 };
 
 } // namespace noarr

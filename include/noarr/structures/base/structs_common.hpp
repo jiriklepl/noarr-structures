@@ -56,7 +56,7 @@ constexpr auto state_at(StructOuter structure, IsState auto state) noexcept {
 	if constexpr(std::is_same_v<StructInner, StructOuter>) {
 		return state;
 	} else {
-		return structure.template strict_state_at<StructInner>(state);
+		return state_at<StructInner>(structure.sub_structure(), structure.sub_state(state));
 	}
 }
 

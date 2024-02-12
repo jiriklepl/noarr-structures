@@ -66,11 +66,6 @@ struct tuple_t : strict_contain<TS...> {
 		}
 	}
 
-	template<class Sub>
-	constexpr void strict_state_at(IsState auto) const noexcept {
-		static_assert(value_always_false<Dim>, "A tuple cannot be used in this context");
-	}
-
 private:
 	static constexpr std::index_sequence_for<TS...> is = {};
 
@@ -150,11 +145,6 @@ struct vector_t : strict_contain<T> {
 		} else {
 			return sub_structure().template length<QDim>(sub_state(state));
 		}
-	}
-
-	template<class Sub>
-	constexpr void strict_state_at(IsState auto) const noexcept {
-		static_assert(value_always_false<Dim>, "A vector cannot be used in this context");
 	}
 };
 

@@ -108,26 +108,25 @@ struct reorder_t : strict_contain<T> {
 	using signature = reassemble_sig<typename T::signature, Dims...>;
 	static constexpr bool complete = reassemble_is_complete<signature>;
 
+	constexpr auto sub_state(IsState auto state) const noexcept -> decltype(state) {
+		return state;
+	}
+
 	constexpr auto size(IsState auto state) const noexcept {
 		static_assert(complete, "Some dimensions were omitted during reordering, cannot use the structure");
-		return sub_structure().size(state);
+		return sub_structure().size(sub_state(state));
 	}
 
 	template<class Sub>
 	constexpr auto strict_offset_of(IsState auto state) const noexcept {
 		static_assert(complete, "Some dimensions were omitted during reordering, cannot use the structure");
-		return offset_of<Sub>(sub_structure(), state);
+		return offset_of<Sub>(sub_structure(), sub_state(state));
 	}
 
 	template<IsDim auto QDim>
 	constexpr auto length(IsState auto state) const noexcept {
 		static_assert(complete || signature::template any_accept<QDim>, "Some dimensions were omitted during reordering, cannot use the structure");
-		return sub_structure().template length<QDim>(state);
-	}
-
-	template<class Sub>
-	constexpr auto strict_state_at(IsState auto state) const noexcept {
-		return state_at<Sub>(sub_structure(), state);
+		return sub_structure().template length<QDim>(sub_state(state));
 	}
 };
 
@@ -164,23 +163,22 @@ private:
 public:
 	using signature = function_sig<Dim, typename hoisted::arg_length, typename T::signature::template replace<dim_replacement, Dim>>;
 
+	constexpr auto sub_state(IsState auto state) const noexcept -> decltype(state) {
+		return state;
+	}
+
 	constexpr auto size(IsState auto state) const noexcept {
-		return sub_structure().size(state);
+		return sub_structure().size(sub_state(state));
 	}
 
 	template<class Sub>
 	constexpr auto strict_offset_of(IsState auto state) const noexcept {
-		return offset_of<Sub>(sub_structure(), state);
+		return offset_of<Sub>(sub_structure(), sub_state(state));
 	}
 
 	template<IsDim auto QDim>
 	constexpr auto length(IsState auto state) const noexcept {
-		return sub_structure().template length<QDim>(state);
-	}
-
-	template<class Sub>
-	constexpr auto strict_state_at(IsState auto state) const noexcept {
-		return state_at<Sub>(sub_structure(), state);
+		return sub_structure().template length<QDim>(sub_state(state));
 	}
 };
 
@@ -327,11 +325,6 @@ public:
 	template<IsDim auto QDim>
 	constexpr auto length(IsState auto state) const noexcept {
 		return sub_structure().template length<helpers::rename_dim<QDim, external, internal>::dim>(sub_state(state));
-	}
-
-	template<class Sub>
-	constexpr auto strict_state_at(IsState auto state) const noexcept {
-		return state_at<Sub>(sub_structure(), sub_state(state));
 	}
 };
 

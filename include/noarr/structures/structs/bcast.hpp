@@ -43,11 +43,6 @@ struct bcast_t : strict_contain<T> {
 			return sub_structure().template length<QDim>(sub_state(state));
 		}
 	}
-
-	template<class Sub, IsState State>
-	constexpr auto strict_state_at(State state) const noexcept {
-		return state_at<Sub>(sub_structure(), sub_state(state));
-	}
 };
 
 template<IsDim auto Dim>

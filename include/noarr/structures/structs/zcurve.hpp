@@ -195,11 +195,6 @@ public:
 			return sub_structure().template length<QDim>(sub_state(state, is()));
 		}
 	}
-
-	template<class Sub>
-	constexpr auto strict_state_at(IsState auto state) const noexcept {
-		return state_at<Sub>(sub_structure(), sub_state(state, is()));
-	}
 };
 
 template<int SpecialLevel, int GeneralLevel, IsDim auto Dim, auto ...Dims>

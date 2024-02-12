@@ -99,11 +99,6 @@ public:
 			return sub_structure().template length<QDim>(sub_state(state));
 		}
 	}
-
-	template<class Sub>
-	constexpr auto strict_state_at(IsState auto state) const noexcept {
-		return state_at<Sub>(sub_structure(), sub_state(state));
-	}
 };
 
 template<IsDim auto Dim, IsDim auto DimMajor, IsDim auto DimMinor>
@@ -222,11 +217,6 @@ public:
 			return sub_structure().template length<QDim>(sub_state(state));
 		}
 	}
-
-	template<class Sub>
-	constexpr auto strict_state_at(IsState auto state) const noexcept {
-		return state_at<Sub>(sub_structure(), sub_state(state));
-	}
 };
 
 template<IsDim auto Dim, IsDim auto DimMajor, IsDim auto DimMinor, IsDim auto DimIsPresent>
@@ -341,11 +331,6 @@ public:
 			static_assert(QDim != Dim, "Index in this dimension is overriden by a substructure");
 			return sub_structure().template length<QDim>(sub_state(state));
 		}
-	}
-
-	template<class Sub>
-	constexpr auto strict_state_at(IsState auto state) const noexcept {
-		return state_at<Sub>(sub_structure(), sub_state(state));
 	}
 
 private:
@@ -463,11 +448,6 @@ public:
 		} else {
 			return sub_structure().template length<QDim>(sub_state(state));
 		}
-	}
-
-	template<class Sub>
-	constexpr auto strict_state_at(IsState auto state) const noexcept {
-		return state_at<Sub>(sub_structure(), sub_state(state));
 	}
 };
 

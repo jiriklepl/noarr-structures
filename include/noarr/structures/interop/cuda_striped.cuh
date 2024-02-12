@@ -109,11 +109,6 @@ public:
 		return sub_structure().template length<QDim>(sub_state(state));
 	}
 
-	template<class Sub>
-	constexpr void strict_state_at(IsState auto) const noexcept {
-		static_assert(always_false<cuda_striped_t>, "A cuda_striped_t cannot be used in this context");
-	}
-
 	static __device__ inline std::size_t current_stripe_index() noexcept {
 		return threadIdx.x % NumStripes;
 	}
