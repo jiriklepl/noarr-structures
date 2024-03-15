@@ -6,11 +6,13 @@
 namespace noarr {
 
 template<class Traverser, class F>
-inline void omp_for_each(const Traverser &t, const F &f) noexcept {
-	#pragma omp parallel
-	#pragma omp for
-	for(auto t_inner : t)
-		t_inner.for_each(f);
+inline auto omp_for_each(const Traverser &t, F &&f) -> decltype(f) {
+	#pragma omp parallel for
+	for(auto t_inner : t) {
+		f(t_inner);
+	}
+
+	return std::forward<F>(f);
 }
 
 } // namespace noarr
