@@ -95,12 +95,12 @@ struct scalar_name<long double> {
 	using type = std::integer_sequence<char, 'l', 'o', 'n', 'g', ' ', 'd', 'o', 'u', 'b', 'l', 'e'>;
 };
 
-template<std::size_t L>
-struct scalar_name<std::integral_constant<std::size_t, L>> {
-	using type = integer_sequence_concat<std::integer_sequence<char, 's', 't', 'd', ':', ':', 'i', 'n', 't', 'e', 'g', 'r', 'a', 'l', '_', 'c', 'o', 'n', 's', 't', 'a', 'n', 't', '<'>, typename scalar_name<std::size_t>::type, std::integer_sequence<char, ','>, mangle_value<int, L>, std::integer_sequence<char, '>'>>;
+template<std::ptrdiff_t L>
+struct scalar_name<std::integral_constant<std::ptrdiff_t, L>> {
+	using type = integer_sequence_concat<std::integer_sequence<char, 's', 't', 'd', ':', ':', 'i', 'n', 't', 'e', 'g', 'r', 'a', 'l', '_', 'c', 'o', 'n', 's', 't', 'a', 'n', 't', '<'>, typename scalar_name<std::ptrdiff_t>::type, std::integer_sequence<char, ','>, mangle_value<int, L>, std::integer_sequence<char, '>'>>;
 };
 
-template<std::size_t L>
+template<std::ptrdiff_t L>
 struct scalar_name<lit_t<L>> {
 	using type = integer_sequence_concat<std::integer_sequence<char, 'l', 'i', 't', '_', 't', '<'>, mangle_value<int, L>, std::integer_sequence<char, '>'>>;
 };
@@ -181,8 +181,8 @@ struct mangle_expr_helpers {
 		out.push_back('}');
 	}
 
-	template<class String, std::size_t L>
-	static constexpr void append(String &out, const std::integral_constant<std::size_t, L>) {
+	template<class String, std::ptrdiff_t L>
+	static constexpr void append(String &out, const std::integral_constant<std::ptrdiff_t, L>) {
 		out.append("lit<", 4);
 		append_int(out, false, L);
 		out.append(">", 1);

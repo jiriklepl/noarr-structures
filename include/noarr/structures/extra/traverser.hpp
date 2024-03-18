@@ -176,7 +176,7 @@ struct traverser_t : strict_contain<Struct, Order> {
 private:
 	template<auto Dim, class Branch, class ...Branches, class F, std::size_t I, std::size_t ...Is>
 	constexpr void for_each_impl_dep(F f, auto state, std::index_sequence<I, Is...>) const {
-		for_each_impl(Branch(), f, state.template with<index_in<Dim>>(std::integral_constant<std::size_t, I>()));
+		for_each_impl(Branch(), f, state.template with<index_in<Dim>>(std::integral_constant<std::ptrdiff_t, I>()));
 		for_each_impl_dep<Dim, Branches...>(f, state, std::index_sequence<Is...>());
 	}
 	template<auto Dim, class F>
@@ -187,8 +187,8 @@ private:
 		if constexpr(dim_sig::dependent) {
 			for_each_impl_dep<Dim, Branches...>(f, state, std::index_sequence_for<Branches...>());
 		} else {
-			std::size_t len = top_struct().template length<Dim>(state);
-			for(std::size_t i = 0; i < len; i++)
+			const std::ptrdiff_t len = top_struct().template length<Dim>(state);
+			for(std::ptrdiff_t i = 0; i < len; i++)
 				for_each_impl(Branches()..., f, state.template with<index_in<Dim>>(i));
 		}
 	}

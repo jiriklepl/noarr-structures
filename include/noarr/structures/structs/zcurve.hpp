@@ -46,24 +46,24 @@ constexpr auto zc_product_static_for(std::index_sequence<I...>, F f) noexcept {
 }
 
 template<std::size_t Levels, class ...SizeTs>
-constexpr std::tuple<SizeTs...> zc_general(std::size_t z, SizeTs ...sizes) noexcept {
-	static_assert((... && std::is_same_v<SizeTs, std::size_t>), "bug");
+constexpr std::tuple<SizeTs...> zc_general(std::ptrdiff_t z, SizeTs ...sizes) noexcept {
+	static_assert((... && std::is_same_v<SizeTs, std::ptrdiff_t>), "bug");
 	using EachDim = std::index_sequence_for<SizeTs...>;
 	std::tuple<SizeTs...> size = {sizes...};
 	std::tuple<SizeTs...> result = {SizeTs(0)...};
 	zc_static_for(std::make_index_sequence<Levels>(), [&]<class k>(k) {
 		zc_static_for(EachDim(), [&]<class i>(i) {
 			using level = zc_constexpr<Levels - k::v - 1>;
-			using small_tile_size = zc_constexpr<(std::size_t) 1 << level::v>;
-			std::size_t facet = zc_product_static_for(EachDim(), [&]<class j>(j) {
+			using small_tile_size = zc_constexpr<(std::ptrdiff_t) 1 << level::v>;
+			std::ptrdiff_t facet = zc_product_static_for(EachDim(), [&]<class j>(j) {
 				if constexpr(j::v == i::v) {
 					return 1;
 				} else {
-					constexpr std::size_t tile_size = (j::v > i::v ? 2 : 1) * small_tile_size::v;
+					constexpr std::ptrdiff_t tile_size = (j::v > i::v ? 2 : 1) * small_tile_size::v;
 					return (std::get<j::v>(size) & -tile_size) == std::get<j::v>(result) ? ((std::get<j::v>(size) - 1) & (tile_size - 1)) + 1 : tile_size;
 				}
 			});
-			std::size_t half_volume = facet << level::v;
+			std::ptrdiff_t half_volume = facet << level::v;
 			if(z >= half_volume) {
 				z -= half_volume;
 				std::get<i::v>(result) += small_tile_size::v;

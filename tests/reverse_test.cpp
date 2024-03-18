@@ -8,7 +8,7 @@ using noarr::lit;
 
 static auto lenstate = noarr::make_state<noarr::length_in<'x'>>(42);
 
-static auto mkstate(std::size_t x) {
+static auto mkstate(std::ptrdiff_t x) {
 	return noarr::make_state<noarr::length_in<'x'>, noarr::index_in<'x'>>(42, x);
 }
 
@@ -64,7 +64,7 @@ TEST_CASE("Reverse sized vector traverser", "[reverse traverser]") {
 	auto s = noarr::scalar<float>() ^ noarr::sized_vector<'x'>(42);
 	auto r = s ^ noarr::reverse<'x'>();
 
-	std::size_t x = 0;
+	std::ptrdiff_t x = 0;
 	noarr::traverser(r).for_each([&](auto state) {
 		REQUIRE(noarr::get_index<'x'>(state) == x);
 		REQUIRE((r | noarr::offset(state)) == (s | noarr::offset<'x'>(41-x)));
@@ -85,7 +85,7 @@ TEST_CASE("Reverse unsized vector traverser", "[reverse traverser]") {
 	auto s = noarr::scalar<float>() ^ noarr::vector<'x'>();
 	auto r = s ^ noarr::reverse<'x'>();
 
-	std::size_t x = 0;
+	std::ptrdiff_t x = 0;
 	noarr::traverser(r).order(noarr::set_length<'x'>(42)).for_each([&](auto state) {
 		REQUIRE(noarr::get_index<'x'>(state) == x);
 		REQUIRE((r | noarr::offset(state)) == (s | noarr::offset(mkstate(41-x))));
@@ -106,7 +106,7 @@ TEST_CASE("Reverse array traverser", "[reverse traverser]") {
 	auto s = noarr::scalar<float>() ^ noarr::array<'x', 42>();
 	auto r = s ^ noarr::reverse<'x'>();
 
-	std::size_t x = 0;
+	std::ptrdiff_t x = 0;
 	noarr::traverser(r).for_each([&](auto state) {
 		REQUIRE(noarr::get_index<'x'>(state) == x);
 		REQUIRE((r | noarr::offset(state)) == (s | noarr::offset<'x'>(41-x)));
@@ -133,7 +133,7 @@ TEST_CASE("Reverse tuple traverser", "[reverse traverser]") {
 	REQUIRE((s | noarr::get_length<'x'>()) == 3);
 	REQUIRE((r | noarr::get_length<'x'>()) == 3);
 
-	std::size_t x = 0;
+	std::ptrdiff_t x = 0;
 	noarr::traverser(r).for_each([&](auto state) {
 		constexpr auto state_x = noarr::get_index<'x'>(state).value;
 		REQUIRE(state_x == x);

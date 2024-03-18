@@ -203,7 +203,7 @@ public:
 			const auto minor_length = state.template get<length_in<DimMinor>>();
 			const auto full_length = sub_structure().template length<Dim>(sub_state(state));
 			const auto full_index = major_index * minor_length + minor_index;
-			return std::size_t(full_index < full_length);
+			return std::ptrdiff_t(full_index < full_length);
 		} else if constexpr(QDim == DimMinor) {
 			static_assert(State::template contains<length_in<DimMinor>>, "Length has not been set");
 			return state.template get<length_in<DimMinor>>();
@@ -274,7 +274,7 @@ private:
 			using quo = dynamic_arg_length;
 			using rem = dynamic_arg_length;
 		};
-		template<std::size_t Num, std::size_t Denom>
+		template<std::ptrdiff_t Num, std::ptrdiff_t Denom>
 		struct divmod<static_arg_length<Num>, static_arg_length<Denom>> {
 			using quo = static_arg_length<Num / Denom>;
 			using rem = static_arg_length<Num % Denom>;

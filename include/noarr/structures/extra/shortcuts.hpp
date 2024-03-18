@@ -33,7 +33,7 @@ constexpr auto sized_vectors(auto ...lengths) noexcept {
 	return (... ^ sized_vector<Dims>(lengths));
 }
 
-template<IsDim auto Dim, std::size_t L>
+template<IsDim auto Dim, std::ptrdiff_t L>
 struct array_proto {
 	static constexpr bool proto_preserves_layout = false;
 
@@ -41,10 +41,10 @@ struct array_proto {
 	constexpr auto instantiate_and_construct(Struct s) const noexcept { return s ^ sized_vector<Dim>(lit<L>); }
 };
 
-template<IsDim auto Dim, std::size_t L, class SubStruct>
+template<IsDim auto Dim, std::ptrdiff_t L, class SubStruct>
 using array_t = decltype(std::declval<SubStruct>() ^ array_proto<Dim, L>());
 
-template<IsDim auto Dim, std::size_t L>
+template<IsDim auto Dim, std::ptrdiff_t L>
 constexpr auto array() noexcept {
 	return array_proto<Dim, L>();
 }
@@ -147,7 +147,7 @@ template<auto ...Dims, IsState State, class ...Diffs> requires (sizeof...(Dims) 
 constexpr auto neighbor(State state, Diffs ...diffs) noexcept {
 	using namespace noarr::constexpr_arithmetic;
 	static_assert((... && State::template contains<index_in<Dims>>), "Requested dimension does not exist");
-	static_assert((... && std::is_same_v<state_get_t<State, index_in<Dims>>, std::size_t>), "Cannot shift in a dimension that is not dynamic");
+	static_assert((... && std::is_same_v<state_get_t<State, index_in<Dims>>, std::ptrdiff_t>), "Cannot shift in a dimension that is not dynamic");
 	return state.template with<index_in<Dims>...>(good_diff_index_t<decltype(state.template get<index_in<Dims>>() + diffs)>(state.template get<index_in<Dims>>() + diffs)...);
 }
 

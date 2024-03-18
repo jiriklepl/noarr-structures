@@ -117,7 +117,7 @@ TEST_CASE("hoist hoist == double hoist", "[reassemble]") {
 }
 
 template<char Dim, class T>
-using dynarray = set_length_t<Dim, vector_t<Dim, T>, std::size_t>;
+using dynarray = set_length_t<Dim, vector_t<Dim, T>, std::ptrdiff_t>;
 
 TEST_CASE("strip mine", "[shortcuts blocks reassemble]") {
 	array_t<'x', 10, array_t<'y', 20, scalar<int>>> array_x_array;

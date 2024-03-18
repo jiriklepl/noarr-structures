@@ -52,7 +52,7 @@ struct reassemble_build<TopSig, State, Dim, Dims...> {
 	struct ty;
 	template<class ArgLength, class RetSig>
 	struct ty<function_sig<Dim, ArgLength, RetSig>> {
-		using sub_state = decltype(std::declval<State>().template with<index_in<Dim>>(std::size_t()));
+		using sub_state = decltype(std::declval<State>().template with<index_in<Dim>>(std::ptrdiff_t()));
 		using sub_sig = typename reassemble_build<TopSig, sub_state, Dims...>::template ty<>::pe;
 		using pe = function_sig<Dim, ArgLength, sub_sig>;
 	};

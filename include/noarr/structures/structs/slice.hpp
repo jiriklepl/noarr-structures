@@ -35,16 +35,16 @@ private:
 		struct subtract { using type = dynamic_arg_length; };
 		template<class S>
 		struct subtract<unknown_arg_length, S> { using type = unknown_arg_length; };
-		template<std::size_t L, std::size_t S>
-		struct subtract<static_arg_length<L>, std::integral_constant<std::size_t, S>> { using type = static_arg_length<L-S>; };
+		template<std::ptrdiff_t L, std::ptrdiff_t S>
+		struct subtract<static_arg_length<L>, std::integral_constant<std::ptrdiff_t, S>> { using type = static_arg_length<L-S>; };
 		using type = function_sig<Dim, typename subtract<ArgLength, StartT>::type, RetSig>;
 	};
 	template<class ...RetSigs>
 	struct dim_replacement<dep_function_sig<Dim, RetSigs...>> {
 		using original = dep_function_sig<Dim, RetSigs...>;
 		static_assert(StartT::value || true, "Cannot shift a tuple dimension dynamically");
-		static constexpr std::size_t start = StartT::value;
-		static constexpr std::size_t len = sizeof...(RetSigs) - start;
+		static constexpr std::ptrdiff_t start = StartT::value;
+		static constexpr std::ptrdiff_t len = sizeof...(RetSigs) - start;
 
 		template<class Indices = std::make_index_sequence<len>>
 		struct pack_helper;
@@ -148,8 +148,8 @@ private:
 		using original = dep_function_sig<Dim, RetSigs...>;
 		static_assert(StartT::value || true, "Cannot slice a tuple dimension dynamically");
 		static_assert(LenT::value || true, "Cannot slice a tuple dimension dynamically");
-		static constexpr std::size_t start = StartT::value;
-		static constexpr std::size_t len = LenT::value;
+		static constexpr std::ptrdiff_t start = StartT::value;
+		static constexpr std::ptrdiff_t len = LenT::value;
 
 		template<class Indices = std::make_index_sequence<len>>
 		struct pack_helper;
@@ -238,8 +238,8 @@ private:
 		using original = dep_function_sig<Dim, RetSigs...>;
 		static_assert(StartT::value || true, "Cannot span a tuple dimension dynamically");
 		static_assert(EndT::value || true, "Cannot span a tuple dimension dynamically");
-		static constexpr std::size_t start = StartT::value;
-		static constexpr std::size_t end = EndT::value;
+		static constexpr std::ptrdiff_t start = StartT::value;
+		static constexpr std::ptrdiff_t end = EndT::value;
 
 		template<class Indices = std::make_index_sequence<end - start>>
 		struct pack_helper;
@@ -331,9 +331,9 @@ private:
 		using original = dep_function_sig<Dim, RetSigs...>;
 		static_assert(StartT::value || true, "Cannot slice a tuple dimension dynamically");
 		static_assert(StrideT::value || true, "Cannot slice a tuple dimension dynamically");
-		static constexpr std::size_t start = StartT::value;
-		static constexpr std::size_t stride = StrideT::value;
-		static constexpr std::size_t sub_length = sizeof...(RetSigs);
+		static constexpr std::ptrdiff_t start = StartT::value;
+		static constexpr std::ptrdiff_t stride = StrideT::value;
+		static constexpr std::ptrdiff_t sub_length = sizeof...(RetSigs);
 
 		template<class Indices = std::make_index_sequence<(sub_length + stride - start - 1) / stride>>
 		struct pack_helper;

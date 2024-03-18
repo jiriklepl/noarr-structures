@@ -128,7 +128,7 @@ struct vector_t : strict_contain<T> {
 	constexpr auto strict_offset_of(State state) const noexcept {
 		using namespace constexpr_arithmetic;
 		static_assert(State::template contains<index_in<Dim>>, "All indices must be set");
-		if constexpr(!std::is_same_v<decltype(state.template get<length_in<Dim>>()), std::integral_constant<std::size_t, 1>>) {
+		if constexpr(!std::is_same_v<decltype(state.template get<length_in<Dim>>()), std::integral_constant<std::ptrdiff_t, 1>>) {
 			// offset = index * elem_size + offset_within_elem
 			const auto index = state.template get<index_in<Dim>>();
 			const auto sub_struct = sub_structure();

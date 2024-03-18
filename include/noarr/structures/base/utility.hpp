@@ -268,12 +268,12 @@ using dim_tree_from_sequence = typename helpers::dim_tree_from_sequence_impl<Seq
 template<class DimTree>
 using dim_tree_to_sequence = typename helpers::dim_tree_to_sequence_impl<DimTree>::type;
 
-template<std::size_t I>
-struct lit_t : std::integral_constant<std::size_t, I> {
-	constexpr auto operator()() const = delete; // using `lit<42>()` by mistake should be rejected, not evaluate to dynamic size_t of 42
+template<std::ptrdiff_t I>
+struct lit_t : std::integral_constant<std::ptrdiff_t, I> {
+	constexpr auto operator()() const = delete; // using `lit<42>()` by mistake should be rejected, not evaluate to dynamic ptrdiff_t of 42
 };
 
-template<std::size_t I>
+template<std::ptrdiff_t I>
 constexpr lit_t<I> lit;
 
 struct empty_t {};
@@ -319,16 +319,16 @@ concept IsContainable = (!std::is_empty_v<T> || std::is_default_constructible_v<
 
 namespace constexpr_arithmetic {
 
-template<std::size_t N>
-using make_const = std::integral_constant<std::size_t, N>;
+template<std::ptrdiff_t N>
+using make_const = std::integral_constant<std::ptrdiff_t, N>;
 
-template<std::size_t A, std::size_t B>
+template<std::ptrdiff_t A, std::ptrdiff_t B>
 constexpr make_const<A + B> operator+(make_const<A>, make_const<B>) noexcept { return {}; }
 
-template<std::size_t A, std::size_t B>
+template<std::ptrdiff_t A, std::ptrdiff_t B>
 constexpr make_const<A - B> operator-(make_const<A>, make_const<B>) noexcept { return {}; }
 
-template<std::size_t A, std::size_t B>
+template<std::ptrdiff_t A, std::ptrdiff_t B>
 constexpr make_const<A * B> operator*(make_const<A>, make_const<B>) noexcept { return {}; }
 
 template<std::integral T>
@@ -337,10 +337,10 @@ constexpr make_const<0> operator*(make_const<0>, T) noexcept { return {}; }
 template<std::integral T>
 constexpr make_const<0> operator*(T, make_const<0>) noexcept { return {}; }
 
-template<std::size_t A, std::size_t B>
+template<std::ptrdiff_t A, std::ptrdiff_t B>
 constexpr make_const<A / B> operator/(make_const<A>, make_const<B>) noexcept { return {}; }
 
-template<std::size_t A, std::size_t B>
+template<std::ptrdiff_t A, std::ptrdiff_t B>
 constexpr make_const<A % B> operator%(make_const<A>, make_const<B>) noexcept { return {}; }
 
 } // namespace constexpr_arithmetic

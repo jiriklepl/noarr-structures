@@ -19,12 +19,12 @@ struct dynamic_arg_length {
 	static constexpr bool is_known = true;
 	static constexpr bool is_static = false;
 };
-template<std::size_t L>
+template<std::ptrdiff_t L>
 struct static_arg_length {
 	static constexpr bool valid_arg_length = true;
 	static constexpr bool is_known = true;
 	static constexpr bool is_static = true;
-	static constexpr std::size_t value = L;
+	static constexpr std::ptrdiff_t value = L;
 };
 
 namespace helpers {
@@ -32,9 +32,9 @@ namespace helpers {
 template<class T>
 struct arg_length_from;
 template<>
-struct arg_length_from<std::size_t> { using type = dynamic_arg_length; };
-template<std::size_t L>
-struct arg_length_from<std::integral_constant<std::size_t, L>> { using type = static_arg_length<L>; };
+struct arg_length_from<std::ptrdiff_t> { using type = dynamic_arg_length; };
+template<std::ptrdiff_t L>
+struct arg_length_from<std::integral_constant<std::ptrdiff_t, L>> { using type = static_arg_length<L>; };
 
 } // namespace helpers
 

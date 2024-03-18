@@ -102,7 +102,7 @@ TEST_CASE("Blocks with static border traverser", "[blocks traverser]") {
 		^ noarr::array<'y', 5>()
 		^ noarr::into_blocks_static<'x', 'c', 'b', 'a'>(4);
 
-	std::size_t i = 0, a = 0, b = 0, c = 0, y = 0;
+	std::ptrdiff_t i = 0, a = 0, b = 0, c = 0, y = 0;
 
 	noarr::traverser(m).for_each([&](auto s){
 		REQUIRE(noarr::get_index<'y'>(s) == y);

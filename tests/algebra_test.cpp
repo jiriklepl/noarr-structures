@@ -94,7 +94,7 @@ TEST_CASE("Sized vector test", "[algebra shortcuts]") {
 	auto testee = scalar<int>() ^ sized_vector<'x'>(20) ^ sized_vector<'y'>(30);
 	auto testee2 = scalar<int>() ^ (sized_vector<'x'>(20) ^ sized_vector<'y'>(30));
 
-	using reference_t = set_length_t<'y', vector_t<'y', set_length_t<'x', vector_t<'x', scalar<int>>, std::size_t>>, std::size_t>;
+	using reference_t = set_length_t<'y', vector_t<'y', set_length_t<'x', vector_t<'x', scalar<int>>, std::ptrdiff_t>>, std::ptrdiff_t>;
 
 	REQUIRE(std::is_same<decltype(testee), reference_t>::value);
 	REQUIRE((testee | get_size()) == (20 * 30 * sizeof(int)));
