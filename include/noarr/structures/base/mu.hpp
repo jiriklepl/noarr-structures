@@ -9,6 +9,13 @@
 #include "utility.hpp"
 #include "state.hpp"
 
+// for comparison with traditional noarr structures:
+#include "../structs/layouts.hpp"
+#include "../structs/scalar.hpp"
+#include "../structs/blocks.hpp"
+#include "../extra/shortcuts.hpp"
+#include "../extra/funcs.hpp"
+
 namespace noarr::mu {
 
 // --------------------------------------------------------------------------------
@@ -68,7 +75,7 @@ struct enable_expression_t {};
 
 struct deleted_t : public enable_expression_t {
 	[[nodiscard("evaluates to a deleted value")]]
-	constexpr auto evaluate([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state, [[maybe_unused]] IsState auto sub_state) const {
+	constexpr auto operator()([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state, [[maybe_unused]] IsState auto sub_state) const {
 		// static_assert(always_false<deleted_t>, "Requested deleted value");
 		return *this;
 	}
@@ -147,7 +154,7 @@ struct size_t : public definable_t<size_t>, public enable_expression_t {
 	static constexpr propagation_t propagates = propagation_t::right;
 
 	[[nodiscard("evaluates to a size")]]
-	constexpr auto evaluate(auto sub_structure, [[maybe_unused]] IsState auto state, IsState auto sub_state) const {
+	constexpr auto operator()(auto sub_structure, [[maybe_unused]] IsState auto state, IsState auto sub_state) const {
 		return sub_structure.size(sub_state);
 	}
 };
@@ -159,12 +166,12 @@ struct definition_t<size_t, Right> : public flexible_contain<Right> {
 	using base = flexible_contain<Right>;
 	using base::base;
 
-	constexpr auto evaluate([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state, IsState auto sub_state) const {
+	constexpr auto operator()([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state, IsState auto sub_state) const {
 		if constexpr (std::is_same_v<Right, deleted_t>) {
 			static_assert(always_false<definition_t>, "Requested deleted size");
 			return constexpr_arithmetic::make_const<0>();
 		} else {
-			return base::template get<>().evaluate(sub_structure, state, sub_state);
+			return base::template get<>()(sub_structure, state, sub_state);
 		}
 	}
 };
@@ -175,7 +182,7 @@ struct offset_t : public definable_t<offset_t>, public enable_expression_t {
 	static constexpr propagation_t propagates = propagation_t::right;
 
 	[[nodiscard("evaluates to an offset")]]
-	constexpr auto evaluate(auto sub_structure, [[maybe_unused]] IsState auto state, IsState auto sub_state) const {
+	constexpr auto operator()(auto sub_structure, [[maybe_unused]] IsState auto state, IsState auto sub_state) const {
 		return sub_structure.offset(sub_state);
 	}
 };
@@ -187,12 +194,12 @@ struct definition_t<offset_t, Right> : public flexible_contain<Right> {
 	using base = flexible_contain<Right>;
 	using base::base;
 
-	constexpr auto evaluate([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state, IsState auto sub_state) const {
+	constexpr auto operator()([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state, IsState auto sub_state) const {
 		if constexpr (std::is_same_v<Right, deleted_t>) {
 			static_assert(always_false<definition_t>, "Requested deleted offset");
 			return constexpr_arithmetic::make_const<0>();
 		} else {
-			return base::template get<>().evaluate(sub_structure, state, sub_state);
+			return base::template get<>()(sub_structure, state, sub_state);
 		}
 	}
 };
@@ -204,7 +211,7 @@ struct length_t : public definable_t<length_t<Dim>>, public enable_expression_t 
 	static constexpr propagation_t propagates = propagation_t::right;
 
 	[[nodiscard("evaluates to a length")]]
-	constexpr auto evaluate(auto sub_structure, [[maybe_unused]] IsState auto state, IsState auto sub_state) const {
+	constexpr auto operator()(auto sub_structure, [[maybe_unused]] IsState auto state, IsState auto sub_state) const {
 		return sub_structure.template length<Dim>(sub_state);
 	}
 };
@@ -216,12 +223,12 @@ struct definition_t<length_t<Dim>, Right> : public flexible_contain<Right> {
 	using base = flexible_contain<Right>;
 	using base::base;
 
-	constexpr auto evaluate(auto sub_structure, IsState auto state, IsState auto sub_state) const {
+	constexpr auto operator()(auto sub_structure, IsState auto state, IsState auto sub_state) const {
 		if constexpr (std::is_same_v<Right, deleted_t>) {
 			static_assert(always_false<definition_t>, "Requested deleted length");
 			return constexpr_arithmetic::make_const<0>();
 		} else {
-			return base::template get<>().evaluate(sub_structure, state, sub_state);
+			return base::template get<>()(sub_structure, state, sub_state);
 		}
 	}
 };
@@ -237,7 +244,7 @@ struct length_in_t : public definable_t<length_in_t<Dim>>, public enable_express
 	static constexpr propagation_t propagates = propagation_t::left;
 
 	[[nodiscard("evaluates to a length")]]
-	constexpr auto evaluate([[maybe_unused]] auto sub_structure, IsState auto state, [[maybe_unused]] IsState auto sub_state) const {
+	constexpr auto operator()([[maybe_unused]] auto sub_structure, IsState auto state, [[maybe_unused]] IsState auto sub_state) const {
 		if constexpr (state.template contains<noarr::length_in<Dim>>) {
 			return state.template get<noarr::length_in<Dim>>();
 		} else {
@@ -255,7 +262,7 @@ struct index_in_t : public definable_t<index_in_t<Dim>>, public enable_expressio
 	static constexpr propagation_t propagates = propagation_t::left;
 
 	[[nodiscard("evaluates to an index")]]
-	constexpr auto evaluate([[maybe_unused]] auto sub_structure, IsState auto state, [[maybe_unused]] IsState auto sub_state) const {
+	constexpr auto operator()([[maybe_unused]] auto sub_structure, IsState auto state, [[maybe_unused]] IsState auto sub_state) const {
 		if constexpr (state.template contains<noarr::index_in<Dim>>) {
 			return state.template get<noarr::index_in<Dim>>();
 		} else {
@@ -272,7 +279,7 @@ struct definition_t<index_in_t<Dim>, Right> : public flexible_contain<Right> {
 	using base::base;
 
 	constexpr auto sub_state(auto sub_structure, IsState auto state) const {
-		return state.template with<noarr::index_in<Dim>>(base::template get<>().evaluate(sub_structure, state, state));
+		return state.template with<noarr::index_in<Dim>>(base::template get<>()(sub_structure, state, state));
 	}
 };
 
@@ -282,7 +289,7 @@ struct definition_t<length_in_t<Dim>, Right> : public flexible_contain<Right> {
 	using base::base;
 
 	constexpr auto sub_state(auto sub_structure, IsState auto state) const {
-		return state.template with<noarr::length_in<Dim>>(base::template get<>().evaluate(sub_structure, state, state));
+		return state.template with<noarr::length_in<Dim>>(base::template get<>()(sub_structure, state, state));
 	}
 };
 
@@ -296,7 +303,7 @@ struct param_t : public flexible_contain<T>, public enable_expression_t {
 	constexpr auto param() const { return this->template get<0>(); }
 
 	[[nodiscard("evaluates to a parameter")]]
-	constexpr auto evaluate([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state, [[maybe_unused]] IsState auto sub_state) const {
+	constexpr auto operator()([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state, [[maybe_unused]] IsState auto sub_state) const {
 		return param();
 	}
 };
@@ -314,13 +321,13 @@ struct unary_op_t : public flexible_contain<T>, public enable_expression_t {
 
 	constexpr auto param() const { return base::template get<0>(); }
 
-	constexpr auto evaluate(auto sub_structure, IsState auto state, IsState auto sub_state) const {
-		using param_t = decltype(param().evaluate(sub_structure, state, sub_state));
+	constexpr auto operator()(auto sub_structure, IsState auto state, IsState auto sub_state) const {
+		using param_t = decltype(param()(sub_structure, state, sub_state));
 
 		if constexpr (std::is_same_v<param_t, deleted_t>)
 			return deleted;
 		else
-			return U{}(param().evaluate(sub_structure, state, sub_state));
+			return U{}(param()(sub_structure, state, sub_state));
 	}
 };
 
@@ -344,8 +351,6 @@ constexpr auto free_right(unary_op_t<T, U> op) {
 	return free_right(op.param());
 }
 
-
-
 template<class Left, class Right, class Op>
 struct binary_op_t : public flexible_contain<Left, Right>, public enable_expression_t {
 	using base = flexible_contain<Left, Right>;
@@ -354,14 +359,14 @@ struct binary_op_t : public flexible_contain<Left, Right>, public enable_express
 	constexpr auto left() const { return base::template get<0>(); }
 	constexpr auto right() const { return base::template get<1>(); }
 
-	constexpr auto evaluate(auto sub_structure, IsState auto state, IsState auto sub_state) const {
-		using left_t = decltype(left().evaluate(sub_structure, state, sub_state));
-		using right_t = decltype(right().evaluate(sub_structure, state, sub_state));
+	constexpr auto operator()(auto sub_structure, IsState auto state, IsState auto sub_state) const {
+		using left_t = decltype(left()(sub_structure, state, sub_state));
+		using right_t = decltype(right()(sub_structure, state, sub_state));
 
 		if constexpr (std::is_same_v<left_t, deleted_t> || std::is_same_v<right_t, deleted_t>)
 			return deleted;
 		else
-			return Op{}(left().evaluate(sub_structure, state, sub_state), right().evaluate(sub_structure, state, sub_state));
+			return Op{}(left()(sub_structure, state, sub_state), right()(sub_structure, state, sub_state));
 	}
 };
 
@@ -591,7 +596,7 @@ private:
 
 	template<std::size_t I, std::size_t ...Is> requires DefinitionFor<std::remove_cvref_t<decltype(std::declval<base>().template get<I>())>, size_t>
 	constexpr auto size([[maybe_unused]] std::index_sequence<I, Is...> is, [[maybe_unused]] auto sub_structure, IsState auto state, IsState auto sub_state) const {
-		return base::template get<I>().evaluate(sub_structure, state, sub_state);
+		return base::template get<I>()(sub_structure, state, sub_state);
 	}
 
 	template<std::size_t I, std::size_t ...Is>
@@ -601,7 +606,7 @@ private:
 
 	template<std::size_t I, std::size_t ...Is> requires DefinitionFor<std::remove_cvref_t<decltype(std::declval<base>().template get<I>())>, offset_t>
 	constexpr auto offset([[maybe_unused]] std::index_sequence<I, Is...> is, [[maybe_unused]] auto sub_structure, IsState auto state, IsState auto sub_state) const {
-		return base::template get<I>().evaluate(sub_structure, state, sub_state);
+		return base::template get<I>()(sub_structure, state, sub_state);
 	}
 
 	template<std::size_t I, std::size_t ...Is>
@@ -611,7 +616,7 @@ private:
 
 	template<auto Dim, std::size_t I, std::size_t ...Is> requires DefinitionFor<std::remove_cvref_t<decltype(std::declval<base>().template get<I>())>, length_t<Dim>>
 	constexpr auto length([[maybe_unused]] std::index_sequence<I, Is...> is, [[maybe_unused]] auto sub_structure, IsState auto state, IsState auto sub_state) const {
-		return base::template get<I>().evaluate(sub_structure, state, sub_state);
+		return base::template get<I>()(sub_structure, state, sub_state);
 	}
 
 	template<auto Dim, std::size_t I, std::size_t ...Is>
@@ -1054,6 +1059,86 @@ inline void test() {
 	static_assert(guard_length_3 == 0);
 	static_assert(guard_length_4 == 1);
 	static_assert(offset5 == size5);
+
+	constexpr auto mega_structure = scalar<int>() ^
+		vector<'a'>(lit<120>) ^ block<'a', 'A'>(lit<10>) ^
+		vector<'b'>(lit<120>) ^ block<'b', 'B'>(lit<10>) ^
+		vector<'c'>(lit<120>) ^ block<'c', 'C'>(lit<10>) ^
+		vector<'d'>(lit<120>) ^ block<'d', 'D'>(lit<10>) ^
+		vector<'e'>(lit<120>) ^ block<'e', 'E'>(lit<10>) ^
+		vector<'f'>(lit<120>) ^ block<'f', 'F'>(lit<10>) ^
+		vector<'g'>(lit<120>) ^ block<'g', 'G'>(lit<10>) ^
+		vector<'h'>(lit<120>) ^ block<'h', 'H'>(lit<10>) ^
+		vector<'i'>(lit<120>) ^ block<'i', 'I'>(lit<10>) ^
+		vector<'j'>(lit<120>) ^ block<'j', 'J'>(lit<10>) ^
+		vector<'k'>(lit<120>) ^ block<'k', 'K'>(lit<10>) ^
+		vector<'l'>(lit<120>) ^ block<'l', 'L'>(lit<10>) ^
+		vector<'m'>(lit<120>) ^ block<'m', 'M'>(lit<10>) ^
+		vector<'n'>(lit<120>) ^ block<'n', 'N'>(lit<10>) ^
+		vector<'o'>(lit<120>) ^ block<'o', 'O'>(lit<10>) ^
+		vector<'p'>(lit<120>) ^ block<'p', 'P'>(lit<10>) ^
+		vector<'q'>(lit<120>) ^ block<'q', 'Q'>(lit<10>) ^
+		vector<'r'>(lit<120>) ^ block<'r', 'R'>(lit<10>) ^
+		vector<'s'>(lit<120>) ^ block<'s', 'S'>(lit<10>) ^
+		vector<'t'>(lit<120>) ^ block<'t', 'T'>(lit<10>) ^
+		vector<'u'>(lit<120>) ^ block<'u', 'U'>(lit<10>) ^
+		vector<'v'>(lit<120>) ^ block<'v', 'V'>(lit<10>) ^
+		vector<'w'>(lit<120>) ^ block<'w', 'W'>(lit<10>);
+
+	// traditional noarr structures can fit much more data:
+	constexpr auto mega_traditional_structure = noarr::scalar<int>() ^
+		noarr::sized_vector<'a'>(lit<120>) ^ noarr::into_blocks<'a', 'A', 'a'>(lit<10>) ^
+		noarr::sized_vector<'b'>(lit<120>) ^ noarr::into_blocks<'b', 'B', 'b'>(lit<10>) ^
+		noarr::sized_vector<'c'>(lit<120>) ^ noarr::into_blocks<'c', 'C', 'c'>(lit<10>) ^
+		noarr::sized_vector<'d'>(lit<120>) ^ noarr::into_blocks<'d', 'D', 'd'>(lit<10>) ^
+		noarr::sized_vector<'e'>(lit<120>) ^ noarr::into_blocks<'e', 'E', 'e'>(lit<10>) ^
+		noarr::sized_vector<'f'>(lit<120>) ^ noarr::into_blocks<'f', 'F', 'f'>(lit<10>) ^
+		noarr::sized_vector<'g'>(lit<120>) ^ noarr::into_blocks<'g', 'G', 'g'>(lit<10>) ^
+		noarr::sized_vector<'h'>(lit<120>) ^ noarr::into_blocks<'h', 'H', 'h'>(lit<10>) ^
+		noarr::sized_vector<'i'>(lit<120>) ^ noarr::into_blocks<'i', 'I', 'i'>(lit<10>) ^
+		noarr::sized_vector<'j'>(lit<120>) ^ noarr::into_blocks<'j', 'J', 'j'>(lit<10>) ^
+		noarr::sized_vector<'k'>(lit<120>) ^ noarr::into_blocks<'k', 'K', 'k'>(lit<10>) ^
+		noarr::sized_vector<'l'>(lit<120>) ^ noarr::into_blocks<'l', 'L', 'l'>(lit<10>) ^
+		noarr::sized_vector<'m'>(lit<120>) ^ noarr::into_blocks<'m', 'M', 'm'>(lit<10>) ^
+		noarr::sized_vector<'n'>(lit<120>) ^ noarr::into_blocks<'n', 'N', 'n'>(lit<10>) ^
+		noarr::sized_vector<'o'>(lit<120>) ^ noarr::into_blocks<'o', 'O', 'o'>(lit<10>) ^
+		noarr::sized_vector<'p'>(lit<120>) ^ noarr::into_blocks<'p', 'P', 'p'>(lit<10>) ^
+		noarr::sized_vector<'q'>(lit<120>) ^ noarr::into_blocks<'q', 'Q', 'q'>(lit<10>) ^
+		noarr::sized_vector<'r'>(lit<120>) ^ noarr::into_blocks<'r', 'R', 'r'>(lit<10>) ^
+		noarr::sized_vector<'s'>(lit<120>) ^ noarr::into_blocks<'s', 'S', 's'>(lit<10>) ^
+		noarr::sized_vector<'t'>(lit<120>) ^ noarr::into_blocks<'t', 'T', 't'>(lit<10>) ^
+		noarr::sized_vector<'u'>(lit<120>) ^ noarr::into_blocks<'u', 'U', 'u'>(lit<10>) ^
+		noarr::sized_vector<'v'>(lit<120>) ^ noarr::into_blocks<'v', 'V', 'v'>(lit<10>) ^
+		noarr::sized_vector<'w'>(lit<120>) ^ noarr::into_blocks<'w', 'W', 'w'>(lit<10>) ^
+		noarr::sized_vector<'x'>(lit<120>) ^ noarr::into_blocks<'x', 'X', 'x'>(lit<10>) ^
+		noarr::sized_vector<'y'>(lit<120>) ^ noarr::into_blocks<'y', 'Y', 'y'>(lit<10>) ^
+		noarr::sized_vector<'z'>(lit<120>) ^ noarr::into_blocks<'z', 'Z', 'z'>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'a'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'a'>{}, noarr::dim<'A'>{}, noarr::dim<'a'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'b'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'b'>{}, noarr::dim<'B'>{}, noarr::dim<'b'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'c'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'c'>{}, noarr::dim<'C'>{}, noarr::dim<'c'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'d'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'d'>{}, noarr::dim<'D'>{}, noarr::dim<'d'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'e'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'e'>{}, noarr::dim<'E'>{}, noarr::dim<'e'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'f'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'f'>{}, noarr::dim<'F'>{}, noarr::dim<'f'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'g'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'g'>{}, noarr::dim<'G'>{}, noarr::dim<'g'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'h'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'h'>{}, noarr::dim<'H'>{}, noarr::dim<'h'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'i'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'i'>{}, noarr::dim<'I'>{}, noarr::dim<'i'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'j'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'j'>{}, noarr::dim<'J'>{}, noarr::dim<'j'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'k'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'k'>{}, noarr::dim<'K'>{}, noarr::dim<'k'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'l'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'l'>{}, noarr::dim<'L'>{}, noarr::dim<'l'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'m'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'m'>{}, noarr::dim<'M'>{}, noarr::dim<'m'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'n'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'n'>{}, noarr::dim<'N'>{}, noarr::dim<'n'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'o'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'o'>{}, noarr::dim<'O'>{}, noarr::dim<'o'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'p'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'p'>{}, noarr::dim<'P'>{}, noarr::dim<'p'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'q'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'q'>{}, noarr::dim<'Q'>{}, noarr::dim<'q'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'r'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'r'>{}, noarr::dim<'R'>{}, noarr::dim<'r'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'s'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'s'>{}, noarr::dim<'S'>{}, noarr::dim<'s'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'t'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'t'>{}, noarr::dim<'T'>{}, noarr::dim<'t'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'u'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'u'>{}, noarr::dim<'U'>{}, noarr::dim<'u'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'v'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'v'>{}, noarr::dim<'V'>{}, noarr::dim<'v'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'w'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'w'>{}, noarr::dim<'W'>{}, noarr::dim<'w'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'x'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'x'>{}, noarr::dim<'X'>{}, noarr::dim<'x'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'y'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'y'>{}, noarr::dim<'Y'>{}, noarr::dim<'y'>{}>(lit<10>) ^
+		noarr::sized_vector<noarr::dim<'z'>{}>(lit<120>) ^ noarr::into_blocks<noarr::dim<'z'>{}, noarr::dim<'Z'>{}, noarr::dim<'z'>{}>(lit<10>);
 }
 
 #endif // NOARR_STRUCTURES_MU_HPP
