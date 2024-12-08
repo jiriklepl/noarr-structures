@@ -23,14 +23,26 @@ struct definition_t;
 template<class T>
 struct is_definition : std::false_type {};
 
+template<class Left, class T>
+struct definition_for : std::false_type {};
+
 template<class Left, class Right>
 struct is_definition<definition_t<Left, Right>> : std::true_type {};
+
+template<class Left, class Right>
+struct definition_for<Left, definition_t<Left, Right>> : std::true_type {};
 
 template<class T>
 constexpr bool is_definition_v = is_definition<T>::value;
 
+template<class Left, class T>
+constexpr bool definition_for_v = definition_for<Left, T>::value;
+
 template<class T>
 concept IsDefinition = is_definition_v<T>;
+
+template<class T, class Left>
+concept DefinitionFor = definition_for_v<Left, T>;
 
 template<class Left, class Right> requires IsDefinition<definition_t<Left, Right>>
 constexpr auto bound_left(definition_t<Left, Right>) {
@@ -56,7 +68,7 @@ struct enable_expression_t {};
 
 struct deleted_t : public enable_expression_t {
 	[[nodiscard("evaluates to a deleted value")]]
-	constexpr auto evaluate([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
+	constexpr auto evaluate([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state, [[maybe_unused]] IsState auto sub_state) const {
 		// static_assert(always_false<deleted_t>, "Requested deleted value");
 		return *this;
 	}
@@ -69,43 +81,15 @@ enum class propagation_t {
 	right,
 };
 
+template<class T>
+struct get_propagation {};
+
+template<class T>
+constexpr propagation_t get_propagation_v = get_propagation<T>::value;
+
 template<class Left, class Right>
-constexpr propagation_t get_propagation(definition_t<Left, Right>) {
-	return Left::propagates;
-}
-
-// empty definition
-template<>
-struct definition_t<void, void> {
-	constexpr auto sub_state([[maybe_unused]] auto sub_structure, IsState auto state) const {
-		return state;
-	}
-
-	constexpr bool has_size([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
-		return false;
-	}
-
-	constexpr auto size([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
-		return sub_structure.size(state);
-	}
-
-	constexpr bool has_length([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
-		return false;
-	}
-
-	template<IsDim auto Dim>
-	constexpr auto length([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
-		return sub_structure.template length<Dim>(state);
-	}
-
-
-	constexpr bool has_offset([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
-		return false;
-	}
-
-	constexpr auto offset([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
-		return sub_structure.offset(state);
-	}
+struct get_propagation<definition_t<Left, Right>> {
+	static constexpr propagation_t value = Left::propagates;
 };
 
 template<class T>
@@ -125,9 +109,9 @@ concept IsDefinable = std::is_base_of_v<definable_t<T>, T> && std::is_trivially_
 };
 
 template<class T> requires IsDefinable<T>
-constexpr propagation_t get_propagation(T) {
-	return T::propagates;
-}
+struct get_propagation<T> {
+	static constexpr propagation_t value = T::propagates;
+};
 
 template<class T> requires IsDefinable<T>
 constexpr auto bound_left(T) {
@@ -163,8 +147,8 @@ struct size_t : public definable_t<size_t>, public enable_expression_t {
 	static constexpr propagation_t propagates = propagation_t::right;
 
 	[[nodiscard("evaluates to a size")]]
-	constexpr auto evaluate(auto sub_structure, IsState auto state) const {
-		return sub_structure.size(state);
+	constexpr auto evaluate(auto sub_structure, [[maybe_unused]] IsState auto state, IsState auto sub_state) const {
+		return sub_structure.size(sub_state);
 	}
 };
 
@@ -175,38 +159,13 @@ struct definition_t<size_t, Right> : public flexible_contain<Right> {
 	using base = flexible_contain<Right>;
 	using base::base;
 
-	constexpr auto sub_state([[maybe_unused]] auto sub_structure, IsState auto state) const {
-		return state;
-	}
-
-	constexpr bool has_size([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
-		return !std::is_same_v<Right, deleted_t>;
-	}
-
-	constexpr auto size([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
+	constexpr auto evaluate([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state, IsState auto sub_state) const {
 		if constexpr (std::is_same_v<Right, deleted_t>) {
 			static_assert(always_false<definition_t>, "Requested deleted size");
 			return constexpr_arithmetic::make_const<0>();
 		} else {
-			return base::template get<>().evaluate(sub_structure, state);
+			return base::template get<>().evaluate(sub_structure, state, sub_state);
 		}
-	}
-
-	constexpr bool has_length(auto sub_structure, IsState auto state) const {
-		return sub_structure.has_length(state);
-	}
-
-	template<IsDim auto Dim>
-	constexpr auto length(auto sub_structure, IsState auto state) const {
-		return sub_structure.template length<Dim>(state);
-	}
-
-	constexpr bool has_offset(auto sub_structure, IsState auto state) const {
-		return sub_structure.has_offset(state);
-	}
-
-	constexpr auto offset(auto sub_structure, IsState auto state) const {
-		return sub_structure.offset(state);
 	}
 };
 
@@ -216,8 +175,8 @@ struct offset_t : public definable_t<offset_t>, public enable_expression_t {
 	static constexpr propagation_t propagates = propagation_t::right;
 
 	[[nodiscard("evaluates to an offset")]]
-	constexpr auto evaluate(auto sub_structure, IsState auto state) const {
-		return sub_structure.offset(state);
+	constexpr auto evaluate(auto sub_structure, [[maybe_unused]] IsState auto state, IsState auto sub_state) const {
+		return sub_structure.offset(sub_state);
 	}
 };
 
@@ -228,37 +187,12 @@ struct definition_t<offset_t, Right> : public flexible_contain<Right> {
 	using base = flexible_contain<Right>;
 	using base::base;
 
-	constexpr auto sub_state([[maybe_unused]] auto sub_structure, IsState auto state) const {
-		return state;
-	}
-
-	constexpr bool has_size(auto sub_structure, IsState auto state) const {
-		return sub_structure.has_size(state);
-	}
-
-	constexpr auto size(auto sub_structure, IsState auto state) const {
-		return sub_structure.size(state);
-	}
-
-	constexpr bool has_length(auto sub_structure, IsState auto state) const {
-		return sub_structure.has_length(state);
-	}
-
-	template<IsDim auto Dim>
-	constexpr auto length(auto sub_structure, IsState auto state) const {
-		return sub_structure.template length<Dim>(state);
-	}
-
-	constexpr bool has_offset([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
-		return !std::is_same_v<Right, deleted_t>;
-	}
-
-	constexpr auto offset([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
+	constexpr auto evaluate([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state, IsState auto sub_state) const {
 		if constexpr (std::is_same_v<Right, deleted_t>) {
 			static_assert(always_false<definition_t>, "Requested deleted offset");
 			return constexpr_arithmetic::make_const<0>();
 		} else {
-			return base::template get<>().evaluate(sub_structure, state);
+			return base::template get<>().evaluate(sub_structure, state, sub_state);
 		}
 	}
 };
@@ -270,8 +204,8 @@ struct length_t : public definable_t<length_t<Dim>>, public enable_expression_t 
 	static constexpr propagation_t propagates = propagation_t::right;
 
 	[[nodiscard("evaluates to a length")]]
-	constexpr auto evaluate(auto sub_structure, IsState auto state) const {
-		return sub_structure.template length<Dim>(state);
+	constexpr auto evaluate(auto sub_structure, [[maybe_unused]] IsState auto state, IsState auto sub_state) const {
+		return sub_structure.template length<Dim>(sub_state);
 	}
 };
 
@@ -282,49 +216,14 @@ struct definition_t<length_t<Dim>, Right> : public flexible_contain<Right> {
 	using base = flexible_contain<Right>;
 	using base::base;
 
-	constexpr auto sub_state([[maybe_unused]] auto sub_structure, IsState auto state) const {
-		return state;
-	}
-
-	constexpr bool has_size(auto sub_structure, IsState auto state) const {
-		return sub_structure.has_size(state);
-	}
-
-	constexpr auto size(auto sub_structure, IsState auto state) const {
-		return sub_structure.size(state);
-	}
-
-	template<IsDim auto SubDim>
-	constexpr bool has_length([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
-		if constexpr (SubDim == Dim) {
-			return !std::is_same_v<Right, deleted_t>;
+	constexpr auto evaluate(auto sub_structure, IsState auto state, IsState auto sub_state) const {
+		if constexpr (std::is_same_v<Right, deleted_t>) {
+			static_assert(always_false<definition_t>, "Requested deleted length");
+			return constexpr_arithmetic::make_const<0>();
 		} else {
-			return sub_structure.template has_length<SubDim>(state);
+			return base::template get<>().evaluate(sub_structure, state, sub_state);
 		}
 	}
-
-	template<IsDim auto SubDim>
-	constexpr auto length(auto sub_structure, IsState auto state) const {
-		if constexpr (SubDim == Dim) {
-			if constexpr (std::is_same_v<Right, deleted_t>) {
-				static_assert(always_false<definition_t>, "Requested deleted length");
-				return constexpr_arithmetic::make_const<0>();
-			} else {
-				return base::template get<>().evaluate(sub_structure, state);
-			}
-		} else {
-			return sub_structure.template length<SubDim>(state);
-		}
-	}
-
-	constexpr bool has_offset(auto sub_structure, IsState auto state) const {
-		return sub_structure.has_offset(state);
-	}
-
-	constexpr auto offset(auto sub_structure, IsState auto state) const {
-		return sub_structure.offset(state);
-	}
-
 };
 
 constexpr size_t size;
@@ -338,7 +237,7 @@ struct length_in_t : public definable_t<length_in_t<Dim>>, public enable_express
 	static constexpr propagation_t propagates = propagation_t::left;
 
 	[[nodiscard("evaluates to a length")]]
-	constexpr auto evaluate([[maybe_unused]] auto sub_structure, IsState auto state) const {
+	constexpr auto evaluate([[maybe_unused]] auto sub_structure, IsState auto state, [[maybe_unused]] IsState auto sub_state) const {
 		if constexpr (state.template contains<noarr::length_in<Dim>>) {
 			return state.template get<noarr::length_in<Dim>>();
 		} else {
@@ -356,7 +255,7 @@ struct index_in_t : public definable_t<index_in_t<Dim>>, public enable_expressio
 	static constexpr propagation_t propagates = propagation_t::left;
 
 	[[nodiscard("evaluates to an index")]]
-	constexpr auto evaluate([[maybe_unused]] auto sub_structure, IsState auto state) const {
+	constexpr auto evaluate([[maybe_unused]] auto sub_structure, IsState auto state, [[maybe_unused]] IsState auto sub_state) const {
 		if constexpr (state.template contains<noarr::index_in<Dim>>) {
 			return state.template get<noarr::index_in<Dim>>();
 		} else {
@@ -373,33 +272,7 @@ struct definition_t<index_in_t<Dim>, Right> : public flexible_contain<Right> {
 	using base::base;
 
 	constexpr auto sub_state(auto sub_structure, IsState auto state) const {
-		return state.template with<noarr::index_in<Dim>>(base::template get<>().evaluate(sub_structure, state));
-	}
-
-	constexpr bool has_size(auto sub_structure, IsState auto state) const {
-		return sub_structure.has_size(state);
-	}
-
-	constexpr auto size(auto sub_structure, IsState auto state) const {
-		return sub_structure.size(state);
-	}
-
-	template<IsDim auto SubDim>
-	constexpr bool has_length(auto sub_structure, IsState auto state) const {
-		return sub_structure.template has_length<SubDim>(state);
-	}
-
-	template<IsDim auto SubDim>
-	constexpr auto length(auto sub_structure, IsState auto state) const {
-		return sub_structure.template length<SubDim>(state);
-	}
-
-	constexpr bool has_offset(auto sub_structure, IsState auto state) const {
-		return sub_structure.has_offset(state);
-	}
-
-	constexpr auto offset(auto sub_structure, IsState auto state) const {
-		return sub_structure.offset(state);
+		return state.template with<noarr::index_in<Dim>>(base::template get<>().evaluate(sub_structure, state, state));
 	}
 };
 
@@ -409,33 +282,7 @@ struct definition_t<length_in_t<Dim>, Right> : public flexible_contain<Right> {
 	using base::base;
 
 	constexpr auto sub_state(auto sub_structure, IsState auto state) const {
-		return state.template with<noarr::length_in<Dim>>(base::template get<>().evaluate(sub_structure, state));
-	}
-
-	constexpr bool has_size(auto sub_structure, IsState auto state) const {
-		return sub_structure.has_size(state);
-	}
-
-	constexpr auto size(auto sub_structure, IsState auto state) const {
-		return sub_structure.size(state);
-	}
-
-	template<IsDim auto SubDim>
-	constexpr bool has_length(auto sub_structure, IsState auto state) const {
-		return sub_structure.template has_length<SubDim>(state);
-	}
-
-	template<IsDim auto SubDim>
-	constexpr auto length(auto sub_structure, IsState auto state) const {
-		return sub_structure.template length<SubDim>(state);
-	}
-
-	constexpr bool has_offset(auto sub_structure, IsState auto state) const {
-		return sub_structure.has_offset(state);
-	}
-
-	constexpr auto offset(auto sub_structure, IsState auto state) const {
-		return sub_structure.offset(state);
+		return state.template with<noarr::length_in<Dim>>(base::template get<>().evaluate(sub_structure, state, state));
 	}
 };
 
@@ -449,7 +296,7 @@ struct param_t : public flexible_contain<T>, public enable_expression_t {
 	constexpr auto param() const { return this->template get<0>(); }
 
 	[[nodiscard("evaluates to a parameter")]]
-	constexpr auto evaluate([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state) const {
+	constexpr auto evaluate([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state, [[maybe_unused]] IsState auto sub_state) const {
 		return param();
 	}
 };
@@ -467,13 +314,13 @@ struct unary_op_t : public flexible_contain<T>, public enable_expression_t {
 
 	constexpr auto param() const { return base::template get<0>(); }
 
-	constexpr auto evaluate(auto sub_structure, IsState auto state) const {
-		using param_t = decltype(param().evaluate(sub_structure, state));
+	constexpr auto evaluate(auto sub_structure, IsState auto state, IsState auto sub_state) const {
+		using param_t = decltype(param().evaluate(sub_structure, state, sub_state));
 
 		if constexpr (std::is_same_v<param_t, deleted_t>)
 			return deleted;
 		else
-			return U{}(param().evaluate(sub_structure, state));
+			return U{}(param().evaluate(sub_structure, state, sub_state));
 	}
 };
 
@@ -507,14 +354,14 @@ struct binary_op_t : public flexible_contain<Left, Right>, public enable_express
 	constexpr auto left() const { return base::template get<0>(); }
 	constexpr auto right() const { return base::template get<1>(); }
 
-	constexpr auto evaluate(auto sub_structure, IsState auto state) const {
-		using left_t = decltype(left().evaluate(sub_structure, state));
-		using right_t = decltype(right().evaluate(sub_structure, state));
+	constexpr auto evaluate(auto sub_structure, IsState auto state, IsState auto sub_state) const {
+		using left_t = decltype(left().evaluate(sub_structure, state, sub_state));
+		using right_t = decltype(right().evaluate(sub_structure, state, sub_state));
 
 		if constexpr (std::is_same_v<left_t, deleted_t> || std::is_same_v<right_t, deleted_t>)
 			return deleted;
 		else
-			return Op{}(left().evaluate(sub_structure, state), right().evaluate(sub_structure, state));
+			return Op{}(left().evaluate(sub_structure, state, sub_state), right().evaluate(sub_structure, state, sub_state));
 	}
 };
 
@@ -690,24 +537,47 @@ constexpr greater_equal_t<Left, Right> operator>=(Left left, Right right) {
 
 // --------------------------------------------------------------------------------
 
-template<class T, class ...Ts>
-concept OnlyOnce = (... + std::is_same_v<T, Ts>) == 1;
-
-// TODO: definition_pack_t should be the atomic version of multiple mu_t
-//   each definition_t throughout the definition_pack_t should be unique
+// TODO: each definition_t throughout the definition_pack_t should be unique
 template<class ...Ts> requires (... && IsDefinition<Ts>)
 struct definition_pack_t : public flexible_contain<Ts...> {
 	using base = flexible_contain<Ts...>;
 	using base::base;
 
+	// TODO: this can be improved; <name>_in_t parameters should not depend on the ones that propagate right
 	constexpr auto sub_state(auto sub_structure, IsState auto state) const {
 		return sub_state(std::index_sequence_for<Ts...>{}, sub_structure, state);
 	}
 
+	constexpr auto size(auto sub_structure, IsState auto state) const requires (... || DefinitionFor<Ts, size_t>) {
+		return size(std::index_sequence_for<Ts...>{}, sub_structure, state, sub_state(sub_structure, state));
+	}
+
+	constexpr auto size(auto sub_structure, IsState auto state) const {
+		return sub_structure.size(sub_state(sub_structure, state));
+	}
+
+	template<auto Dim> requires (... || DefinitionFor<Ts, length_t<Dim>>)
+	constexpr auto length(auto sub_structure, IsState auto state) const {
+		return length<Dim>(std::index_sequence_for<Ts...>{}, sub_structure, state, sub_state(sub_structure, state));
+	}
+
+	template<auto Dim>
+	constexpr auto length(auto sub_structure, IsState auto state) const {
+		return sub_structure.template length<Dim>(sub_state(sub_structure, state));
+	}
+
+	constexpr auto offset(auto sub_structure, IsState auto state) const requires (... || DefinitionFor<Ts, offset_t>) {
+		return offset(std::index_sequence_for<Ts...>{}, sub_structure, state, sub_state(sub_structure, state));
+	}
+
+	constexpr auto offset(auto sub_structure, IsState auto state) const {
+		return sub_structure.offset(sub_state(sub_structure, state));
+	}
+
 private:
-	template<std::size_t I, std::size_t ...Is> requires IsDefinition<decltype((std::declval<base>().template get<I>()))>
+	template<std::size_t I, std::size_t ...Is> requires (get_propagation_v<std::remove_cvref_t<decltype(base::template get<I>())>> == propagation_t::left)
 	constexpr auto sub_state([[maybe_unused]] std::index_sequence<I, Is...> is, [[maybe_unused]] auto sub_structure, IsState auto state) const {
-		return base::template get<I>().sub_state(sub_structure, sub_state(is, sub_structure, state));
+		return sub_state(std::index_sequence<Is...>{}, sub_structure, base::template get<I>().sub_state(sub_structure, state));
 	}
 
 	template<std::size_t I, std::size_t ...Is>
@@ -717,6 +587,36 @@ private:
 
 	constexpr auto sub_state([[maybe_unused]] std::index_sequence<> is, [[maybe_unused]] auto sub_structure, IsState auto state) const {
 		return state;
+	}
+
+	template<std::size_t I, std::size_t ...Is> requires DefinitionFor<std::remove_cvref_t<decltype(std::declval<base>().template get<I>())>, size_t>
+	constexpr auto size([[maybe_unused]] std::index_sequence<I, Is...> is, [[maybe_unused]] auto sub_structure, IsState auto state, IsState auto sub_state) const {
+		return base::template get<I>().evaluate(sub_structure, state, sub_state);
+	}
+
+	template<std::size_t I, std::size_t ...Is>
+	constexpr auto size([[maybe_unused]] std::index_sequence<I, Is...> is, [[maybe_unused]] auto sub_structure, IsState auto state, IsState auto sub_state) const {
+		return size(std::index_sequence<Is...>{}, sub_structure, state, sub_state);
+	}
+
+	template<std::size_t I, std::size_t ...Is> requires DefinitionFor<std::remove_cvref_t<decltype(std::declval<base>().template get<I>())>, offset_t>
+	constexpr auto offset([[maybe_unused]] std::index_sequence<I, Is...> is, [[maybe_unused]] auto sub_structure, IsState auto state, IsState auto sub_state) const {
+		return base::template get<I>().evaluate(sub_structure, state, sub_state);
+	}
+
+	template<std::size_t I, std::size_t ...Is>
+	constexpr auto offset([[maybe_unused]] std::index_sequence<I, Is...> is, [[maybe_unused]] auto sub_structure, IsState auto state, IsState auto sub_state) const {
+		return offset(std::index_sequence<Is...>{}, sub_structure, state, sub_state);
+	}
+
+	template<auto Dim, std::size_t I, std::size_t ...Is> requires DefinitionFor<std::remove_cvref_t<decltype(std::declval<base>().template get<I>())>, length_t<Dim>>
+	constexpr auto length([[maybe_unused]] std::index_sequence<I, Is...> is, [[maybe_unused]] auto sub_structure, IsState auto state, IsState auto sub_state) const {
+		return base::template get<I>().evaluate(sub_structure, state, sub_state);
+	}
+
+	template<auto Dim, std::size_t I, std::size_t ...Is>
+	constexpr auto length([[maybe_unused]] std::index_sequence<I, Is...> is, [[maybe_unused]] auto sub_structure, IsState auto state, IsState auto sub_state) const {
+		return length<Dim>(std::index_sequence<Is...>{}, sub_structure, state, sub_state);
 	}
 };
 
@@ -742,13 +642,13 @@ struct mu_t<> : public flexible_contain<> {
 	[[nodiscard]]
 	constexpr auto definition() const {
 		static_assert(always_false<mu_t>, "Requested definition on an empty mu");
-		return definition_t<void, void>();
+		return;
 	}
 
 	template<std::size_t I>
 	constexpr auto get() const {
 		static_assert(always_false<mu_t>, "Requested get on an empty mu");
-		return definition_t<void, void>();
+		return;
 	}
 
 	[[nodiscard]]
@@ -756,7 +656,6 @@ struct mu_t<> : public flexible_contain<> {
 		return state;
 	}
 
-	template<class _Anything = void>
 	[[nodiscard]]
 	constexpr auto size([[maybe_unused]] IsState auto state) const {
 		static_assert(always_false<mu_t>, "Requested size on an empty mu");
@@ -770,7 +669,6 @@ struct mu_t<> : public flexible_contain<> {
 		return constexpr_arithmetic::make_const<0>();
 	}
 
-	template<class _Anything = void>
 	[[nodiscard]]
 	constexpr auto offset([[maybe_unused]] IsState auto state) const {
 		static_assert(always_false<mu_t>, "Requested offset on an empty mu");
@@ -807,18 +705,18 @@ struct mu_t<T> : public flexible_contain<T> {
 
 	[[nodiscard]]
 	constexpr auto size(IsState auto state) const {
-		return definition().size(sub_structure(), sub_state(state));
+		return definition().size(sub_structure(), state);
 	}
 
 	template<IsDim auto Dim>
 	[[nodiscard]]
 	constexpr auto length(IsState auto state) const {
-		return definition().template length<Dim>(sub_structure(), sub_state(state));
+		return definition().template length<Dim>(sub_structure(), state);
 	}
 
 	[[nodiscard]]
 	constexpr auto offset(IsState auto state) const {
-		return definition().offset(sub_structure(), sub_state(state));
+		return definition().offset(sub_structure(), state);
 	}
 };
 
@@ -849,48 +747,33 @@ struct mu_t<T, Ts...> : public flexible_contain<T, mu_t<Ts...>> {
 	}
 
 	constexpr bool has_size(IsState auto state) const {
-		return definition().has_size(sub_structure(), sub_state(state));
+		return definition().has_size(sub_structure(), state);
 	}
 
 	constexpr auto size(IsState auto state) const {
-		return definition().size(sub_structure(), sub_state(state));
-	}
-
-	template<IsDim auto Dim>
-	constexpr bool has_length(IsState auto state) const {
-		return definition().template has_length<Dim>(sub_structure(), sub_state(state));
+		return definition().size(sub_structure(), state);
 	}
 
 	template<IsDim auto Dim>
 	constexpr auto length(IsState auto state) const {
-		return definition().template length<Dim>(sub_structure(), sub_state(state));
-	}
-
-	constexpr bool has_offset(IsState auto state) const {
-		return definition().has_offset(sub_structure(), sub_state(state));
+		return definition().template length<Dim>(sub_structure(), state);
 	}
 
 	constexpr auto offset(IsState auto state) const {
-		return definition().offset(sub_structure(), sub_state(state));
+		return definition().offset(sub_structure(), state);
 	}
 };
 
-template<class T, class ...Ts>
+template<class ...Ts>
 [[nodiscard("creates a mu")]]
-constexpr mu_t<T, Ts...> mu(T param, Ts... params) {
-	return mu_t<T, Ts...>{param, mu(params...)};
-}
-
-template<class T>
-[[nodiscard("creates a mu")]]
-constexpr mu_t<T> mu(T param) {
-	return mu_t<T>{param};
+constexpr mu_t<definition_pack_t<Ts...>> mu(Ts... params) {
+	return mu_t<definition_pack_t<Ts...>>{definition_pack_t<Ts...>{params...}};
 }
 
 // uses the greek letter mu (μ) as a symbol for a structure
 template<class ...Ts>
 [[nodiscard("creates a mu")]]
-constexpr mu_t<Ts...> μ(Ts... params) {
+constexpr mu_t<definition_pack_t<Ts...>> μ(Ts... params) {
 	return mu(params...);
 }
 
@@ -924,7 +807,7 @@ constexpr auto scalar() {
 	);
 }
 
-// TODO: make consuming implicit after making μ atomic
+// TODO: make consuming implicit
 // TODO: add signatures
 
 template<IsDim auto Dim>
@@ -948,13 +831,12 @@ constexpr auto block() {
 // block_dynamic sets the length of the guard dimension to 1 iff the index is in bounds
 template<IsDim auto OldDim, IsDim auto MajorDim, IsDim auto MinorDim, IsDim auto GuardDim>
 constexpr auto block_dynamic() {
-	return
-		μ(
-			index_in<OldDim> = index_in<MajorDim> * length_in<MinorDim> + index_in<MinorDim>,
-			length<MinorDim> = length_in<MinorDim>,
-			length<MajorDim> = (length<OldDim> + length_in<MinorDim> - param(lit<1>)) / length_in<MinorDim>,
-			length<GuardDim> = index_in<OldDim> < length<OldDim>
-		);
+	return μ(
+		index_in<OldDim> = index_in<MajorDim> * length_in<MinorDim> + index_in<MinorDim>,
+		length<MinorDim> = length_in<MinorDim>,
+		length<MajorDim> = (length<OldDim> + length_in<MinorDim> - param(lit<1>)) / length_in<MinorDim>,
+		length<GuardDim> = (index_in<MajorDim> * length_in<MinorDim> + index_in<MinorDim>) < length<OldDim>
+	);
 }
 
 template<IsDim auto Dim>
@@ -984,35 +866,15 @@ constexpr auto pad(auto before, auto after) {
 
 template<IsDim auto LeftDim, IsDim auto RightDim>
 constexpr auto rename() {
-	constexpr auto tmp_dim = dim<[](){}>{}; // TODO: wouldn't be needed if the whole thing was atomic
 	return μ(
-		length<tmp_dim> = deleted,
-
-		index_in<tmp_dim> = index_in<LeftDim>,
-		length_in<tmp_dim> = length_in<LeftDim>,
-		length<RightDim> = length<tmp_dim>,
-
 		index_in<LeftDim> = index_in<RightDim>,
 		length_in<LeftDim> = length_in<RightDim>,
 		length<LeftDim> = length<RightDim>,
 
-		index_in<RightDim> = index_in<tmp_dim>,
-		length_in<RightDim> = length_in<tmp_dim>,
-		length<tmp_dim> = length<LeftDim>,
-
-		index_in<tmp_dim> = deleted,
-		length_in<tmp_dim> = deleted
+		index_in<RightDim> = index_in<LeftDim>,
+		length_in<RightDim> = length_in<LeftDim>,
+		length<RightDim> = length<LeftDim>
 	);
-
-	// TODO: for an atomic implementation, the following would be enough:
-	// return μ(
-	// 	index_in<LeftDim> = index_in<RightDim>,
-	// 	length_in<LeftDim> = length_in<RightDim>,
-	// 	length<LeftDim> = length<RightDim>,
-	// 	index_in<RightDim> = index_in<LeftDim>,
-	// 	length_in<RightDim> = length_in<LeftDim>,
-	// 	length<RightDim> = length<LeftDim>
-	// );
 }
 
 // --------------------------------------------------------------------------------
@@ -1062,6 +924,12 @@ constexpr auto bcast(auto len) {
 inline void test() {
 	using noarr::lit;
 	using namespace noarr::mu;
+
+	constexpr auto scalar_structure = scalar<int>();
+
+	// expected: 4
+	constexpr auto scalar_size = scalar_structure.size(noarr::empty_state);
+	static_assert(scalar_size == 4);
 
 	constexpr auto structure = scalar<int>() ^ vector<'x'>(lit<10>) ^ vector<'y'>(lit<20>) ^ vector<'z'>(lit<30>);
 	constexpr auto test_associativity = scalar<int>() ^ (vector<'x'>(lit<10>) ^ vector<'y'>(lit<20>) ^ vector<'z'>(lit<30>));
@@ -1142,21 +1010,23 @@ inline void test() {
 	constexpr auto offset3 = structure3.offset(noarr::empty_state);
 	static_assert(offset3 == 38100);
 
-	// expected: false
-	constexpr auto has_x_length3 = structure3.template has_length<'x'>(noarr::empty_state);
-	static_assert(!has_x_length3);
+	// TODO: define bound_left, bound_right, free_left, free_right for mu_t
+	//         it should honor the implicit consumption
+	// // expected: false
+	// constexpr auto has_x_length3 = structure3.template has_length<'x'>(noarr::empty_state);
+	// static_assert(!has_x_length3);
 
-	// expected: false
-	constexpr auto has_y_length3 = structure3.template has_length<'y'>(noarr::empty_state);
-	static_assert(!has_y_length3);
+	// // expected: false
+	// constexpr auto has_y_length3 = structure3.template has_length<'y'>(noarr::empty_state);
+	// static_assert(!has_y_length3);
 
-	// expected: false
-	constexpr auto has_X_length3 = structure3.template has_length<'X'>(noarr::empty_state);
-	static_assert(!has_X_length3);
+	// // expected: false
+	// constexpr auto has_X_length3 = structure3.template has_length<'X'>(noarr::empty_state);
+	// static_assert(!has_X_length3);
 
-	// expected: false
-	constexpr auto has_Y_length3 = structure3.template has_length<'Y'>(noarr::empty_state);
-	static_assert(!has_Y_length3);
+	// // expected: false
+	// constexpr auto has_Y_length3 = structure3.template has_length<'Y'>(noarr::empty_state);
+	// static_assert(!has_Y_length3);
 
 	// --------------------------------------------------------------------------------
 
