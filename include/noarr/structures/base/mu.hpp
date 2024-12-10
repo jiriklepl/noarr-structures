@@ -51,6 +51,31 @@ concept IsDefinition = is_definition_v<T>;
 template<class T, class Left>
 concept DefinitionFor = definition_for_v<Left, T>;
 
+template<class ...Ts>
+constexpr auto contain_merge(Ts ...ts) {
+	return contain_cat(ts...); // TODO: implement
+}
+
+template<std::size_t I, std::size_t ...Is, class Left, class ...Rights>
+constexpr auto contain_set_minus_impl(std::index_sequence<I, Is...>, Left left, helpers::contain<Rights...> right) {
+	if constexpr ((... || std::is_same_v<std::remove_cvref_t<decltype(left.template get<I>())>, Rights>)) {
+		return contain_set_minus_impl(std::index_sequence<Is...>{}, left, right);
+	} else {
+		return contain_cat(helpers::contain(left.template get<I>()), contain_set_minus_impl(std::index_sequence<Is...>{}, left, right));
+	}
+}
+
+template<class Left, class ...Rights>
+constexpr auto contain_set_minus_impl(std::index_sequence<>, Left, helpers::contain<Rights...>) {
+	return helpers::contain<>{};
+}
+
+template<class ...Lefts, class ...Rights>
+constexpr auto contain_set_minus(helpers::contain<Lefts...> left, helpers::contain<Rights...> right) {
+	constexpr auto is = std::index_sequence_for<Lefts...>{};
+	return contain_set_minus_impl(is, left, right);
+}
+
 template<class Left, class Right> requires IsDefinition<definition_t<Left, Right>>
 constexpr auto bound_left(definition_t<Left, Right>) {
 	return bound_left(Left{});
@@ -62,18 +87,32 @@ constexpr auto bound_right(definition_t<Left, Right>) {
 }
 
 template<class Left, class Right> requires IsDefinition<definition_t<Left, Right>>
-constexpr auto free_left(definition_t<Left, Right>) {
-	return free_left(std::declval<Right>());
+constexpr auto free_left(definition_t<Left, Right> t) {
+	return free_left(t.template get<0>());
 }
 
 template<class Left, class Right> requires IsDefinition<definition_t<Left, Right>>
-constexpr auto free_right(definition_t<Left, Right>) {
-	return free_right(std::declval<Right>());
+constexpr auto free_right(definition_t<Left, Right> t) {
+	return free_right(t.template get<0>());
 }
 
 struct enable_expression_t {};
 
-struct deleted_t : public enable_expression_t {
+template<class T>
+concept IsExpression = std::is_base_of_v<enable_expression_t, T> && requires(T t) {
+	{T::sub_expressions} -> std::convertible_to<std::size_t>;
+	std::integral_constant<std::size_t, T::sub_expressions>{};
+	[]<std::size_t ...Is>(std::index_sequence<Is...>) {
+		(std::declval<T>().template get<Is>(), ..., void());
+	}(std::make_index_sequence<T::sub_expressions>{});
+};
+
+struct deleted_t : public enable_expression_t, public flexible_contain<> {
+	using flexible_contain<>::flexible_contain;
+	using flexible_contain<>::get;
+
+	static constexpr std::size_t sub_expressions = 0;
+
 	[[nodiscard("evaluates to a deleted value")]]
 	constexpr auto operator()([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state, [[maybe_unused]] IsState auto sub_state) const {
 		// static_assert(always_false<deleted_t>, "Requested deleted value");
@@ -120,7 +159,7 @@ struct get_propagation<T> {
 	static constexpr propagation_t value = T::propagates;
 };
 
-template<class T> requires IsDefinable<T>
+template<class T> requires IsDefinable<T> && IsExpression<T>
 constexpr auto bound_left(T) {
 	if constexpr (T::propagates == propagation_t::left) {
 		return helpers::contain<T>{};
@@ -129,7 +168,7 @@ constexpr auto bound_left(T) {
 	}
 }
 
-template<class T> requires IsDefinable<T>
+template<class T> requires IsDefinable<T> && IsExpression<T>
 constexpr auto bound_right(T) {
 	if constexpr (T::propagates == propagation_t::right) {
 		return helpers::contain<T>{};
@@ -138,20 +177,37 @@ constexpr auto bound_right(T) {
 	}
 }
 
-template<class T> requires IsDefinable<T>
+template<class T> requires IsExpression<T>
+constexpr auto free_left(T t) {
+	return [t]<std::size_t ...Is>(std::index_sequence<Is...>) {
+		return contain_merge(free_left(t.template get<Is>())...);
+	}(std::make_index_sequence<T::sub_expressions>{});
+}
+
+template<class T> requires IsExpression<T>
+constexpr auto free_right(T t) {
+	return [t]<std::size_t ...Is>(std::index_sequence<Is...>) {
+		return contain_merge(free_right(t.template get<Is>())...);
+	}(std::make_index_sequence<T::sub_expressions>{});
+}
+
+template<class T> requires IsDefinable<T> && IsExpression<T>
 constexpr auto free_left(T t) {
 	return bound_left(t);
 }
 
-template<class T> requires IsDefinable<T>
+template<class T> requires IsDefinable<T> && IsExpression<T>
 constexpr auto free_right(T t) {
 	return bound_right(t);
 }
 
-struct size_t : public definable_t<size_t>, public enable_expression_t {
+struct size_t : public definable_t<size_t>, public enable_expression_t, public flexible_contain<> {
+	using flexible_contain<>::flexible_contain;
+	using flexible_contain<>::get;
 	using definable_t<size_t>::operator=;
 
 	static constexpr propagation_t propagates = propagation_t::right;
+	static constexpr std::size_t sub_expressions = 0;
 
 	[[nodiscard("evaluates to a size")]]
 	constexpr auto operator()(auto sub_structure, [[maybe_unused]] IsState auto state, IsState auto sub_state) const {
@@ -176,10 +232,13 @@ struct definition_t<size_t, Right> : public flexible_contain<Right> {
 	}
 };
 
-struct offset_t : public definable_t<offset_t>, public enable_expression_t {
+struct offset_t : public definable_t<offset_t>, public enable_expression_t, public flexible_contain<> {
+	using flexible_contain<>::flexible_contain;
+	using flexible_contain<>::get;
 	using definable_t<offset_t>::operator=;
 
 	static constexpr propagation_t propagates = propagation_t::right;
+	static constexpr std::size_t sub_expressions = 0;
 
 	[[nodiscard("evaluates to an offset")]]
 	constexpr auto operator()(auto sub_structure, [[maybe_unused]] IsState auto state, IsState auto sub_state) const {
@@ -205,10 +264,13 @@ struct definition_t<offset_t, Right> : public flexible_contain<Right> {
 };
 
 template<IsDim auto Dim>
-struct length_t : public definable_t<length_t<Dim>>, public enable_expression_t {
+struct length_t : public definable_t<length_t<Dim>>, public enable_expression_t, public flexible_contain<> {
+	using flexible_contain<>::flexible_contain;
+	using flexible_contain<>::get;
 	using definable_t<length_t<Dim>>::operator=;
 
 	static constexpr propagation_t propagates = propagation_t::right;
+	static constexpr std::size_t sub_expressions = 0;
 
 	[[nodiscard("evaluates to a length")]]
 	constexpr auto operator()(auto sub_structure, [[maybe_unused]] IsState auto state, IsState auto sub_state) const {
@@ -238,10 +300,13 @@ constexpr offset_t offset;
 template<IsDim auto Dim> constexpr length_t<Dim> length;
 
 template<IsDim auto Dim>
-struct length_in_t : public definable_t<length_in_t<Dim>>, public enable_expression_t {
+struct length_in_t : public definable_t<length_in_t<Dim>>, public enable_expression_t, public flexible_contain<> {
+	using flexible_contain<>::flexible_contain;
+	using flexible_contain<>::get;
 	using definable_t<length_in_t<Dim>>::operator=;
 
 	static constexpr propagation_t propagates = propagation_t::left;
+	static constexpr std::size_t sub_expressions = 0;
 
 	[[nodiscard("evaluates to a length")]]
 	constexpr auto operator()([[maybe_unused]] auto sub_structure, IsState auto state, [[maybe_unused]] IsState auto sub_state) const {
@@ -256,10 +321,13 @@ struct length_in_t : public definable_t<length_in_t<Dim>>, public enable_express
 static_assert(IsDefinable<length_in_t<'x'>>);
 
 template<IsDim auto Dim>
-struct index_in_t : public definable_t<index_in_t<Dim>>, public enable_expression_t {
+struct index_in_t : public definable_t<index_in_t<Dim>>, public enable_expression_t, public flexible_contain<> {
+	using flexible_contain<>::flexible_contain;
+	using flexible_contain<>::get;
 	using definable_t<index_in_t<Dim>>::operator=;
 
 	static constexpr propagation_t propagates = propagation_t::left;
+	static constexpr std::size_t sub_expressions = 0;
 
 	[[nodiscard("evaluates to an index")]]
 	constexpr auto operator()([[maybe_unused]] auto sub_structure, IsState auto state, [[maybe_unused]] IsState auto sub_state) const {
@@ -298,13 +366,15 @@ template<IsDim auto Dim> constexpr index_in_t<Dim> index_in;
 
 template<class T>
 struct param_t : public flexible_contain<T>, public enable_expression_t {
-	using flexible_contain<T>::flexible_contain;
+	using base = flexible_contain<T>;
+	using base::base;
+	using base::get;
 
-	constexpr auto param() const { return this->template get<0>(); }
+	static constexpr std::size_t sub_expressions = 0;
 
 	[[nodiscard("evaluates to a parameter")]]
 	constexpr auto operator()([[maybe_unused]] auto sub_structure, [[maybe_unused]] IsState auto state, [[maybe_unused]] IsState auto sub_state) const {
-		return param();
+		return base::template get<>();
 	}
 };
 
@@ -318,80 +388,39 @@ template<class T, class U>
 struct unary_op_t : public flexible_contain<T>, public enable_expression_t {
 	using base = flexible_contain<T>;
 	using base::base;
+	using base::get;
 
-	constexpr auto param() const { return base::template get<0>(); }
+	static constexpr std::size_t sub_expressions = 1;
 
 	constexpr auto operator()(auto sub_structure, IsState auto state, IsState auto sub_state) const {
-		using param_t = decltype(param()(sub_structure, state, sub_state));
+		using param_t = decltype(base::template get<>()(sub_structure, state, sub_state));
 
 		if constexpr (std::is_same_v<param_t, deleted_t>)
 			return deleted;
 		else
-			return U{}(param()(sub_structure, state, sub_state));
+			return U{}(base::template get<>()(sub_structure, state, sub_state));
 	}
 };
-
-template<class T, class U>
-constexpr auto bound_left(unary_op_t<T, U> op) {
-	return bound_left(op.param());
-}
-
-template<class T, class U>
-constexpr auto bound_right(unary_op_t<T, U> op) {
-	return bound_right(op.param());
-}
-
-template<class T, class U>
-constexpr auto free_left(unary_op_t<T, U> op) {
-	return free_left(op.param());
-}
-
-template<class T, class U>
-constexpr auto free_right(unary_op_t<T, U> op) {
-	return free_right(op.param());
-}
 
 template<class Left, class Right, class Op>
 struct binary_op_t : public flexible_contain<Left, Right>, public enable_expression_t {
 	using base = flexible_contain<Left, Right>;
 	using base::base;
+	using base::get;
 
-	constexpr auto left() const { return base::template get<0>(); }
-	constexpr auto right() const { return base::template get<1>(); }
+	static constexpr std::size_t sub_expressions = 2;
 
 	constexpr auto operator()(auto sub_structure, IsState auto state, IsState auto sub_state) const {
-		using left_t = decltype(left()(sub_structure, state, sub_state));
-		using right_t = decltype(right()(sub_structure, state, sub_state));
+		using left_t = decltype(base::template get<0>()(sub_structure, state, sub_state));
+		using right_t = decltype(base::template get<1>()(sub_structure, state, sub_state));
 
 		if constexpr (std::is_same_v<left_t, deleted_t> || std::is_same_v<right_t, deleted_t>)
 			return deleted;
 		else
-			return Op{}(left()(sub_structure, state, sub_state), right()(sub_structure, state, sub_state));
+			return Op{}(base::template get<0>()(sub_structure, state, sub_state),
+			            base::template get<1>()(sub_structure, state, sub_state));
 	}
 };
-
-template<class Left, class Right, class Op>
-constexpr auto bound_left(binary_op_t<Left, Right, Op> op) {
-	return helpers::contain_cat(bound_left(op.left()), bound_left(op.right()));
-}
-
-template<class Left, class Right, class Op>
-constexpr auto bound_right(binary_op_t<Left, Right, Op> op) {
-	return helpers::contain_cat(bound_right(op.left()), bound_right(op.right()));
-}
-
-template<class Left, class Right, class Op>
-constexpr auto free_left(binary_op_t<Left, Right, Op> op) {
-	return helpers::contain_cat(free_left(op.left()), free_left(op.right()));
-}
-
-template<class Left, class Right, class Op>
-constexpr auto free_right(binary_op_t<Left, Right, Op> op) {
-	return helpers::contain_cat(free_right(op.left()), free_right(op.right()));
-}
-
-template<class T>
-concept IsExpression = std::is_base_of_v<enable_expression_t, T>;
 
 // arithmetic operations
 
@@ -547,6 +576,7 @@ template<class ...Ts> requires (... && IsDefinition<Ts>)
 struct definition_pack_t : public flexible_contain<Ts...> {
 	using base = flexible_contain<Ts...>;
 	using base::base;
+	using base::get;
 
 	// TODO: this can be improved; <name>_in_t parameters should not depend on the ones that propagate right
 	constexpr auto sub_state(auto sub_structure, IsState auto state) const {
@@ -624,6 +654,50 @@ private:
 		return length<Dim>(std::index_sequence<Is...>{}, sub_structure, state, sub_state);
 	}
 };
+
+// bound values of a definition pack are the merged bound values of its definitions
+template<class ...Ts>
+constexpr auto bound_left(definition_pack_t<Ts...> pack) {
+	return [pack]<std::size_t ...Is>(std::index_sequence<Is...>) {
+		return contain_merge(bound_left(pack.template get<Is>())...);
+	}(std::make_index_sequence<sizeof...(Ts)>{});
+}
+
+// bound values of a definition pack are the merged bound values of its definitions
+template<class ...Ts>
+constexpr auto bound_right(definition_pack_t<Ts...> pack) {
+	return [pack]<std::size_t ...Is>(std::index_sequence<Is...>) {
+		return contain_merge(bound_right(pack.template get<Is>())...);
+	}(std::make_index_sequence<sizeof...(Ts)>{});
+}
+
+// parameters of a definition pack are the merged parameters of its definitions
+template<class ...Ts>
+constexpr auto free_left(definition_pack_t<Ts...> pack) {
+	return [pack]<std::size_t ...Is>(std::index_sequence<Is...>) {
+		return contain_merge(free_left(pack.template get<Is>())...);
+	}(std::make_index_sequence<sizeof...(Ts)>{});
+}
+
+// parameters of a definition pack are the merged parameters of its definitions
+template<class ...Ts>
+constexpr auto free_right(definition_pack_t<Ts...> pack) {
+	return [pack]<std::size_t ...Is>(std::index_sequence<Is...>) {
+		return contain_merge(free_right(pack.template get<Is>())...);
+	}(std::make_index_sequence<sizeof...(Ts)>{});
+}
+
+// a definition pack consumes all parameters unless they are rebound
+template<class ...Ts>
+constexpr auto consume_left(definition_pack_t<Ts...> pack) {
+	return contain_set_minus(free_left(pack), bound_left(pack));
+}
+
+// a definition pack consumes all parameters unless they are rebound
+template<class ...Ts>
+constexpr auto consume_right(definition_pack_t<Ts...> pack) {
+	return contain_set_minus(free_right(pack), bound_right(pack));
+}
 
 // --------------------------------------------------------------------------------
 // MU
@@ -725,6 +799,36 @@ struct mu_t<T> : public flexible_contain<T> {
 	}
 };
 
+template<class T>
+constexpr auto free_left(mu_t<T> mu) {
+	return free_left(mu.definition());
+}
+
+template<class T>
+constexpr auto free_right(mu_t<T> mu) {
+	return free_right(mu.definition());
+}
+
+template<class T>
+constexpr auto bound_left(mu_t<T> mu) {
+	return bound_left(mu.definition());
+}
+
+template<class T>
+constexpr auto bound_right(mu_t<T> mu) {
+	return bound_right(mu.definition());
+}
+
+template<class T>
+constexpr auto consume_left(mu_t<T> mu) {
+	return consume_left(mu.definition());
+}
+
+template<class T>
+constexpr auto consume_right(mu_t<T> mu) {
+	return consume_right(mu.definition());
+}
+
 template<class T, class ...Ts>
 struct mu_t<T, Ts...> : public flexible_contain<T, mu_t<Ts...>> {
 	using base = flexible_contain<T, mu_t<Ts...>>;
@@ -769,6 +873,49 @@ struct mu_t<T, Ts...> : public flexible_contain<T, mu_t<Ts...>> {
 	}
 };
 
+// parameters of a composite mu are the parameters of the inner mu except those provided by the outer one extended by the parameters of the outer one
+template<class ...Ts> requires (sizeof...(Ts) > 1)
+constexpr auto free_left(mu_t<Ts...> mu) {
+	// in this case, the sub_structure is the inner mu
+	return contain_merge(contain_set_minus(free_left(mu.sub_structure()), bound_left(mu.definition())), free_left(mu.definition()));
+}
+
+// parameters of a composite mu are the parameters of the inner mu except those provided by the outer one extended by the parameters of the outer one
+template<class ...Ts> requires (sizeof...(Ts) > 1)
+constexpr auto free_right(mu_t<Ts...> mu) {
+	// in this case, the sub_structure is the outer mu
+	return contain_merge(contain_set_minus(free_right(mu.definition()), bound_right(mu.sub_structure())), free_right(mu.sub_structure()));
+}
+
+// bound values of a composite mu are the bound values of the outer mu except those consumed by the inner one extended by the bound values of the inner one
+template<class ...Ts> requires (sizeof...(Ts) > 1)
+constexpr auto bound_left(mu_t<Ts...> mu) {
+	// in this case, the sub_structure is the inner mu
+	return contain_merge(contain_set_minus(bound_left(mu.definition()), consume_left(mu.sub_structure())), bound_left(mu.sub_structure()));
+}
+
+// bound values of a composite mu are the bound values of the outer mu except those consumed by the inner one extended by the bound values of the inner one
+template<class ...Ts> requires (sizeof...(Ts) > 1)
+constexpr auto bound_right(mu_t<Ts...> mu) {
+	// in this case, the sub_structure is the outer mu
+	return contain_merge(contain_set_minus(bound_right(mu.sub_structure()), consume_right(mu.definition())), bound_right(mu.sub_structure()));
+}
+
+// a composite mu consumes all parameters except those rebound by it
+template<class ...Ts> requires (sizeof...(Ts) > 1)
+constexpr auto consume_left(mu_t<Ts...> mu) {
+	// in this case, the sub_structure is the inner mu
+	return contain_set_minus(free_left(mu), bound_left(mu));
+}
+
+// a composite mu consumes all parameters except those rebound by it
+template<class ...Ts> requires (sizeof...(Ts) > 1)
+constexpr auto consume_right(mu_t<Ts...> mu) {
+	// in this case, the sub_structure is the outer mu
+	return contain_set_minus(free_right(mu), bound_right(mu));
+}
+
+
 template<class ...Ts>
 [[nodiscard("creates a mu")]]
 constexpr mu_t<definition_pack_t<Ts...>> mu(Ts... params) {
@@ -812,7 +959,6 @@ constexpr auto scalar() {
 	);
 }
 
-// TODO: make consuming implicit
 // TODO: add signatures
 
 template<IsDim auto Dim>
@@ -1015,8 +1161,6 @@ inline void test() {
 	constexpr auto offset3 = structure3.offset(noarr::empty_state);
 	static_assert(offset3 == 38100);
 
-	// TODO: define bound_left, bound_right, free_left, free_right for mu_t
-	//         it should honor the implicit consumption
 	// // expected: false
 	// constexpr auto has_x_length3 = structure3.template has_length<'x'>(noarr::empty_state);
 	// static_assert(!has_x_length3);

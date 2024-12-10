@@ -115,6 +115,11 @@ struct contain : private helpers::contain_impl<TS...> {
 template<>
 struct contain<> : private helpers::contain_impl<> {
 	using helpers::contain_impl<>::contain_impl;
+
+	template<std::size_t I> requires false
+	constexpr decltype(auto) get() const noexcept {
+		static_assert(value_always_false<I>, "Index out of bounds");
+	}
 };
 
 template<class... TS>
