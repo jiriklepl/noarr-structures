@@ -22,7 +22,7 @@ struct contain_impl;
 
 // an implementation for the pair (T, TS...) where neither is empty
 template<class T, class... TS>
-requires (!std::is_empty_v<T> && !std::is_empty_v<contain_impl<TS...>>)
+requires (!std::is_empty_v<T>) && (... || !std::is_empty_v<TS>)
 struct contain_impl<T, TS...> {
 	template<class T_, class... TS_>
 	requires (sizeof...(TS) == sizeof...(TS_))
@@ -47,7 +47,7 @@ private:
 
 // an implementation for the pair (T, TS...) where TS... is empty
 template<class T, class... TS>
-requires (!std::is_empty_v<T> && std::is_empty_v<contain_impl<TS...>>)
+requires (!std::is_empty_v<T>) && (... && std::is_empty_v<TS>)
 struct contain_impl<T, TS...> : private contain_impl<TS...> {
 	template<class T_, class... TS_>
 	requires (sizeof...(TS) == sizeof...(TS_))

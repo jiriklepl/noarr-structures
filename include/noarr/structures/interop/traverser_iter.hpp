@@ -23,7 +23,7 @@ struct traverser_iterator_t : strict_contain<Struct, Order> {
 	constexpr traverser_iterator_t(const base &b, std::size_t idx) : base(b), idx(idx) {}
 
 	using this_t = traverser_iterator_t;
-	using order_with_fix = decltype(std::declval<Order>() ^ fix<Dim>(std::declval<std::size_t>()));
+	using order_with_fix = std::remove_cvref_t<decltype(std::declval<Order>() ^ fix<Dim>(std::declval<std::size_t>()))>;
 
 	[[nodiscard]]
 	constexpr auto get_struct() const noexcept {
@@ -156,19 +156,19 @@ struct traverser_range_t : strict_contain<Struct, Order> {
 	constexpr auto order(NewOrder new_order) const noexcept {
 		// equivalent to as_traverser().order(new_order)
 		const auto slice_order = slice<Dim>(begin_idx, end_idx - begin_idx);
-		return traverser_t<Struct, decltype(get_order() ^ slice_order ^ new_order)>(
+		return traverser_t<Struct, std::remove_cvref_t<decltype(get_order() ^ slice_order ^ new_order)>>(
 			get_struct(), get_order() ^ slice_order ^ new_order);
 	}
 
 	template<class F>
-	constexpr void for_each(F f) const {
-		as_traverser().for_each(f);
+	constexpr void for_each(F &&f) const {
+		as_traverser().for_each(std::forward<F>(f));
 	}
 
 	[[nodiscard]]
 	constexpr auto as_traverser() const noexcept {
 		const auto slice_order = slice<Dim>(begin_idx, end_idx - begin_idx);
-		return traverser_t<Struct, decltype(get_order() ^ slice_order)>(get_struct(), get_order() ^ slice_order);
+		return traverser_t<Struct, std::remove_cvref_t<decltype(get_order() ^ slice_order)>>(get_struct(), get_order() ^ slice_order);
 	}
 
 	// empty() and is_divisible() are required by TBB, but it could also be useful to call them directly, so they are
@@ -253,7 +253,7 @@ constexpr auto traverser_t<Struct, Order>::range() const noexcept {
 // declared in traverser.hpp
 template<class Struct, class Order>
 constexpr auto traverser_t<Struct, Order>::range() const noexcept {
-	constexpr auto dim = helpers::traviter_top_dim<decltype(top_struct())>;
+	constexpr auto dim = helpers::traviter_top_dim<std::remove_cvref_t<decltype(top_struct())>>;
 	return range<dim>();
 }
 
@@ -261,7 +261,7 @@ constexpr auto traverser_t<Struct, Order>::range() const noexcept {
 template<class Struct, class Order>
 constexpr auto traverser_t<Struct, Order>::begin() const noexcept {
 	// same as range().begin()
-	constexpr auto dim = helpers::traviter_top_dim<decltype(top_struct())>;
+	constexpr auto dim = helpers::traviter_top_dim<std::remove_cvref_t<decltype(top_struct())>>;
 	return traverser_iterator_t<dim, Struct, Order>(*this, 0);
 }
 
@@ -269,7 +269,7 @@ constexpr auto traverser_t<Struct, Order>::begin() const noexcept {
 template<class Struct, class Order>
 constexpr auto traverser_t<Struct, Order>::end() const noexcept {
 	// same as range().end()
-	constexpr auto dim = helpers::traviter_top_dim<decltype(top_struct())>;
+	constexpr auto dim = helpers::traviter_top_dim<std::remove_cvref_t<decltype(top_struct())>>;
 	return traverser_iterator_t<dim, Struct, Order>(*this, top_struct().template length<dim>(empty_state));
 }
 

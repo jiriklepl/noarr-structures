@@ -29,28 +29,28 @@ struct planner_iterator_t<Dim, union_t<Structs...>, Order, Ending>
 	using order_type = Order;
 	using ending_type = Ending;
 
-	using order_with_fix = decltype(std::declval<Order>() ^ fix<Dim>(std::declval<std::size_t>()));
+	using order_with_fix = std::remove_cvref_t<decltype(std::declval<Order>() ^ fix<Dim>(std::declval<std::size_t>()))>;
 
 	static constexpr std::size_t num_structs = sizeof...(Structs);
 
 	[[nodiscard]]
-	constexpr auto get_union() const noexcept {
+	constexpr decltype(auto) get_union() const noexcept {
 		return this->template get<0>();
 	}
 
 	[[nodiscard]]
-	constexpr auto get_order() const noexcept {
+	constexpr decltype(auto) get_order() const noexcept {
 		return this->template get<1>();
 	}
 
 	[[nodiscard]]
-	constexpr auto get_ending() const noexcept {
+	constexpr decltype(auto) get_ending() const noexcept {
 		return this->template get<2>();
 	}
 
 	template<std::size_t I>
 	[[nodiscard]]
-	constexpr auto get_struct() const noexcept {
+	constexpr decltype(auto) get_struct() const noexcept {
 		return get_union().template get<I>();
 	}
 
@@ -156,7 +156,7 @@ template<IsDim auto Dim, class... Structs, class Order, class Ending>
 struct planner_range_t<Dim, union_t<Structs...>, Order, Ending> : flexible_contain<union_t<Structs...>, Order, Ending> {
 	using this_t = planner_range_t;
 	using base = flexible_contain<union_t<Structs...>, Order, Ending>;
-	std::size_t begin_idx, end_idx;
+	std::size_t begin_idx{0}, end_idx{0};
 
 	using union_struct = union_t<Structs...>;
 	using order_type = Order;
@@ -186,27 +186,27 @@ struct planner_range_t<Dim, union_t<Structs...>, Order, Ending> : flexible_conta
 	}
 
 	constexpr planner_range_t(const planner_t<union_t<Structs...>, Order, Ending> &planner, std::size_t length)
-		: base(static_cast<const base &>(planner)), begin_idx(0), end_idx(length) {}
+		: base(static_cast<const base &>(planner)), end_idx(length) {}
 
 	template<class NewOrder>
 	[[nodiscard("Returns a new planner")]]
 	constexpr auto order(NewOrder new_order) const noexcept {
 		// equivalent to as_planner().order(new_order)
 		const auto slice_order = slice<Dim>(begin_idx, end_idx - begin_idx);
-		return planner_t<union_t<Structs...>, decltype(get_order() ^ slice_order ^ new_order), Ending>(
+		return planner_t<union_t<Structs...>, std::remove_cvref_t<decltype(get_order() ^ slice_order ^ new_order)>, Ending>(
 			get_union(), get_order() ^ slice_order ^ new_order, get_ending());
 	}
 
 	template<class F>
 	[[nodiscard("Returns a new planner")]]
-	constexpr auto for_each(F f) const {
-		return as_planner().for_each(f);
+	constexpr auto for_each(F &&f) const {
+		return as_planner().for_each(std::forward<F>(f));
 	}
 
 	[[nodiscard]]
 	constexpr auto as_planner() const noexcept {
 		const auto slice_order = slice<Dim>(begin_idx, end_idx - begin_idx);
-		return planner_t<union_t<Structs...>, decltype(get_order() ^ slice_order), Ending>(
+		return planner_t<union_t<Structs...>, std::remove_cvref_t<decltype(get_order() ^ slice_order)>, Ending>(
 			get_union(), get_order() ^ slice_order, get_ending());
 	}
 
@@ -269,19 +269,19 @@ constexpr auto range(const planner_t<union_t<Structs...>, Order, Ending> &planne
 
 template<class... Structs, class Order, class Ending>
 constexpr auto range(const planner_t<union_t<Structs...>, Order, Ending> &planner) {
-	constexpr auto dim = helpers::traviter_top_dim<decltype(planner.top_struct())>;
+	constexpr auto dim = helpers::traviter_top_dim<std::remove_cvref_t<decltype(planner.top_struct())>>;
 	return range<dim>(planner);
 }
 
 template<class... Structs, class Order, class Ending>
 constexpr auto begin(const planner_t<union_t<Structs...>, Order, Ending> &planner) {
-	constexpr auto dim = helpers::traviter_top_dim<decltype(planner.top_struct())>;
+	constexpr auto dim = helpers::traviter_top_dim<std::remove_cvref_t<decltype(planner.top_struct())>>;
 	return planner_iterator_t<dim, union_t<Structs...>, Order, Ending>(planner, 0);
 }
 
 template<class... Structs, class Order, class Ending>
 constexpr auto end(const planner_t<union_t<Structs...>, Order, Ending> &planner) {
-	constexpr auto dim = helpers::traviter_top_dim<decltype(planner.top_struct())>;
+	constexpr auto dim = helpers::traviter_top_dim<std::remove_cvref_t<decltype(planner.top_struct())>>;
 	return planner_iterator_t<dim, union_t<Structs...>, Order, Ending>(
 		planner, planner.top_struct().template length<dim>(empty_state));
 }

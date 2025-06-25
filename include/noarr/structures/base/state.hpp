@@ -252,13 +252,13 @@ template<class State, auto Dim>
 concept HasSetIndex = IsState<State> && state_contains<State, index_in<Dim>>;
 
 template<IsState State, IsTag Tag>
-using state_get_t = decltype(std::declval<State>().template get<Tag>());
+using state_get_t = std::remove_cvref_t<decltype(std::declval<std::remove_cvref_t<State>>().template get<Tag>())>;
 
 template<IsState State, class... Tags>
 requires IsTagPack<Tags...>
-using state_remove_t = decltype(std::declval<State>().template remove<Tags...>());
+using state_remove_t = std::remove_cvref_t<decltype(std::declval<std::remove_cvref_t<State>>().template remove<Tags...>())>;
 
-static constexpr state<> empty_state;
+constexpr state<> empty_state;
 
 template<class T>
 struct to_state : std::false_type {};

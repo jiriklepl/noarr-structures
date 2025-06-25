@@ -33,15 +33,11 @@ struct type_param {
 };
 
 template<auto V>
-struct value_param {
-	static constexpr auto value = V;
-};
+struct value_param : std::integral_constant<decltype(V), V> {};
 
 template<auto Dim>
 requires IsDim<decltype(Dim)>
-struct dim_param {
-	static constexpr auto value = Dim;
-};
+struct dim_param : std::integral_constant<decltype(Dim), Dim> {};
 
 template<class StructInner, class StructOuter, IsState State>
 constexpr bool has_offset_of() noexcept {

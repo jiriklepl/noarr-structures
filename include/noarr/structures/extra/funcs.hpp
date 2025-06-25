@@ -168,8 +168,8 @@ constexpr auto get_at(CvVoid *ptr, Idxs... idxs) noexcept {
  * @return the result of the piping
  */
 template<ToStruct S, class F>
-constexpr decltype(auto) operator|(const S &s, F f) {
-	return f(to_struct<S>::convert(s));
+constexpr decltype(auto) operator|(S &&s, F &&f) {
+	return std::forward<F>(f)(to_struct<S>::convert(std::forward<S>(s)));
 }
 
 } // namespace noarr

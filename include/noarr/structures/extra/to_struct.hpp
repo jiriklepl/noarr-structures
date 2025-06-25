@@ -28,9 +28,10 @@ template<IsStruct T>
 struct to_struct<T> : std::true_type {
 	using type = std::remove_cvref_t<T>;
 
+	template<class T_> requires std::is_same_v<std::remove_cvref_t<T_>, type>
 	[[nodiscard]]
-	static constexpr decltype(auto) convert(T t) noexcept {
-		return t;
+	static constexpr decltype(auto) convert(T_ &&t) noexcept {
+		return std::forward<T_>(t);
 	}
 };
 

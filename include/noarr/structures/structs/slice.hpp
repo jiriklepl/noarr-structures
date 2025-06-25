@@ -22,12 +22,12 @@ struct shift_t : strict_contain<T, StartT> {
 
 	template<IsState State>
 	[[nodiscard]]
-	constexpr T sub_structure(State /*state*/) const noexcept {
+	constexpr decltype(auto) sub_structure(const State &/*state*/) const noexcept {
 		return this->template get<0>();
 	}
 
 	[[nodiscard]]
-	constexpr T sub_structure() const noexcept {
+	constexpr decltype(auto) sub_structure() const noexcept {
 		return this->template get<0>();
 	}
 
@@ -76,7 +76,7 @@ private:
 	struct impl {
 		template<IsState State>
 		[[nodiscard]]
-		static constexpr auto sub_state(State state, StartT start) noexcept {
+		static constexpr auto sub_state(const State &state, StartT start) noexcept {
 			using namespace constexpr_arithmetic;
 			const auto tmp_state = clean_state(state);
 			if constexpr (state_contains<State, index_in<Dim>>) {
@@ -101,21 +101,21 @@ public:
 
 	template<IsState State>
 	[[nodiscard]]
-	constexpr auto sub_state(State state) const noexcept {
-		return impl::sub_state(state, start());
+	constexpr decltype(auto) sub_state(State &&state) const noexcept {
+		return impl::sub_state(std::forward<State>(state), start());
 	}
 
 	template<IsState State>
 	[[nodiscard]]
-	static constexpr auto clean_state(State state) noexcept {
-		return state.template remove<index_in<Dim>, length_in<Dim>>();
+	static constexpr decltype(auto) clean_state(State &&state) noexcept {
+		return std::forward<State>(state).template remove<index_in<Dim>, length_in<Dim>>();
 	}
 
 	using sub_structure_t = T;
 	template<IsState State>
-	using sub_state_t = decltype(impl::sub_state(std::declval<State>(), std::declval<StartT>()));
+	using sub_state_t = std::remove_cvref_t<decltype(impl::sub_state(std::declval<State>(), std::declval<StartT>()))>;
 	template<IsState State>
-	using clean_state_t = decltype(clean_state(std::declval<State>()));
+	using clean_state_t = std::remove_cvref_t<decltype(clean_state(std::declval<State>()))>;
 
 	template<IsState State>
 	[[nodiscard]]
@@ -125,18 +125,18 @@ public:
 
 	template<IsState State>
 	[[nodiscard]]
-	constexpr auto size(State state) const noexcept
+	constexpr auto size(State &&state) const noexcept
 	requires (has_size<State>())
 	{
-		return sub_structure().size(sub_state(state));
+		return sub_structure().size(sub_state(std::forward<State>(state)));
 	}
 
 	template<IsState State>
 	[[nodiscard]]
-	constexpr auto align(State state) const noexcept
+	constexpr auto align(State &&state) const noexcept
 	requires (has_size<State>())
 	{
-		return sub_structure().align(sub_state(state));
+		return sub_structure().align(sub_state(std::forward<State>(state)));
 	}
 
 	template<class Sub, IsState State>
@@ -147,10 +147,10 @@ public:
 
 	template<class Sub, IsState State>
 	[[nodiscard]]
-	constexpr auto strict_offset_of(State state) const noexcept
+	constexpr auto strict_offset_of(State &&state) const noexcept
 	requires (has_offset_of<Sub, shift_t, State>())
 	{
-		return offset_of<Sub>(sub_structure(), sub_state(state));
+		return offset_of<Sub>(sub_structure(), sub_state(std::forward<State>(state)));
 	}
 
 	template<auto QDim, IsState State>
@@ -171,16 +171,16 @@ public:
 	template<auto QDim, IsState State>
 	requires IsDim<decltype(QDim)>
 	[[nodiscard]]
-	constexpr auto length(State state) const noexcept {
+	constexpr auto length(State &&state) const noexcept {
 		using namespace constexpr_arithmetic;
 		if constexpr (QDim == Dim) {
 			if constexpr (state_contains<State, length_in<Dim>>) {
-				return state.template get<length_in<Dim>>();
+				return std::forward<State>(state).template get<length_in<Dim>>();
 			} else {
-				return sub_structure().template length<Dim>(sub_state(state)) - start();
+				return sub_structure().template length<Dim>(sub_state(std::forward<State>(state))) - start();
 			}
 		} else {
-			return sub_structure().template length<QDim>(sub_state(state));
+			return sub_structure().template length<QDim>(sub_state(std::forward<State>(state)));
 		}
 	}
 
@@ -192,10 +192,10 @@ public:
 
 	template<class Sub, IsState State>
 	[[nodiscard]]
-	constexpr auto strict_state_at(State state) const noexcept
+	constexpr auto strict_state_at(State &&state) const noexcept
 	requires (has_state_at<Sub, shift_t, State>())
 	{
-		return state_at<Sub>(sub_structure(), sub_state(state));
+		return state_at<Sub>(sub_structure(), sub_state(std::forward<State>(state)));
 	}
 };
 
@@ -207,8 +207,8 @@ struct shift_proto : strict_contain<StartT> {
 
 	template<class Struct>
 	[[nodiscard]]
-	constexpr auto instantiate_and_construct(Struct s) const noexcept {
-		return shift_t<Dim, Struct, StartT>(s, this->get());
+	constexpr auto instantiate_and_construct(Struct &&s) const noexcept {
+		return shift_t<Dim, std::remove_cvref_t<Struct>, StartT>(std::forward<Struct>(s), this->get());
 	}
 };
 
@@ -238,12 +238,12 @@ struct slice_t : strict_contain<T, StartT, LenT> {
 
 	template<IsState State>
 	[[nodiscard]]
-	constexpr T sub_structure(State /*state*/) const noexcept {
+	constexpr decltype(auto) sub_structure(const State &/*state*/) const noexcept {
 		return this->template get<0>();
 	}
 
 	[[nodiscard]]
-	constexpr T sub_structure() const noexcept {
+	constexpr decltype(auto) sub_structure() const noexcept {
 		return this->template get<0>();
 	}
 
@@ -288,12 +288,12 @@ private:
 	struct impl {
 		template<IsState State>
 		[[nodiscard]]
-		static constexpr auto sub_state(State state, StartT start) noexcept {
+		static constexpr decltype(auto) sub_state(State &&state, StartT start) noexcept {
 			using namespace constexpr_arithmetic;
 			if constexpr (state_contains<State, index_in<Dim>>) {
-				return state.template with<index_in<Dim>>(state.template get<index_in<Dim>>() + start);
+				return std::forward<State>(state).template with<index_in<Dim>>(state.template get<index_in<Dim>>() + start);
 			} else {
-				return state;
+				return std::forward<State>(state);
 			}
 		}
 	};
@@ -303,21 +303,21 @@ public:
 
 	template<IsState State>
 	[[nodiscard]]
-	constexpr auto sub_state(State state) const noexcept {
-		return impl::sub_state(state, start());
+	constexpr decltype(auto) sub_state(State &&state) const noexcept {
+		return impl::sub_state(std::forward<State>(state), start());
 	}
 
 	template<IsState State>
 	[[nodiscard]]
-	static constexpr auto clean_state(State state) noexcept {
-		return state.template remove<length_in<Dim>, index_in<Dim>>();
+	static constexpr decltype(auto) clean_state(State &&state) noexcept {
+		return std::forward<State>(state).template remove<length_in<Dim>, index_in<Dim>>();
 	}
 
 	using sub_structure_t = T;
 	template<IsState State>
-	using sub_state_t = decltype(impl::sub_state(std::declval<State>(), std::declval<StartT>()));
+	using sub_state_t = std::remove_cvref_t<decltype(impl::sub_state(std::declval<State>(), std::declval<StartT>()))>;
 	template<IsState State>
-	using clean_state_t = decltype(clean_state(std::declval<State>()));
+	using clean_state_t = std::remove_cvref_t<decltype(clean_state(std::declval<State>()))>;
 
 	template<IsState State>
 	[[nodiscard]]
@@ -328,18 +328,18 @@ public:
 
 	template<IsState State>
 	[[nodiscard]]
-	constexpr auto size(State state) const noexcept
+	constexpr auto size(State &&state) const noexcept
 	requires (has_size<State>())
 	{
-		return sub_structure().size(sub_state(state));
+		return sub_structure().size(sub_state(std::forward<State>(state)));
 	}
 
 	template<IsState State>
 	[[nodiscard]]
-	constexpr auto align(State state) const noexcept
+	constexpr auto align(State &&state) const noexcept
 	requires (has_size<State>())
 	{
-		return sub_structure().align(sub_state(state));
+		return sub_structure().align(sub_state(std::forward<State>(state)));
 	}
 
 	template<class Sub, IsState State>
@@ -351,10 +351,10 @@ public:
 
 	template<class Sub, IsState State>
 	[[nodiscard]]
-	constexpr auto strict_offset_of(State state) const noexcept
+	constexpr auto strict_offset_of(State &&state) const noexcept
 	requires (has_offset_of<Sub, slice_t, State>())
 	{
-		return offset_of<Sub>(sub_structure(), sub_state(state));
+		return offset_of<Sub>(sub_structure(), sub_state(std::forward<State>(state)));
 	}
 
 	template<auto QDim, IsState State>
@@ -368,13 +368,13 @@ public:
 	template<auto QDim, IsState State>
 	requires IsDim<decltype(QDim)>
 	[[nodiscard]]
-	constexpr auto length(State state) const noexcept
+	constexpr auto length(State &&state) const noexcept
 	requires (has_length<QDim, State>())
 	{
 		if constexpr (QDim == Dim) {
 			return len();
 		} else {
-			return sub_structure().template length<QDim>(sub_state(state));
+			return sub_structure().template length<QDim>(sub_state(std::forward<State>(state)));
 		}
 	}
 
@@ -387,11 +387,11 @@ public:
 
 	template<class Sub, IsState State>
 	[[nodiscard]]
-	constexpr auto strict_state_at(State state) const noexcept
+	constexpr auto strict_state_at(State &&state) const noexcept
 	requires (has_state_at<Sub, slice_t, State>())
 	{
 		static_assert(!state_contains<State, length_in<Dim>>, "Cannot set slice length");
-		return state_at<Sub>(sub_structure(), sub_state(state));
+		return state_at<Sub>(sub_structure(), sub_state(std::forward<State>(state)));
 	}
 };
 
@@ -403,8 +403,8 @@ struct slice_proto : strict_contain<StartT, LenT> {
 
 	template<class Struct>
 	[[nodiscard]]
-	constexpr auto instantiate_and_construct(Struct s) const noexcept {
-		return slice_t<Dim, Struct, StartT, LenT>(s, this->template get<0>(), this->template get<1>());
+	constexpr auto instantiate_and_construct(Struct &&s) const noexcept {
+		return slice_t<Dim, std::remove_cvref_t<Struct>, StartT, LenT>(std::forward<Struct>(s), this->template get<0>(), this->template get<1>());
 	}
 };
 
@@ -427,12 +427,12 @@ struct span_t : strict_contain<T, StartT, EndT> {
 
 	template<IsState State>
 	[[nodiscard]]
-	constexpr T sub_structure(State /*state*/) const noexcept {
+	constexpr decltype(auto) sub_structure(State /*state*/) const noexcept {
 		return this->template get<0>();
 	}
 
 	[[nodiscard]]
-	constexpr T sub_structure() const noexcept {
+	constexpr decltype(auto) sub_structure() const noexcept {
 		return this->template get<0>();
 	}
 
@@ -477,12 +477,12 @@ private:
 	struct impl {
 		template<IsState State>
 		[[nodiscard]]
-		static constexpr auto sub_state(State state, StartT start) noexcept {
+		static constexpr decltype(auto) sub_state(State &&state, StartT start) noexcept {
 			using namespace constexpr_arithmetic;
 			if constexpr (state_contains<State, index_in<Dim>>) {
-				return state.template with<index_in<Dim>>(state.template get<index_in<Dim>>() + start);
+				return std::forward<State>(state).template with<index_in<Dim>>(state.template get<index_in<Dim>>() + start);
 			} else {
-				return state;
+				return std::forward<State>(state);
 			}
 		}
 	};
@@ -492,21 +492,21 @@ public:
 
 	template<IsState State>
 	[[nodiscard]]
-	constexpr auto sub_state(State state) const noexcept {
-		return impl::sub_state(state, start());
+	constexpr decltype(auto) sub_state(State &&state) const noexcept {
+		return impl::sub_state(std::forward<State>(state), start());
 	}
 
 	template<IsState State>
 	[[nodiscard]]
-	static constexpr auto clean_state(State state) noexcept {
-		return state.template remove<length_in<Dim>, index_in<Dim>>();
+	static constexpr decltype(auto) clean_state(State &&state) noexcept {
+		return std::forward<State>(state).template remove<length_in<Dim>, index_in<Dim>>();
 	}
 
 	using sub_structure_t = T;
 	template<IsState State>
-	using sub_state_t = decltype(impl::sub_state(std::declval<State>(), std::declval<StartT>()));
+	using sub_state_t = std::remove_cvref_t<decltype(impl::sub_state(std::declval<State>(), std::declval<StartT>()))>;
 	template<IsState State>
-	using clean_state_t = decltype(clean_state(std::declval<State>()));
+	using clean_state_t = std::remove_cvref_t<decltype(clean_state(std::declval<State>()))>;
 
 	template<IsState State>
 	[[nodiscard]]
@@ -517,18 +517,18 @@ public:
 
 	template<IsState State>
 	[[nodiscard]]
-	constexpr auto size(State state) const noexcept
+	constexpr auto size(State &&state) const noexcept
 	requires (has_size<State>())
 	{
-		return sub_structure().size(sub_state(state));
+		return sub_structure().size(sub_state(std::forward<State>(state)));
 	}
 
 	template<IsState State>
 	[[nodiscard]]
-	constexpr auto align(State state) const noexcept
+	constexpr auto align(State &&state) const noexcept
 	requires (has_size<State>())
 	{
-		return sub_structure().align(sub_state(state));
+		return sub_structure().align(sub_state(std::forward<State>(state)));
 	}
 
 	template<class Sub, IsState State>
@@ -540,10 +540,10 @@ public:
 
 	template<class Sub, IsState State>
 	[[nodiscard]]
-	constexpr auto strict_offset_of(State state) const noexcept
+	constexpr auto strict_offset_of(State &&state) const noexcept
 	requires (has_offset_of<Sub, span_t, State>())
 	{
-		return offset_of<Sub>(sub_structure(), sub_state(state));
+		return offset_of<Sub>(sub_structure(), sub_state(std::forward<State>(state)));
 	}
 
 	template<auto QDim, IsState State>
@@ -557,14 +557,14 @@ public:
 	template<auto QDim, IsState State>
 	requires IsDim<decltype(QDim)>
 	[[nodiscard]]
-	constexpr auto length(State state) const noexcept
+	constexpr auto length(State &&state) const noexcept
 	requires (has_length<QDim, State>())
 	{
 		using namespace constexpr_arithmetic;
 		if constexpr (QDim == Dim) {
 			return end() - start();
 		} else {
-			return sub_structure().template length<QDim>(sub_state(state));
+			return sub_structure().template length<QDim>(sub_state(std::forward<State>(state)));
 		}
 	}
 
@@ -577,10 +577,10 @@ public:
 
 	template<class Sub, IsState State>
 	[[nodiscard]]
-	constexpr auto strict_state_at(State state) const noexcept
+	constexpr auto strict_state_at(State &&state) const noexcept
 	requires (has_state_at<Sub, span_t, State>())
 	{
-		return state_at<Sub>(sub_structure(), sub_state(state));
+		return state_at<Sub>(sub_structure(), sub_state(std::forward<State>(state)));
 	}
 };
 
@@ -592,8 +592,8 @@ struct span_proto : strict_contain<StartT, EndT> {
 
 	template<class Struct>
 	[[nodiscard]]
-	constexpr auto instantiate_and_construct(Struct s) const noexcept {
-		return span_t<Dim, Struct, StartT, EndT>(s, this->template get<0>(), this->template get<1>());
+	constexpr auto instantiate_and_construct(Struct &&s) const noexcept {
+		return span_t<Dim, std::remove_cvref_t<Struct>, StartT, EndT>(std::forward<Struct>(s), this->template get<0>(), this->template get<1>());
 	}
 };
 
@@ -616,12 +616,12 @@ struct step_t : strict_contain<T, StartT, StrideT> {
 
 	template<IsState State>
 	[[nodiscard]]
-	constexpr T sub_structure(State /*state*/) const noexcept {
+	constexpr decltype(auto) sub_structure(State /*state*/) const noexcept {
 		return this->template get<0>();
 	}
 
 	[[nodiscard]]
-	constexpr T sub_structure() const noexcept {
+	constexpr decltype(auto) sub_structure() const noexcept {
 		return this->template get<0>();
 	}
 
@@ -667,12 +667,12 @@ private:
 	struct impl {
 		template<IsState State>
 		[[nodiscard]]
-		static constexpr auto sub_state(State state, StartT start, StrideT stride) noexcept {
+		static constexpr decltype(auto) sub_state(State &&state, StartT start, StrideT stride) noexcept {
 			using namespace constexpr_arithmetic;
 			if constexpr (state_contains<State, index_in<Dim>>) {
-				return state.template with<index_in<Dim>>(state.template get<index_in<Dim>>() * stride + start);
+				return std::forward<State>(state).template with<index_in<Dim>>(state.template get<index_in<Dim>>() * stride + start);
 			} else {
-				return state;
+				return std::forward<State>(state);
 			}
 		}
 	};
@@ -680,14 +680,14 @@ private:
 public:
 	template<IsState State>
 	[[nodiscard]]
-	constexpr auto sub_state(State state) const noexcept {
-		return impl::sub_state(state, start(), stride());
+	constexpr auto sub_state(State &&state) const noexcept {
+		return impl::sub_state(std::forward<State>(state), start(), stride());
 	}
 
 	template<IsState State>
 	[[nodiscard]]
-	static constexpr auto clean_state(State state) noexcept {
-		return state.template remove<length_in<Dim>, index_in<Dim>>();
+	static constexpr auto clean_state(State &&state) noexcept {
+		return std::forward<State>(state).template remove<length_in<Dim>, index_in<Dim>>();
 	}
 
 	using signature = typename T::signature::template replace<dim_replacement, Dim>;
@@ -695,9 +695,9 @@ public:
 	using sub_structure_t = T;
 	template<IsState State>
 	using sub_state_t =
-		decltype(impl::sub_state(std::declval<State>(), std::declval<StartT>(), std::declval<StrideT>()));
+		std::remove_cvref_t<decltype(impl::sub_state(std::declval<State>(), std::declval<StartT>(), std::declval<StrideT>()))>;
 	template<IsState State>
-	using clean_state_t = decltype(clean_state(std::declval<State>()));
+	using clean_state_t = std::remove_cvref_t<decltype(clean_state(std::declval<State>()))>;
 
 	template<IsState State>
 	[[nodiscard]]
@@ -708,18 +708,18 @@ public:
 
 	template<IsState State>
 	[[nodiscard]]
-	constexpr auto size(State state) const noexcept
+	constexpr auto size(State &&state) const noexcept
 	requires (has_size<State>())
 	{
-		return sub_structure().size(sub_state(state));
+		return sub_structure().size(sub_state(std::forward<State>(state)));
 	}
 
 	template<IsState State>
 	[[nodiscard]]
-	constexpr auto align(State state) const noexcept
+	constexpr auto align(State &&state) const noexcept
 	requires (has_size<State>())
 	{
-		return sub_structure().align(sub_state(state));
+		return sub_structure().align(sub_state(std::forward<State>(state)));
 	}
 
 	template<class Sub, IsState State>
@@ -731,10 +731,10 @@ public:
 
 	template<class Sub, IsState State>
 	[[nodiscard]]
-	constexpr auto strict_offset_of(State state) const noexcept
+	constexpr auto strict_offset_of(State &&state) const noexcept
 	requires (has_offset_of<Sub, step_t, State>())
 	{
-		return offset_of<Sub>(sub_structure(), sub_state(state));
+		return offset_of<Sub>(sub_structure(), sub_state(std::forward<State>(state)));
 	}
 
 	template<auto QDim, IsState State>
@@ -748,15 +748,15 @@ public:
 	template<auto QDim, IsState State>
 	requires IsDim<decltype(QDim)>
 	[[nodiscard]]
-	constexpr auto length(State state) const noexcept
+	constexpr auto length(State &&state) const noexcept
 	requires (has_length<QDim, State>())
 	{
 		using namespace constexpr_arithmetic;
 		if constexpr (QDim == Dim) {
-			const auto sub_length = sub_structure().template length<Dim>(state);
+			const auto sub_length = sub_structure().template length<Dim>(std::forward<State>(state));
 			return (sub_length + stride() - start() - make_const<1>()) / stride();
 		} else {
-			return sub_structure().template length<QDim>(sub_state(state));
+			return sub_structure().template length<QDim>(sub_state(std::forward<State>(state)));
 		}
 	}
 
@@ -769,10 +769,10 @@ public:
 
 	template<class Sub, IsState State>
 	[[nodiscard]]
-	constexpr auto strict_state_at(State state) const noexcept
+	constexpr auto strict_state_at(State &&state) const noexcept
 	requires (has_state_at<Sub, step_t, State>())
 	{
-		return state_at<Sub>(sub_structure(), sub_state(state));
+		return state_at<Sub>(sub_structure(), sub_state(std::forward<State>(state)));
 	}
 };
 
@@ -784,8 +784,8 @@ struct step_proto : strict_contain<StartT, StrideT> {
 
 	template<class Struct>
 	[[nodiscard]]
-	constexpr auto instantiate_and_construct(Struct s) const noexcept {
-		return step_t<Dim, Struct, StartT, StrideT>(s, this->template get<0>(), this->template get<1>());
+	constexpr auto instantiate_and_construct(Struct &&s) const noexcept {
+		return step_t<Dim, std::remove_cvref_t<Struct>, StartT, StrideT>(std::forward<Struct>(s), this->template get<0>(), this->template get<1>());
 	}
 };
 
@@ -802,12 +802,13 @@ struct auto_step_proto : strict_contain<StartT, StrideT> {
 
 	template<class Struct>
 	[[nodiscard]]
-	constexpr auto instantiate_and_construct(Struct s) const noexcept {
+	constexpr auto instantiate_and_construct(Struct &&s) const noexcept {
+		using struct_t = std::remove_cvref_t<Struct>;
 		static_assert(
-			!Struct::signature::dependent,
+			!struct_t::signature::dependent,
 			"Add a dimension name as the first parameter to step, or use a structure with a dynamic topmost dimension");
-		constexpr auto dim = Struct::signature::dim;
-		return step_t<dim, Struct, StartT, StrideT>(s, this->template get<0>(), this->template get<1>());
+		constexpr auto dim = struct_t::signature::dim;
+		return step_t<dim, struct_t, StartT, StrideT>(std::forward<Struct>(s), this->template get<0>(), this->template get<1>());
 	}
 };
 
@@ -825,12 +826,12 @@ struct reverse_t : strict_contain<T> {
 
 	template<IsState State>
 	[[nodiscard]]
-	constexpr T sub_structure(State /*state*/) const noexcept {
+	constexpr decltype(auto) sub_structure(const State &/*state*/) const noexcept {
 		return this->get();
 	}
 
 	[[nodiscard]]
-	constexpr T sub_structure() const noexcept {
+	constexpr decltype(auto) sub_structure() const noexcept {
 		return this->get();
 	}
 
@@ -857,15 +858,15 @@ private:
 	};
 
 	struct impl {
-		template<IsState State>
+		template<IsState State, class T_>
 		[[nodiscard]]
-		static constexpr auto sub_state(State state, T sub_structure) noexcept {
+		static constexpr decltype(auto) sub_state(const State &state, T_ &&sub_structure) noexcept {
 			using namespace constexpr_arithmetic;
 			if constexpr (state_contains<State, index_in<Dim>>) {
 				const auto tmp_state = state.template remove<index_in<Dim>>();
 
-				if constexpr (sub_structure_t::template has_length<Dim, decltype(tmp_state)>()) {
-					return tmp_state.template with<index_in<Dim>>(sub_structure.template length<Dim>(tmp_state) -
+				if constexpr (sub_structure_t::template has_length<Dim, std::remove_cvref_t<decltype(tmp_state)>>()) {
+					return tmp_state.template with<index_in<Dim>>(std::forward<T_>(sub_structure).template length<Dim>(tmp_state) -
 					                                              make_const<1>() -
 					                                              state.template get<index_in<Dim>>());
 				} else {
@@ -880,23 +881,23 @@ private:
 public:
 	template<IsState State>
 	[[nodiscard]]
-	constexpr auto sub_state(State state) const noexcept {
-		return impl::sub_state(state, sub_structure());
+	constexpr decltype(auto) sub_state(State &&state) const noexcept {
+		return impl::sub_state(std::forward<State>(state), sub_structure());
 	}
 
 	template<IsState State>
 	[[nodiscard]]
-	static constexpr auto clean_state(State state) noexcept {
-		return state.template remove<length_in<Dim>, index_in<Dim>>();
+	static constexpr decltype(auto) clean_state(State &&state) noexcept {
+		return std::forward<State>(state).template remove<length_in<Dim>, index_in<Dim>>();
 	}
 
 	using signature = typename T::signature::template replace<dim_replacement, Dim>;
 
 	using sub_structure_t = T;
 	template<IsState State>
-	using sub_state_t = decltype(impl::sub_state(std::declval<State>(), std::declval<T>()));
+	using sub_state_t = std::remove_cvref_t<decltype(impl::sub_state(std::declval<State>(), std::declval<T>()))>;
 	template<IsState State>
-	using clean_state_t = decltype(clean_state(std::declval<State>()));
+	using clean_state_t = std::remove_cvref_t<decltype(clean_state(std::declval<State>()))>;
 
 	template<IsState State>
 	[[nodiscard]]
@@ -906,18 +907,18 @@ public:
 
 	template<IsState State>
 	[[nodiscard]]
-	constexpr auto size(State state) const noexcept
+	constexpr auto size(State &&state) const noexcept
 	requires (has_size<State>())
 	{
-		return sub_structure().size(sub_state(state));
+		return sub_structure().size(sub_state(std::forward<State>(state)));
 	}
 
 	template<IsState State>
 	[[nodiscard]]
-	constexpr auto align(State state) const noexcept
+	constexpr auto align(State &&state) const noexcept
 	requires (has_size<State>())
 	{
-		return sub_structure().align(sub_state(state));
+		return sub_structure().align(sub_state(std::forward<State>(state)));
 	}
 
 	template<class Sub, IsState State>
@@ -928,10 +929,10 @@ public:
 
 	template<class Sub, IsState State>
 	[[nodiscard]]
-	constexpr auto strict_offset_of(State state) const noexcept
+	constexpr auto strict_offset_of(State &&state) const noexcept
 	requires (has_offset_of<Sub, reverse_t, State>())
 	{
-		return offset_of<Sub>(sub_structure(), sub_state(state));
+		return offset_of<Sub>(sub_structure(), sub_state(std::forward<State>(state)));
 	}
 
 	template<auto QDim, IsState State>
@@ -944,8 +945,8 @@ public:
 	template<auto QDim, IsState State>
 	requires IsDim<decltype(QDim)>
 	[[nodiscard]]
-	constexpr auto length(State state) const noexcept {
-		return sub_structure().template length<QDim>(state);
+	constexpr auto length(State &&state) const noexcept {
+		return sub_structure().template length<QDim>(std::forward<State>(state));
 	}
 
 	template<class Sub, IsState State>
@@ -956,10 +957,10 @@ public:
 
 	template<class Sub, IsState State>
 	[[nodiscard]]
-	constexpr auto strict_state_at(State state) const noexcept
+	constexpr auto strict_state_at(State &&state) const noexcept
 	requires (has_state_at<Sub, reverse_t, State>())
 	{
-		return state_at<Sub>(sub_structure(), sub_state(state));
+		return state_at<Sub>(sub_structure(), sub_state(std::forward<State>(state)));
 	}
 };
 
@@ -969,8 +970,8 @@ struct reverse_proto {
 
 	template<class Struct>
 	[[nodiscard]]
-	constexpr auto instantiate_and_construct(Struct s) const noexcept {
-		return reverse_t<Dim, Struct>(s);
+	constexpr auto instantiate_and_construct(Struct &&s) const noexcept {
+		return reverse_t<Dim, std::remove_cvref_t<Struct>>(std::forward<Struct>(s));
 	}
 };
 

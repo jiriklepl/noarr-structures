@@ -40,9 +40,9 @@ struct bcast_t : strict_contain<T> {
 
 	using sub_structure_t = T;
 	template<IsState State>
-	using sub_state_t = decltype(sub_state(std::declval<State>()));
+	using sub_state_t = std::remove_cvref_t<decltype(sub_state(std::declval<State>()))>;
 	template<IsState State>
-	using clean_state_t = decltype(clean_state(std::declval<State>()));
+	using clean_state_t = std::remove_cvref_t<decltype(clean_state(std::declval<State>()))>;
 
 	static_assert(!T::signature::template any_accept<Dim>, "Dimension name already used");
 	using signature = function_sig<Dim, dynamic_arg_length, typename T::signature>;

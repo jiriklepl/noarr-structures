@@ -112,7 +112,7 @@ struct union_t : strict_contain<Structs...> {
 
 	template<std::size_t Index>
 	[[nodiscard("returns a copy of the underlying struct")]]
-	constexpr auto sub_structure() const noexcept {
+	constexpr decltype(auto) sub_structure() const noexcept {
 		return this->template get<Index>();
 	}
 
@@ -133,7 +133,7 @@ private:
 
 	template<auto Dim>
 	requires IsDim<decltype(Dim)>
-	using first_match = decltype(find_first_match<Dim, 0>());
+	using first_match = std::remove_cvref_t<decltype(find_first_match<Dim, 0>())>;
 
 public:
 	template<auto Dim, IsState State>
@@ -162,50 +162,51 @@ struct traverser_t : strict_contain<Struct, Order> {
 	using strict_contain<Struct, Order>::strict_contain;
 
 	[[nodiscard("returns a copy of the underlying struct")]]
-	constexpr auto get_struct() const noexcept {
+	constexpr decltype(auto) get_struct() const noexcept {
 		return this->template get<0>();
 	}
 
 	[[nodiscard("returns a copy of the underlying order")]]
-	constexpr auto get_order() const noexcept {
+	constexpr decltype(auto) get_order() const noexcept {
 		return this->template get<1>();
 	}
 
+	template<IsProtoStruct NewOrder>
 	[[nodiscard("returns a new traverser")]]
-	constexpr auto order(IsProtoStruct auto new_order) const noexcept {
-		return traverser_t<Struct, decltype(get_order() ^ new_order)>(get_struct(), get_order() ^ new_order);
+	constexpr auto order(NewOrder &&new_order) const noexcept {
+		return traverser_t<Struct, std::remove_cvref_t<decltype(get_order() ^ std::forward<NewOrder>(new_order))>>(get_struct(), get_order() ^ std::forward<NewOrder>(new_order));
 	}
 
 	template<auto... Dims, class F>
 	requires IsDimPack<decltype(Dims)...>
-	constexpr void for_each(F f) const {
-		for_sections<Dims...>([f](auto inner) constexpr { f(inner.state()); });
+	constexpr void for_each(F &&f) const {
+		for_sections<Dims...>([&f](auto &&inner) constexpr { std::forward<F>(f)(inner.state()); });
 	}
 
 	template<auto Dim, auto... Dims, class F>
 	requires IsDimPack<decltype(Dim), decltype(Dims)...>
-	constexpr void for_sections(F f) const {
+	constexpr void for_sections(F &&f) const {
 		using dim_tree =
-			dim_tree_filter<sig_dim_tree<typename decltype(top_struct())::signature>, in_dim_sequence<Dim, Dims...>>;
+			dim_tree_filter<sig_dim_tree<typename std::remove_cvref_t<decltype(top_struct())>::signature>, in_dim_sequence<Dim, Dims...>>;
 		static_assert((dim_tree_contains<Dim, dim_tree> && ... && dim_tree_contains<Dims, dim_tree>),
 		              "Requested dimensions are not present");
-		for_each_impl(dim_tree(), f, empty_state);
+		for_each_impl(dim_tree(), std::forward<F>(f), empty_state);
 	}
 
 	template<class F>
-	constexpr void for_sections(F f) const {
-		using dim_tree = sig_dim_tree<typename decltype(top_struct())::signature>;
-		for_each_impl(dim_tree(), f, empty_state);
+	constexpr void for_sections(F &&f) const {
+		using dim_tree = sig_dim_tree<typename std::remove_cvref_t<decltype(top_struct())>::signature>;
+		for_each_impl(dim_tree(), std::forward<F>(f), empty_state);
 	}
 
 	template<auto... Dims, class F>
 	requires IsDimPack<decltype(Dims)...>
-	constexpr void for_dims(F f) const {
+	constexpr void for_dims(F &&f) const {
 		using dim_tree =
-			dim_tree_filter<sig_dim_tree<typename decltype(top_struct())::signature>, in_dim_sequence<Dims...>>;
+			dim_tree_filter<sig_dim_tree<typename std::remove_cvref_t<decltype(top_struct())>::signature>, in_dim_sequence<Dims...>>;
 		static_assert((... && dim_tree_contains<Dims, dim_tree>), "Requested dimensions are not present");
 		using reordered_tree = dim_tree_reorder<dim_tree, Dims...>;
-		for_each_impl(reordered_tree(), f, empty_state);
+		for_each_impl(reordered_tree(), std::forward<F>(f), empty_state);
 	}
 
 	[[nodiscard("construct an object representing the state of the traverser")]]
@@ -234,20 +235,20 @@ struct traverser_t : strict_contain<Struct, Order> {
 
 private:
 	template<auto Dim, class Branch, class... Branches, class F, std::size_t I, std::size_t... Is>
-	constexpr void for_each_impl_dep(F f, auto state, std::index_sequence<I, Is...> /*is*/) const {
+	constexpr void for_each_impl_dep(F &&f, const auto &state, std::index_sequence<I, Is...> /*is*/) const {
 		for_each_impl(Branch(), f, state.template with<index_in<Dim>>(std::integral_constant<std::size_t, I>()));
-		for_each_impl_dep<Dim, Branches...>(f, state, std::index_sequence<Is...>());
+		for_each_impl_dep<Dim, Branches...>(std::forward<F>(f), state, std::index_sequence<Is...>());
 	}
 
 	// the bottom case
-	template<auto Dim, class F>
+	template<auto Dim>
 	requires IsDim<decltype(Dim)>
-	constexpr void for_each_impl_dep(F /*f*/, auto /*state*/, std::index_sequence<> /*is*/) const {}
+	constexpr void for_each_impl_dep(auto &&/*f*/, const auto &/*state*/, std::index_sequence<> /*is*/) const {}
 
-	template<auto Dim, class... Branches, class F, class State>
+	template<auto Dim, class... Branches, class State>
 	requires IsState<State> && IsDim<decltype(Dim)>
-	constexpr void for_each_impl(dim_tree<Dim, Branches...> /*dt*/, F f, State state) const {
-		using dim_sig = sig_find_dim<Dim, State, typename decltype(top_struct())::signature>;
+	constexpr void for_each_impl(dim_tree<Dim, Branches...> /*dt*/, auto &&f, const State &state) const {
+		using dim_sig = sig_find_dim<Dim, State, typename std::remove_cvref_t<decltype(top_struct())>::signature>;
 		if constexpr (dim_sig::dependent) {
 			for_each_impl_dep<Dim, Branches...>(f, state, std::index_sequence_for<Branches...>());
 		} else {
@@ -259,18 +260,18 @@ private:
 	}
 
 	template<class F, class StateItem, class... StateItems>
-	constexpr void for_each_impl(dim_sequence<> /*ds*/, F f, noarr::state<StateItem, StateItems...> state) const {
-		f(order(fix(state)));
+	constexpr void for_each_impl(dim_sequence<> /*ds*/, F &&f, const noarr::state<StateItem, StateItems...> &state) const {
+		std::forward<F>(f)(order(fix(state)));
 	}
 
 	template<class F>
-	constexpr void for_each_impl(dim_sequence<> /*ds*/, F f, noarr::state<> /*state*/) const {
-		f(*this);
+	constexpr void for_each_impl(dim_sequence<> /*ds*/, F &&f, const noarr::state<> &/*state*/) const {
+		std::forward<F>(f)(*this);
 	}
 
 	template<class DimTree, class F, IsState State>
-	friend constexpr void for_each_impl(const traverser_t &traverser, DimTree /*dt*/, F f, State state) {
-		traverser.for_each_impl(DimTree(), f, state);
+	friend constexpr void for_each_impl(const traverser_t &traverser, DimTree /*dt*/, F &&f, const State &state) {
+		traverser.for_each_impl(DimTree(), std::forward<F>(f), state);
 	}
 };
 
@@ -316,10 +317,10 @@ struct to_traverser<traverser_t<Struct, Order>> : std::true_type {
 	}
 };
 
-template<IsTraverser T>
+template<IsTraverser T, IsProtoStruct Order>
 [[nodiscard("returns a new traverser")]]
-constexpr auto operator^(const T &t, IsProtoStruct auto order) noexcept {
-	return t.order(order);
+constexpr decltype(auto) operator^(T &&t,  Order &&order) noexcept {
+	return std::forward<T>(t).order(std::forward<Order>(order));
 }
 
 template<IsTraverser T>

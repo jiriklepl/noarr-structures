@@ -44,7 +44,7 @@ struct planner_ending_elem_t : flexible_contain<F> {
 			static_assert(!always_false<signature>);
 		};
 
-		return planner_ending_elem_t<typename decltype(sigholder_t() ^ new_order)::signature, F>(
+		return planner_ending_elem_t<typename std::remove_cvref_t<decltype(sigholder_t() ^ new_order)>::signature, F>(
 			flexible_contain<F>::get());
 	}
 
@@ -88,7 +88,7 @@ struct planner_ending_t : flexible_contain<F> {
 			static_assert(!always_false<signature>);
 		};
 
-		return planner_ending_t<typename decltype(sigholder_t() ^ new_order)::signature, F>(flexible_contain<F>::get());
+		return planner_ending_t<typename std::remove_cvref_t<decltype(sigholder_t() ^ new_order)>::signature, F>(flexible_contain<F>::get());
 	}
 
 	template<class Planner>
@@ -135,7 +135,7 @@ struct planner_endings : flexible_contain<Endings...> {
 
 	[[nodiscard]]
 	static constexpr auto get_next_ending(auto order, auto ending) noexcept {
-		if constexpr (helpers::is_activated_v<decltype(ending.order(order))>) {
+		if constexpr (helpers::is_activated_v<std::remove_cvref_t<decltype(ending.order(order))>>) {
 			return helpers::contain<>();
 		} else {
 			return helpers::contain(ending);
@@ -144,7 +144,7 @@ struct planner_endings : flexible_contain<Endings...> {
 
 	[[nodiscard]]
 	constexpr auto get_next(auto order) const noexcept
-	requires helpers::is_activated_v<decltype(this -> order(order))>
+	requires helpers::is_activated_v<std::remove_cvref_t<decltype(this -> order(order))>>
 	{
 		return get_next(order, std::index_sequence_for<Endings...>());
 	}
@@ -152,7 +152,7 @@ struct planner_endings : flexible_contain<Endings...> {
 	template<std::size_t... Is>
 	[[nodiscard]]
 	constexpr auto get_next(auto order, std::index_sequence<Is...> /*unused*/) const noexcept
-	requires helpers::is_activated_v<decltype(this -> order(order))>
+	requires helpers::is_activated_v<std::remove_cvref_t<decltype(this -> order(order))>>
 	{
 		return make_planner_endings(contain_cat(get_next_ending(order, this->template get<Is>())...));
 	}
@@ -170,7 +170,7 @@ struct planner_endings : flexible_contain<Endings...> {
 	requires activated
 	{
 		return (0 + ... +
-		        (helpers::is_activated_v<decltype(std::declval<planner_endings>().template get<Is>())> ? Is : 0));
+		        (helpers::is_activated_v<std::remove_cvref_t<decltype(std::declval<planner_endings>().template get<Is>())>> ? Is : 0));
 	}
 
 	[[nodiscard]]
@@ -187,10 +187,10 @@ struct planner_endings : flexible_contain<Endings...> {
 	template<class Planner>
 	constexpr void operator()(const Planner &planner) const
 	requires helpers::is_activated_v<
-		decltype(this->order(fix(state_at<typename Planner::union_struct>(planner.top_struct(), empty_state))))>
+		std::remove_cvref_t<decltype(this->order(fix(state_at<typename Planner::union_struct>(planner.top_struct(), empty_state))))>>
 	{
 		using transformed =
-			decltype(order(fix(state_at<typename Planner::union_struct>(planner.top_struct(), empty_state))));
+			std::remove_cvref_t<decltype(order(fix(state_at<typename Planner::union_struct>(planner.top_struct(), empty_state))))>;
 		this->template get<transformed::activated_index()>()(planner.pop_endings());
 	}
 };
@@ -233,7 +233,7 @@ struct planner_sections_t : flexible_contain<F> {
 			static_assert(!always_false<signature>);
 		};
 
-		return planner_sections_t<typename decltype(sigholder_t() ^ new_order)::signature, F>(
+		return planner_sections_t<typename std::remove_cvref_t<decltype(sigholder_t() ^ new_order)>::signature, F>(
 			flexible_contain<F>::get());
 	}
 
@@ -264,17 +264,17 @@ struct planner_t<union_t<Structs...>, Order, Ending> : flexible_contain<union_t<
 	static constexpr std::size_t num_structs = sizeof...(Structs);
 
 	[[nodiscard]]
-	constexpr union_struct get_union() const noexcept {
+	constexpr decltype(auto) get_union() const noexcept {
 		return base::template get<0>();
 	}
 
 	[[nodiscard]]
-	constexpr Order get_order() const noexcept {
+	constexpr decltype(auto) get_order() const noexcept {
 		return base::template get<1>();
 	}
 
 	[[nodiscard]]
-	constexpr Ending get_ending() const noexcept {
+	constexpr decltype(auto) get_ending() const noexcept {
 		return base::template get<2>();
 	}
 
@@ -324,7 +324,7 @@ struct planner_t<union_t<Structs...>, Order, Ending> : flexible_contain<union_t<
 			static_assert(!always_false<signature>); // suppresses warnings
 		};
 
-		using signature = typename decltype(sigholder_t() ^ reorder<Dims...>())::signature;
+		using signature = typename std::remove_cvref_t<decltype(sigholder_t() ^ reorder<Dims...>())>::signature;
 
 		return make_planner(get_union(), get_order(), get_ending().add_ending(planner_sections_t<signature, F>(f)));
 	}
@@ -332,15 +332,15 @@ struct planner_t<union_t<Structs...>, Order, Ending> : flexible_contain<union_t<
 	constexpr void execute() const
 	requires (!std::same_as<Ending, planner_endings<>>)
 	{
-		using dim_tree = sig_dim_tree<typename decltype(top_struct())::signature>;
-		for_each_impl(dim_tree(), empty_state);
+		using dim_tree = sig_dim_tree<typename std::remove_cvref_t<decltype(top_struct())>::signature>;
+		return for_each_impl(dim_tree(), empty_state);
 	}
 
 	// execute the planner
 	constexpr void operator()() const
 	requires (!std::same_as<Ending, planner_endings<>>)
 	{
-		execute();
+		return execute();
 	}
 
 	[[nodiscard("returns the state of the planner")]]
@@ -364,12 +364,12 @@ private:
 	constexpr void for_each_impl_dep(F /*f*/, auto /*state*/, std::index_sequence<> /*is*/) const {}
 
 	template<auto Dim, class... Branches, IsState State>
-	constexpr void for_each_impl(dim_tree<Dim, Branches...> /*dt*/, State state) const {
-		if constexpr (helpers::is_activated_v<decltype(get_ending().order(
-						  fix(state_at<union_struct>(top_struct(), state))))>) {
+	constexpr void for_each_impl(dim_tree<Dim, Branches...> /*dt*/, const State &state) const {
+		if constexpr (helpers::is_activated_v<std::remove_cvref_t<decltype(get_ending().order(
+						  fix(state_at<union_struct>(top_struct(), state))))>>) {
 			get_ending()(order(fix(state)));
 		} else {
-			using dim_sig = sig_find_dim<Dim, State, typename decltype(top_struct())::signature>;
+			using dim_sig = sig_find_dim<Dim, State, typename std::remove_cvref_t<decltype(top_struct())>::signature>;
 			if constexpr (dim_sig::dependent) {
 				for_each_impl_dep<Dim, Branches...>(state, std::index_sequence_for<Branches...>());
 			} else {
@@ -382,9 +382,9 @@ private:
 	}
 
 	template<IsState State>
-	constexpr void for_each_impl(dim_sequence<> /*ds*/, State state) const {
+	constexpr void for_each_impl(dim_sequence<> /*ds*/, const State &state) const {
 		static_assert(
-			helpers::is_activated_v<decltype(get_ending().order(fix(state_at<union_struct>(top_struct(), state))))>);
+			helpers::is_activated_v<std::remove_cvref_t<decltype(get_ending().order(fix(state_at<union_struct>(top_struct(), state))))>>);
 		get_ending()(order(fix(state)));
 	}
 };
@@ -404,7 +404,7 @@ concept IsPlanner = IsSpecialization<T, planner_t>;
 
 template<IsPlanner P>
 struct to_traverser<P> : std::true_type {
-	using type = decltype(traverser(std::declval<P>().get_union()));
+	using type = std::remove_cvref_t<decltype(traverser(std::declval<P>().get_union()))>;
 
 	[[nodiscard]]
 	static constexpr type convert(const P &p) noexcept {
