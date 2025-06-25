@@ -112,13 +112,13 @@ class bag_t : flexible_contain<Structure, typename BagPolicy::type> {
 	using base = flexible_contain<Structure, typename BagPolicy::type>;
 
 public:
-	explicit constexpr bag_t(Structure s) : base(s, BagPolicy::construct(s | noarr::get_size())) {}
+	explicit constexpr bag_t(const Structure &s) : base(s, BagPolicy::construct(s | noarr::get_size())) {}
 
-	explicit constexpr bag_t(Structure s, typename BagPolicy::type &&data) : base(s, std::move(data)) {}
+	explicit constexpr bag_t(const Structure &s, typename BagPolicy::type &&data) : base(s, std::move(data)) {}
 
-	explicit constexpr bag_t(Structure s, const typename BagPolicy::type &data) : base(s, data) {}
+	explicit constexpr bag_t(const Structure &s, const typename BagPolicy::type &data) : base(s, data) {}
 
-	explicit constexpr bag_t(Structure s, BagPolicy policy) : base(s, policy.construct(s | noarr::get_size())) {}
+	explicit constexpr bag_t(const Structure &s, BagPolicy policy) : base(s, policy.construct(s | noarr::get_size())) {}
 
 	/**
 	 * @brief return the wrapped structure which describes the `data` blob
@@ -158,9 +158,10 @@ public:
 	 *
 	 * @param ts: the dimension values
 	 */
+	template<ToState State>
 	[[nodiscard]]
-	constexpr decltype(auto) operator[](ToState auto state) const noexcept {
-		return structure() | noarr::get_at(data(), convert_to_state(state));
+	constexpr decltype(auto) operator[](State &&state) const noexcept {
+		return structure() | noarr::get_at(data(), convert_to_state(std::forward<State>(state)));
 	}
 
 	/**
@@ -225,16 +226,16 @@ public:
 	template<IsProtoStruct ProtoStruct>
 	requires (ProtoStruct::proto_preserves_layout)
 	[[nodiscard("Returns a new bag")]]
-	friend constexpr auto operator^(bag_t &&s, ProtoStruct p) {
-		return bag_t<std::remove_cvref_t<decltype(s.structure() ^ p)>, BagPolicy>(s.structure() ^ p,
+	friend constexpr auto operator^(bag_t &&s, ProtoStruct &&p) {
+		return bag_t<std::remove_cvref_t<decltype(s.structure() ^ std::forward<ProtoStruct>(p))>, BagPolicy>(s.structure() ^ std::forward<ProtoStruct>(p),
 		                                                     std::move(std::move(s).template get<1>()));
 	}
 
 	template<IsProtoStruct ProtoStruct>
 	requires (ProtoStruct::proto_preserves_layout && std::is_trivially_copy_constructible_v<typename BagPolicy::type>)
 	[[nodiscard("Returns a new bag")]]
-	friend constexpr auto operator^(const bag_t &s, ProtoStruct p) {
-		return bag_t<std::remove_cvref_t<decltype(s.structure() ^ p)>, BagPolicy>(s.structure() ^ p, s.template get<1>());
+	friend constexpr auto operator^(const bag_t &s, ProtoStruct &&p) {
+		return bag_t<std::remove_cvref_t<decltype(s.structure() ^ std::forward<ProtoStruct>(p))>, BagPolicy>(s.structure() ^ std::forward<ProtoStruct>(p), s.template get<1>());
 	}
 };
 
@@ -249,30 +250,30 @@ struct to_struct<T> : std::true_type {
 };
 
 template<class Structure>
-constexpr bag_t<Structure, helpers::bag_policy<std::unique_ptr>> bag(Structure s,
+constexpr bag_t<std::remove_cvref_t<Structure>, helpers::bag_policy<std::unique_ptr>> bag(const Structure &s,
                                                                      std::unique_ptr<char[]> &&ptr) noexcept {
-	return bag_t<Structure, helpers::bag_policy<std::unique_ptr>>(s, std::move(ptr));
+	return bag_t<std::remove_cvref_t<Structure>, helpers::bag_policy<std::unique_ptr>>(s, std::move(ptr));
 }
 
 template<class Structure>
-constexpr bag_t<Structure, helpers::bag_policy<std::unique_ptr>> bag(Structure s) {
-	return bag_t<Structure, helpers::bag_policy<std::unique_ptr>>(s);
+constexpr bag_t<std::remove_cvref_t<Structure>, helpers::bag_policy<std::unique_ptr>> bag(Structure &&s) {
+	return bag_t<std::remove_cvref_t<Structure>, helpers::bag_policy<std::unique_ptr>>(std::forward<Structure>(s));
 }
 
 template<class Structure>
-constexpr bag_t<Structure, helpers::bag_policy<helpers::bag_raw_pointer_tag>> bag(Structure s, void *ptr) noexcept {
-	return bag_t<Structure, helpers::bag_policy<helpers::bag_raw_pointer_tag>>(s, ptr);
+constexpr bag_t<std::remove_cvref_t<Structure>, helpers::bag_policy<helpers::bag_raw_pointer_tag>> bag(Structure &&s, void *ptr) noexcept {
+	return bag_t<std::remove_cvref_t<Structure>, helpers::bag_policy<helpers::bag_raw_pointer_tag>>(std::forward<Structure>(s), ptr);
 }
 
 template<class Structure>
-constexpr bag_t<Structure, helpers::bag_policy<helpers::bag_const_raw_pointer_tag>> bag(Structure s,
+constexpr bag_t<std::remove_cvref_t<Structure>, helpers::bag_policy<helpers::bag_const_raw_pointer_tag>> bag(Structure &&s,
                                                                                         const void *ptr) noexcept {
-	return bag_t<Structure, helpers::bag_policy<helpers::bag_const_raw_pointer_tag>>(s, ptr);
+	return bag_t<std::remove_cvref_t<Structure>, helpers::bag_policy<helpers::bag_const_raw_pointer_tag>>(std::forward<Structure>(s), ptr);
 }
 
 template<class Structure>
-constexpr bag_t<Structure, helpers::bag_policy<helpers::bag_nullptr_tag>> bag(Structure s, std::nullptr_t /*unused*/) {
-	return bag_t<Structure, helpers::bag_policy<helpers::bag_nullptr_tag>>(s);
+constexpr bag_t<std::remove_cvref_t<Structure>, helpers::bag_policy<helpers::bag_nullptr_tag>> bag(Structure &&s, std::nullptr_t /*unused*/) {
+	return bag_t<std::remove_cvref_t<Structure>, helpers::bag_policy<helpers::bag_nullptr_tag>>(std::forward<Structure>(s));
 }
 
 template<class Structure>
@@ -289,8 +290,9 @@ using const_raw_bag = decltype(bag(std::declval<Structure>(), std::declval<const
  * @param s: the structure
  */
 template<class Structure>
-constexpr auto make_unique_bag(Structure s) {
-	return unique_bag<Structure>(s);
+constexpr auto make_unique_bag(Structure &&s) {
+	using structure_t = std::remove_cvref_t<Structure>;
+	return unique_bag<structure_t>(std::forward<Structure>(s));
 }
 
 /**
@@ -300,8 +302,9 @@ constexpr auto make_unique_bag(Structure s) {
  * @param s: the structure
  */
 template<class Structure>
-constexpr auto make_vector_bag(Structure s) {
-	return bag_t<Structure, helpers::bag_policy<std::vector>>(s);
+constexpr auto make_vector_bag(Structure &&s) {
+	using structure_t = std::remove_cvref_t<Structure>;
+	return bag_t<structure_t, helpers::bag_policy<std::vector>>(std::forward<Structure>(s));
 }
 
 /**
@@ -311,8 +314,8 @@ constexpr auto make_vector_bag(Structure s) {
  * @param s: the structure
  */
 template<class Structure>
-constexpr auto make_bag(Structure s) {
-	return make_unique_bag(s);
+constexpr auto make_bag(Structure &&s) {
+	return make_unique_bag(std::forward<Structure>(s));
 }
 
 /**
@@ -322,8 +325,9 @@ constexpr auto make_bag(Structure s) {
  * @param data: the data blob
  */
 template<class Structure>
-constexpr auto make_bag(Structure s, void *data) noexcept {
-	return raw_bag<Structure>(s, data);
+constexpr auto make_bag(Structure &&s, void *data) noexcept {
+	using structure_t = std::remove_cvref_t<Structure>;
+	return raw_bag<structure_t>(std::forward<Structure>(s), data);
 }
 
 /**
@@ -333,8 +337,9 @@ constexpr auto make_bag(Structure s, void *data) noexcept {
  * @param data: the data blob
  */
 template<class Structure>
-constexpr auto make_bag(Structure s, const void *data) noexcept {
-	return const_raw_bag<Structure>(s, data);
+constexpr auto make_bag(Structure &&s, const void *data) noexcept {
+	using structure_t = std::remove_cvref_t<Structure>;
+	return const_raw_bag<structure_t>(std::forward<Structure>(s), data);
 }
 
 /**
@@ -344,8 +349,9 @@ constexpr auto make_bag(Structure s, const void *data) noexcept {
  * @param data: the data blob
  */
 template<class Structure>
-constexpr auto make_bag(Structure s, std::nullptr_t /*unused*/) noexcept {
-	return bag_t<Structure, helpers::bag_policy<helpers::bag_nullptr_tag>>(s);
+constexpr auto make_bag(Structure &&s, std::nullptr_t /*unused*/) noexcept {
+	using structure_t = std::remove_cvref_t<Structure>;
+	return bag_t<structure_t, helpers::bag_policy<helpers::bag_nullptr_tag>>(std::forward<Structure>(s));
 }
 
 template<class Structure, class BagPolicy>

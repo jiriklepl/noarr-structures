@@ -320,10 +320,9 @@ struct vector_t : strict_contain<T> {
 		if constexpr (!std::is_same_v<decltype(std::declval<State>().template get<length_in<Dim>>()),
 		                              std::integral_constant<std::size_t, 1>>) {
 			// offset = index * elem_size + offset_within_elem
-			const auto &index = state.template get<index_in<Dim>>();
-			const auto &sub_struct = sub_structure();
-			const auto &sub_stat = sub_state(std::forward<State>(state));
-			return index * sub_struct.size(sub_stat) + offset_of<Sub>(sub_struct, sub_stat);
+			auto &&sub_struct = sub_structure();
+			auto &&sub_stat = sub_state(std::forward<State>(state));
+			return state.template get<index_in<Dim>>() * sub_struct.size(sub_stat) + offset_of<Sub>(sub_struct, sub_stat);
 		} else {
 			// Optimization: length is one, thus the only valid index is zero.
 			// Assume the index is valid (caller's responsibility).

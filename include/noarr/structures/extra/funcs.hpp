@@ -2,6 +2,7 @@
 #define NOARR_STRUCTURES_FUNCS_HPP
 
 #include <cstddef>
+#include <type_traits>
 
 #include "../base/state.hpp"
 #include "../base/structs_common.hpp"
@@ -15,13 +16,13 @@ namespace noarr {
 template<auto Dim, class State>
 requires IsDim<decltype(Dim)> && IsState<State>
 constexpr auto has_length() noexcept {
-	return []<class Struct>(Struct /*unused*/) constexpr noexcept { return Struct::template has_length<Dim, State>(); };
+	return []<class Struct>(const Struct &/*unused*/) constexpr noexcept { return std::remove_cvref_t<Struct>::template has_length<Dim, State>(); };
 }
 
-template<auto Dim>
+template<auto Dim, IsState State>
 requires IsDim<decltype(Dim)>
-constexpr auto get_length(IsState auto state) noexcept {
-	return [state](auto structure) constexpr noexcept { return structure.template length<Dim>(state); };
+constexpr auto get_length(const State &state) noexcept {
+	return [state]<class Struct>(Struct &&structure) constexpr noexcept { return std::forward<Struct>(structure).template length<Dim>(state); };
 }
 
 /**
@@ -48,20 +49,21 @@ constexpr auto get_length() noexcept {
 
 template<class SubStruct, IsState State>
 constexpr auto has_offset() noexcept {
-	return []<class Struct>(Struct /*unused*/) constexpr noexcept { return has_offset_of<SubStruct, Struct, State>(); };
+	return []<class Struct>(const Struct &/*unused*/) constexpr noexcept { return has_offset_of<SubStruct, std::remove_cvref_t<Struct>, State>(); };
 }
 
-template<class SubStruct>
-constexpr auto offset(IsState auto state) noexcept {
-	return [state](auto structure) constexpr noexcept { return offset_of<SubStruct>(structure, state); };
+template<class SubStruct, IsState State>
+constexpr auto offset(const State &state) noexcept {
+	return [state]<class Struct>(Struct &&structure) constexpr noexcept { return offset_of<SubStruct>(std::forward<Struct>(structure), state); };
 }
 
 template<IsState State>
 constexpr auto has_offset() noexcept {
-	return []<class Struct>(Struct /*unused*/) constexpr noexcept {
-		if constexpr (requires { scalar<scalar_t<Struct, State>>(); }) {
-			using type = scalar_t<Struct, State>;
-			return has_offset_of<scalar<type>, Struct, State>();
+	return []<class Struct>(const Struct &/*unused*/) constexpr noexcept {
+		using struct_t = std::remove_cvref_t<Struct>;
+		if constexpr (requires { scalar<scalar_t<struct_t, State>>(); }) {
+			using type = scalar_t<struct_t, State>;
+			return has_offset_of<scalar<type>, struct_t, State>();
 		} else {
 			return false;
 		}
@@ -77,10 +79,10 @@ constexpr auto offset(Idxs... idxs) noexcept {
 }
 
 template<IsState State>
-constexpr auto offset(State state) noexcept {
-	return [state]<class Struct>(Struct structure) constexpr noexcept {
-		using type = scalar_t<Struct, State>;
-		return offset_of<scalar<type>>(structure, state);
+constexpr auto offset(const State &state) noexcept {
+	return [state]<class Struct>(Struct &&structure) constexpr noexcept {
+		using type = scalar_t<std::remove_cvref_t<Struct>, std::remove_cvref_t<State>>;
+		return offset_of<scalar<type>>(std::forward<Struct>(structure), state);
 	};
 }
 
@@ -92,11 +94,12 @@ constexpr auto offset(Idxs... idxs) noexcept {
 
 template<IsState State>
 constexpr auto has_size() noexcept {
-	return []<class Struct>(Struct /*unused*/) constexpr noexcept { return Struct::template has_size<State>(); };
+	return []<class Struct>(const Struct &/*unused*/) constexpr noexcept { return std::remove_cvref_t<Struct>::template has_size<State>(); };
 }
 
-constexpr auto get_size(IsState auto state) noexcept {
-	return [state](auto structure) constexpr noexcept { return structure.size(state); };
+template<IsState State>
+constexpr auto get_size(const State &state) noexcept {
+	return [state]<class Struct>(Struct &&structure) constexpr noexcept { return std::forward<Struct>(structure).size(state); };
 }
 
 /**
@@ -139,10 +142,10 @@ constexpr auto sub_ptr(const volatile void *ptr, std::size_t off) noexcept {
  * @param ptr: the pointer to blob structure
  */
 template<class CvVoid, IsState State>
-constexpr auto get_at(CvVoid *ptr, State state) noexcept {
-	return [ptr, state]<class Struct>(Struct structure) constexpr noexcept -> decltype(auto) {
-		using type = scalar_t<Struct, State>;
-		return *helpers::sub_ptr<type>(ptr, offset_of<scalar<type>>(structure, state));
+constexpr auto get_at(CvVoid *ptr, const State &state) noexcept {
+	return [ptr, state]<class Struct>(Struct &&structure) constexpr noexcept -> decltype(auto) {
+		using type = scalar_t<std::remove_cvref_t<Struct>, std::remove_cvref_t<State>>;
+		return *helpers::sub_ptr<type>(ptr, offset_of<scalar<type>>(std::forward<Struct>(structure), state));
 	};
 }
 
@@ -169,7 +172,7 @@ constexpr auto get_at(CvVoid *ptr, Idxs... idxs) noexcept {
  */
 template<ToStruct S, class F>
 constexpr decltype(auto) operator|(S &&s, F &&f) {
-	return std::forward<F>(f)(to_struct<S>::convert(std::forward<S>(s)));
+	return std::forward<F>(f)(to_struct<std::remove_cvref_t<S>>::convert(std::forward<S>(s)));
 }
 
 } // namespace noarr
