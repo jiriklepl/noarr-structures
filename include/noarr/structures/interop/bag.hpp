@@ -224,7 +224,7 @@ public:
 	constexpr auto get_ref() const noexcept;
 
 	template<IsProtoStruct ProtoStruct>
-	requires (ProtoStruct::proto_preserves_layout)
+	requires (std::remove_cvref_t<ProtoStruct>::proto_preserves_layout)
 	[[nodiscard("Returns a new bag")]]
 	friend constexpr auto operator^(bag_t &&s, ProtoStruct &&p) {
 		return bag_t<std::remove_cvref_t<decltype(s.structure() ^ std::forward<ProtoStruct>(p))>, BagPolicy>(s.structure() ^ std::forward<ProtoStruct>(p),
@@ -232,7 +232,7 @@ public:
 	}
 
 	template<IsProtoStruct ProtoStruct>
-	requires (ProtoStruct::proto_preserves_layout && std::is_trivially_copy_constructible_v<typename BagPolicy::type>)
+	requires (std::remove_cvref_t<ProtoStruct>::proto_preserves_layout && std::is_trivially_copy_constructible_v<typename BagPolicy::type>)
 	[[nodiscard("Returns a new bag")]]
 	friend constexpr auto operator^(const bag_t &s, ProtoStruct &&p) {
 		return bag_t<std::remove_cvref_t<decltype(s.structure() ^ std::forward<ProtoStruct>(p))>, BagPolicy>(s.structure() ^ std::forward<ProtoStruct>(p), s.template get<1>());
