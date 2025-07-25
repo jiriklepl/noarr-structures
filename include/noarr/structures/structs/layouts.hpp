@@ -27,6 +27,8 @@ struct tuple_t : strict_contain<TS...> {
 	static constexpr char name[] = "tuple_t";
 	using params = struct_params<dim_param<Dim>, structure_param<TS>...>;
 
+	using base::base;
+
 	template<IsState State>
 	[[nodiscard]]
 	constexpr decltype(auto) sub_structure(const State &/*state*/) const noexcept {
@@ -62,12 +64,6 @@ struct tuple_t : strict_contain<TS...> {
 	using sub_state_t = std::remove_cvref_t<decltype(sub_state(std::declval<State>()))>;
 	template<IsState State>
 	using clean_state_t = std::remove_cvref_t<decltype(clean_state(std::declval<State>()))>;
-
-	constexpr tuple_t() noexcept = default;
-
-	explicit constexpr tuple_t(TS... ss) noexcept
-	requires (sizeof...(TS) > 0)
-		: base(ss...) {}
 
 	static_assert(!(... || TS::signature::template any_accept<Dim>), "Dimension name already used");
 	using signature = dep_function_sig<Dim, typename TS::signature...>;
@@ -234,22 +230,20 @@ constexpr auto tuple() noexcept {
  */
 template<IsDim auto Dim, class T>
 struct vector_t : strict_contain<T> {
+	using base = strict_contain<T>;
 	static constexpr char name[] = "vector_t";
 	using params = struct_params<dim_param<Dim>, structure_param<T>>;
 
-	constexpr vector_t() noexcept = default;
-
-	template<class T_>
-	explicit constexpr vector_t(T_ &&sub_structure) noexcept : strict_contain<T>(std::forward<T_>(sub_structure)) {}
+	using base::base;
 
 	template<IsState State>
 	constexpr decltype(auto) sub_structure(const State &/*state*/) const noexcept {
-		return strict_contain<T>::get();
+		return base::get();
 	}
 
 	[[nodiscard]]
 	constexpr decltype(auto) sub_structure() const noexcept {
-		return strict_contain<T>::get();
+		return base::get();
 	}
 
 	template<IsState State>
