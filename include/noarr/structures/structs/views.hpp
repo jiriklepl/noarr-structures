@@ -69,7 +69,7 @@ template<class TopSig, IsState State, IsDim auto Dim, auto... Dims>
 requires IsDimPack<decltype(Dims)...>
 struct reassemble_build<TopSig, State, Dim, Dims...> {
 	static_assert((... && (Dim != Dims)), "Duplicate dimension in reorder");
-	using found = sig_find_dim<Dim, State, TopSig>;
+	using found = sig_find_dim_t<Dim, State, TopSig>;
 	template<class = found>
 	struct ty;
 
@@ -279,9 +279,7 @@ struct hoist_t : strict_contain<T> {
 	}
 
 private:
-	using hoisted = sig_find_dim<Dim, state<>, typename T::signature>; // sig_find_dim also checks the dimension exists
-	                                                                   // and is not within a tuple.
-	static_assert(!hoisted::dependent, "Cannot hoist tuple dimension, use reorder");
+	using hoisted = sig_find_dim_t<Dim, state<>, typename T::signature>;
 
 	template<class Original>
 	struct dim_replacement {
@@ -364,10 +362,39 @@ template<IsDim auto Dim>
 struct hoist_proto {
 	static constexpr bool proto_preserves_layout = true;
 
+private:
+	template<class Struct>
+	[[nodiscard]]
+	static constexpr bool can_hoist() noexcept {
+		using sig_find_result = sig_find_dim<Dim, state<>, typename Struct::signature>;
+
+		constexpr bool sig_found = sig_find_result::value;
+
+		if constexpr (sig_found) {
+			using hoisted_sig = typename sig_find_result::type;
+
+			if constexpr (!hoisted_sig::dependent) {
+				return true;
+			} else {
+				static_assert(hoisted_sig::dependent,
+				              "Cannot hoist a dimension that is dependent on another dimension");
+				return false;
+			}
+		} else {
+			static_assert(
+				sig_found,
+				"Cannot hoist dimension that is not present in the structure or is dependent on another dimension");
+			return false;
+		}
+	}
+
+public:
 	template<class Struct>
 	[[nodiscard]]
 	constexpr auto instantiate_and_construct(Struct s) const noexcept {
-		return hoist_t<Dim, Struct>(s);
+		if constexpr (can_hoist<Struct>()) {
+			return hoist_t<Dim, Struct>(s);
+		}
 	}
 };
 
@@ -665,8 +692,8 @@ struct join_t : strict_contain<T> {
 	using clean_state_t = decltype(clean_state(std::declval<State>()));
 
 private:
-	using dim_a = sig_find_dim<DimA, state<>, typename T::signature>;
-	using dim_b = sig_find_dim<DimB, state<>, typename T::signature>;
+	using dim_a = sig_find_dim_t<DimA, state<>, typename T::signature>;
+	using dim_b = sig_find_dim_t<DimB, state<>, typename T::signature>;
 
 	static_assert(!dim_a::dependent && !dim_b::dependent, "Cannot join dependent dimensions");
 	static_assert(std::is_same_v<typename dim_a::arg_length, typename dim_b::arg_length>,

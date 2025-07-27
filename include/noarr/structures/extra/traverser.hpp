@@ -252,7 +252,7 @@ private:
 	template<auto Dim, class... Branches, class F, class State>
 	requires IsState<State> && IsDim<decltype(Dim)>
 	constexpr void for_each_impl(dim_tree<Dim, Branches...> /*dt*/, F f, State state) const {
-		using dim_sig = sig_find_dim<Dim, State, typename decltype(top_struct())::signature>;
+		using dim_sig = sig_find_dim_t<Dim, State, typename decltype(top_struct())::signature>;
 		if constexpr (dim_sig::dependent) {
 			for_each_impl_dep<Dim, Branches...>(f, state, std::index_sequence_for<Branches...>());
 		} else {

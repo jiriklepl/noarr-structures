@@ -369,7 +369,7 @@ private:
 						  fix(state_at<union_struct>(top_struct(), state))))>) {
 			get_ending()(order(fix(state)));
 		} else {
-			using dim_sig = sig_find_dim<Dim, State, typename decltype(top_struct())::signature>;
+			using dim_sig = sig_find_dim_t<Dim, State, typename decltype(top_struct())::signature>;
 			if constexpr (dim_sig::dependent) {
 				for_each_impl_dep<Dim, Branches...>(state, std::index_sequence_for<Branches...>());
 			} else {
