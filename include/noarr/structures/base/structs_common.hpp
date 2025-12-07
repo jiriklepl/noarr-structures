@@ -88,6 +88,15 @@ constexpr auto struct_sub_state(Struct structure, State state) noexcept {
 template<IsStruct Struct, IsState State>
 using struct_sub_state_t = std::remove_cvref_t<decltype(std::declval<Struct>().sub_state(std::declval<State>()))>;
 
+template<class Structure, class State>
+concept defines_has_size = IsState<State> && requires {
+	requires static_cast<bool>(Structure::template has_size<State>()) ||
+				 !static_cast<bool>(Structure::template has_size<State>());
+};
+
+template<class Structure, class State>
+concept defines_size = IsState<State> && requires(Structure structure, State state) { structure.size(state); };
+
 template<class StructInner, class StructOuter, class State>
 concept defines_has_strict_offset_of = requires {
 	requires static_cast<bool>(StructOuter::template has_strict_offset_of<StructInner, State>()) ||
@@ -109,6 +118,12 @@ template<class StructInner, class StructOuter, class State>
 concept defines_strict_state_at = IsState<State> && requires(StructOuter structure, State state) {
 	structure.template strict_state_at<StructInner>(state);
 };
+
+template<IsStruct Structure, IsState State>
+consteval bool struct_has_size() noexcept;
+
+template<IsStruct Structure, IsState State>
+constexpr auto struct_size(Structure structure, State state) noexcept;
 
 template<IsStruct StructInner, IsStruct StructOuter, IsState State>
 consteval bool has_offset_of() noexcept;
@@ -143,6 +158,28 @@ constexpr auto struct_state_at(StructOuter structure, State state) noexcept {
 }
 
 namespace helpers {
+
+template<IsStruct Structure, IsState State>
+requires defines_has_size<Structure, State>
+consteval bool struct_has_size_impl() noexcept {
+	return Structure::template has_size<State>();
+}
+
+template<IsStruct Structure, IsState State>
+consteval bool struct_has_size_impl() noexcept {
+	return struct_has_size<struct_sub_structure_t<Structure, State>, struct_sub_state_t<Structure, State>>();
+}
+
+template<IsStruct Structure, IsState State>
+requires defines_size<Structure, State>
+constexpr auto struct_size_impl(Structure structure, State state) noexcept {
+	return structure.size(state);
+}
+
+template<IsStruct Structure, IsState State>
+constexpr auto struct_size_impl(Structure structure, State state) noexcept {
+	return struct_size(structure.sub_structure(state), structure.sub_state(state));
+}
 
 template<IsStruct StructInner, IsStruct StructOuter, IsState State>
 requires defines_has_strict_offset_of<StructInner, StructOuter, State>
@@ -191,6 +228,18 @@ constexpr auto state_at_impl(StructOuter structure, State state) noexcept {
 }
 
 } // namespace helpers
+
+template<IsStruct Structure, IsState State>
+consteval bool struct_has_size() noexcept {
+	using struct_t = std::remove_cvref_t<Structure>;
+	return helpers::struct_has_size_impl<struct_t, State>();
+}
+
+template<IsStruct Structure, IsState State>
+constexpr auto struct_size(Structure structure, State state) noexcept {
+	using struct_t = std::remove_cvref_t<Structure>;
+	return helpers::struct_size_impl<struct_t, State>(structure, state);
+}
 
 template<IsStruct StructInner, IsStruct StructOuter, IsState State>
 consteval bool has_offset_of() noexcept {

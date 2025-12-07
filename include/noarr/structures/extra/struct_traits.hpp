@@ -5,6 +5,7 @@
 
 #include "../base/signature.hpp"
 #include "../base/state.hpp"
+#include "../base/structs_common.hpp"
 #include "../base/utility.hpp"
 
 namespace noarr {
@@ -44,10 +45,7 @@ struct sig_is_cube<function_sig<Dim, ArgLength, RetSig>> : std::integral_constan
  */
 template<class T>
 struct is_cube {
-	static constexpr bool value = sig_is_cube<typename T::signature>::value && requires {
-		T::template has_size<state<>>();
-		typename std::enable_if_t<T::template has_size<state<>>()>;
-	};
+	static constexpr bool value = sig_is_cube<typename T::signature>::value && struct_has_size<T, state<>>();
 };
 
 template<class T, IsState State>

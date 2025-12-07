@@ -94,14 +94,14 @@ constexpr auto offset(Idxs... idxs) noexcept {
 
 template<IsState State>
 constexpr auto has_size() noexcept {
-	return []<class Struct>(Struct /*unused*/) constexpr noexcept { return Struct::template has_size<State>(); };
+	return []<class Struct>(Struct /*unused*/) constexpr noexcept { return struct_has_size<Struct, State>(); };
 }
 
 template<IsState State>
 constexpr auto get_size(State state) noexcept {
 	return [state]<class Struct>
-	requires (Struct::template has_size<State>())
-	(Struct structure) constexpr noexcept { return structure.size(state); };
+	requires (struct_has_size<Struct, State>())
+	(Struct structure) constexpr noexcept { return struct_size(structure, state); };
 }
 
 /**

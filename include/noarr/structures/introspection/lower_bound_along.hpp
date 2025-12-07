@@ -294,7 +294,7 @@ public:
 	{
 		using namespace constexpr_arithmetic;
 		if constexpr (QDim == Dim) {
-			return structure.sub_structure().size(structure.sub_state(state)) * min;
+			return struct_size(structure.sub_structure(), structure.sub_state(state)) * min;
 		} else {
 			return has_lower_bound_along<QDim, sub_structure_t, sub_state_t>::lower_bound(
 				structure.sub_structure(), structure.sub_state(state), min, end);

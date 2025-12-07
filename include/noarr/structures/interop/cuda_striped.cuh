@@ -83,7 +83,7 @@ struct cuda_striped_t : strict_contain<T> {
 	}
 
 private:
-	static constexpr std::size_t elem_size = decltype(std::declval<ElemType>().size(state<>()))::value;
+	static constexpr std::size_t elem_size = decltype(struct_size(std::declval<ElemType>(), state<>()))::value;
 	// the stripe width in bytes, forbidding bank conflicts
 	static constexpr std::size_t tmp_stripe_padded_width = (BankCount / NumStripes) * BankWidth;
 	// if the stripe is too narrow for even a single element, enlarge stripe just enough (at the cost of conflicts)
@@ -115,16 +115,16 @@ public:
 	template<IsState State>
 	[[nodiscard]]
 	static consteval bool has_size() noexcept {
-		return sub_structure_t::template has_size<sub_state_t<State>>();
+		return struct_has_size<sub_structure_t, sub_state_t<State>>();
 	}
 
 	template<IsState State>
-	requires (has_size<State>())
+	requires (struct_has_size<cuda_striped_t, State>())
 	[[nodiscard]]
 	constexpr auto size(State state) const noexcept {
 		using namespace constexpr_arithmetic;
 		// substructure size
-		const auto sub_size = sub_structure().size(sub_state(state));
+		const auto sub_size = struct_size(sub_structure(), sub_state(state));
 		// total elements in each stripe = total elements in sub-structure
 		const auto sub_elements = sub_size / make_const<elem_size>();
 		// stripe length = ceil(total elements in stripe / total elements in stripe width)
@@ -135,7 +135,7 @@ public:
 	}
 
 	template<IsState State>
-	requires (has_size<State>())
+	requires (struct_has_size<cuda_striped_t, State>())
 	[[nodiscard]]
 	constexpr auto align(State state) const noexcept {
 		using namespace constexpr_arithmetic;

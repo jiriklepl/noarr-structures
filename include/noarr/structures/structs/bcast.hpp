@@ -49,18 +49,18 @@ struct bcast_t : strict_contain<T> {
 	template<IsState State>
 	[[nodiscard]]
 	static consteval bool has_size() noexcept {
-		return sub_structure_t::template has_size<sub_state_t<State>>();
+		return struct_has_size<sub_structure_t, sub_state_t<State>>();
 	}
 
 	template<IsState State>
-	requires (has_size<State>())
+	requires (struct_has_size<bcast_t, State>())
 	[[nodiscard]]
 	constexpr auto size(State state) const noexcept {
-		return sub_structure().size(sub_state(state));
+		return struct_size(sub_structure(), sub_state(state));
 	}
 
 	template<IsState State>
-	requires (has_size<State>())
+	requires (struct_has_size<bcast_t, State>())
 	[[nodiscard]]
 	constexpr auto align(State state) const noexcept {
 		return sub_structure().align(sub_state(state));

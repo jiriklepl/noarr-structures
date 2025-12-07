@@ -69,7 +69,7 @@ inline void tbb_reduce(const Traverser &t, const FNeut &f_neut, const FAcc &f_ac
 			private_ptr &local = out_ptrs.local();
 			void *local_out_ptr = local.raw;
 			if (local_out_ptr == nullptr) {
-				local_out_ptr = std::malloc(out_struct.size(empty_state));
+				local_out_ptr = std::malloc(struct_size(out_struct, empty_state));
 				traverser(out_struct).for_each([local_out_ptr, f_neut](auto state) { f_neut(state, local_out_ptr); });
 				local.raw = local_out_ptr;
 			}

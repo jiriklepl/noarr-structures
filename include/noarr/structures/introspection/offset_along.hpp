@@ -100,7 +100,7 @@ public:
 		using namespace constexpr_arithmetic;
 		if constexpr (QDim == Dim) {
 			const auto index = state.template get<index_in<Dim>>();
-			return index * structure.sub_structure().size(structure.sub_state(state));
+			return index * struct_size(structure.sub_structure(), structure.sub_state(state));
 		} else {
 			return has_offset_along<QDim, sub_structure_t, sub_state_t>::offset(structure.sub_structure(),
 			                                                                    structure.sub_state(state));

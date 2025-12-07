@@ -219,7 +219,7 @@ public:
 	template<IsState State = state<>>
 	[[nodiscard]]
 	static consteval bool has_size() noexcept {
-		return structure_t::template has_size<State>();
+		return struct_has_size<structure_t, State>();
 	}
 
 	/**
@@ -227,10 +227,10 @@ public:
 	 *
 	 */
 	template<IsState State = state<>>
-	requires (has_size<State>())
+	requires (struct_has_size<structure_t, State>())
 	[[nodiscard]]
 	constexpr auto size(State state = empty_state) const noexcept {
-		return noarr::get_size(state)(structure());
+		return struct_size(structure(), state);
 	}
 
 	/**

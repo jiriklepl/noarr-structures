@@ -191,14 +191,14 @@ public:
 
 	template<noarr::IsState State>
 	static consteval bool has_size() noexcept {
-		return T::template has_size<decltype(std::declval<bar_t>().sub_state(std::declval<State>()))>();
+		return noarr::struct_has_size<T, decltype(std::declval<bar_t>().sub_state(std::declval<State>()))>();
 	}
 
 	template<noarr::IsState State>
 	constexpr auto size(State state) const noexcept
 	requires(has_size<State>())
 	{
-		auto sub_size = sub_structure().size(sub_state(state));
+		auto sub_size = noarr::struct_size(sub_structure(), sub_state(state));
 		return ...; // Could return sub_size if it is the same
 	}
 

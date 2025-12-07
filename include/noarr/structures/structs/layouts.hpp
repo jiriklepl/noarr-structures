@@ -77,14 +77,14 @@ struct tuple_t : strict_contain<TS...> {
 	}
 
 	template<IsState State>
-	requires (has_size<State>())
+	requires (struct_has_size<tuple_t, State>())
 	[[nodiscard]]
 	constexpr auto size(State state) const noexcept {
 		return size_inner(is, sub_state(state));
 	}
 
 	template<IsState State>
-	requires (has_size<State>())
+	requires (struct_has_size<tuple_t, State>())
 	[[nodiscard]]
 	constexpr auto align(State state) const noexcept {
 		return align_inner(is, sub_state(state));
@@ -153,8 +153,8 @@ private:
 	template<IsState State, std::size_t... IS>
 	[[nodiscard]]
 	static consteval bool has_size_inner(std::index_sequence<IS...> /*is*/) noexcept {
-		return (... && std::remove_cvref_t<decltype(std::declval<tuple_t>().template get<IS>())>::template has_size<
-						   sub_state_t<State>>());
+		return (... && struct_has_size<std::remove_cvref_t<decltype(std::declval<tuple_t>().template get<IS>())>,
+		                               sub_state_t<State>>());
 	}
 
 	template<IsState State>
@@ -169,7 +169,7 @@ private:
 		using namespace constexpr_arithmetic;
 		const auto alignment = sub_structure<I>().align(sub_state);
 		const auto safe_start = (start + alignment - make_const<1>()) / alignment * alignment;
-		return size_accumulator(std::index_sequence<IS...>(), safe_start + sub_structure<I>().size(sub_state),
+		return size_accumulator(std::index_sequence<IS...>(), safe_start + struct_size(sub_structure<I>(), sub_state),
 		                        sub_state);
 	}
 
@@ -257,23 +257,23 @@ struct vector_t : strict_contain<T> {
 	[[nodiscard]]
 	static consteval bool has_size() noexcept {
 		if constexpr (state_contains<State, length_in<Dim>>) {
-			return sub_structure_t::template has_size<sub_state_t<State>>();
+			return struct_has_size<sub_structure_t, sub_state_t<State>>();
 		} else {
 			return false;
 		}
 	}
 
 	template<IsState State>
-	requires (has_size<State>())
+	requires (struct_has_size<vector_t, State>())
 	[[nodiscard]]
 	constexpr auto size(State state) const noexcept {
 		using namespace constexpr_arithmetic;
 		const auto len = state.template get<length_in<Dim>>();
-		return len * sub_structure().size(sub_state(state));
+		return len * struct_size(sub_structure(), sub_state(state));
 	}
 
 	template<IsState State>
-	requires (has_size<State>())
+	requires (struct_has_size<vector_t, State>())
 	[[nodiscard]]
 	constexpr auto align(State state) const noexcept {
 		return sub_structure().align(sub_state(state));
@@ -300,7 +300,7 @@ struct vector_t : strict_contain<T> {
 			const auto index = state.template get<index_in<Dim>>();
 			const auto sub_struct = sub_structure();
 			const auto sub_stat = sub_state(state);
-			return offset_of<Sub>(sub_struct, sub_stat, index * sub_struct.size(sub_stat) + start);
+			return offset_of<Sub>(sub_struct, sub_stat, index * struct_size(sub_struct, sub_stat) + start);
 		} else {
 			// Optimization: length is one, thus the only valid index is zero.
 			// Assume the index is valid (caller's responsibility).

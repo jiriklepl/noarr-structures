@@ -30,14 +30,14 @@ struct scalar : strict_contain<> {
 	}
 
 	template<IsState State>
-	requires (has_size<State>())
+	requires (struct_has_size<scalar, State>())
 	[[nodiscard]]
 	static constexpr auto size(State /*unused*/ = empty_state) noexcept {
 		return constexpr_arithmetic::make_const<sizeof(T)>();
 	}
 
 	template<IsState State = state<>>
-	requires (has_size<State>())
+	requires (struct_has_size<scalar, State>())
 	[[nodiscard]]
 	static constexpr auto align(State /*unused*/ = empty_state) noexcept {
 		return constexpr_arithmetic::make_const<alignof(T)>();
