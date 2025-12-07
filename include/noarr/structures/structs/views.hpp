@@ -177,13 +177,6 @@ struct reorder_t : strict_contain<T> {
 	template<IsState State>
 	requires (struct_has_size<reorder_t, State>())
 	[[nodiscard]]
-	constexpr auto size(State state) const noexcept {
-		return struct_size(sub_structure(), sub_state(state));
-	}
-
-	template<IsState State>
-	requires (struct_has_size<reorder_t, State>())
-	[[nodiscard]]
 	constexpr auto align(State state) const noexcept {
 		return sub_structure().align(sub_state(state));
 	}
@@ -276,19 +269,6 @@ public:
 	using sub_state_t = State;
 	template<IsState State>
 	using clean_state_t = State;
-
-	template<IsState State>
-	[[nodiscard]]
-	static consteval bool has_size() noexcept {
-		return struct_has_size<sub_structure_t, sub_state_t<State>>();
-	}
-
-	template<IsState State>
-	requires (struct_has_size<hoist_t, State>())
-	[[nodiscard]]
-	constexpr auto size(State state) const noexcept {
-		return struct_size(sub_structure(), sub_state(state));
-	}
 
 	template<IsState State>
 	requires (struct_has_size<hoist_t, State>())
@@ -503,19 +483,6 @@ public:
 	using clean_state_t = decltype(clean_state(std::declval<State>()));
 
 	template<IsState State>
-	[[nodiscard]]
-	static consteval bool has_size() noexcept {
-		return struct_has_size<sub_structure_t, sub_state_t<State>>();
-	}
-
-	template<IsState State>
-	requires (struct_has_size<rename_t, State>())
-	[[nodiscard]]
-	constexpr auto size(State state) const noexcept {
-		return struct_size(sub_structure(), sub_state(state));
-	}
-
-	template<IsState State>
 	requires (struct_has_size<rename_t, State>())
 	[[nodiscard]]
 	constexpr auto align(State state) const noexcept {
@@ -636,18 +603,6 @@ public:
 
 	template<IsState State>
 	using sub_state_t = decltype(sub_state(std::declval<State>()));
-
-	template<IsState State>
-	static consteval bool has_size() noexcept {
-		return struct_has_size<sub_structure_t, sub_state_t<State>>();
-	}
-
-	template<IsState State>
-	requires (struct_has_size<join_t, State>())
-	[[nodiscard]]
-	constexpr auto size(State state) const noexcept {
-		return struct_size(sub_structure(), sub_state(state));
-	}
 
 	template<IsState State>
 	requires (struct_has_size<join_t, State>())

@@ -115,19 +115,6 @@ public:
 	using sub_state_t = decltype(impl::sub_state(std::declval<State>(), std::declval<T>()));
 
 	template<IsState State>
-	[[nodiscard]]
-	static consteval bool has_size() noexcept {
-		return struct_has_size<sub_structure_t, sub_state_t<State>>();
-	}
-
-	template<IsState State>
-	requires (struct_has_size<into_blocks_t, State>())
-	[[nodiscard]]
-	constexpr auto size(State state) const noexcept {
-		return struct_size(sub_structure(), sub_state(state));
-	}
-
-	template<IsState State>
 	requires (struct_has_size<into_blocks_t, State>())
 	[[nodiscard]]
 	constexpr auto align(State state) const noexcept {
@@ -323,19 +310,6 @@ public:
 	using sub_structure_t = T;
 	template<IsState State>
 	using sub_state_t = decltype(impl::sub_state(std::declval<State>(), std::declval<T>()));
-
-	template<IsState State>
-	[[nodiscard]]
-	static consteval bool has_size() noexcept {
-		return struct_has_size<sub_structure_t, sub_state_t<State>>();
-	}
-
-	template<IsState State>
-	requires (struct_has_size<into_blocks_dynamic_t, State>())
-	[[nodiscard]]
-	constexpr auto size(State state) const noexcept {
-		return struct_size(sub_structure(), sub_state(state));
-	}
 
 	template<IsState State>
 	requires (struct_has_size<into_blocks_dynamic_t, State>())
@@ -584,18 +558,6 @@ public:
 		decltype(impl::sub_state(std::declval<State>(), std::declval<sub_structure_t>(), std::declval<MinorLenT>()));
 
 	template<IsState State>
-	static consteval bool has_size() noexcept {
-		return struct_has_size<sub_structure_t, sub_state_t<State>>();
-	}
-
-	template<IsState State>
-	requires (struct_has_size<into_blocks_static_t, State>())
-	[[nodiscard]]
-	constexpr auto size(State state) const noexcept {
-		return struct_size(sub_structure(), sub_state(state));
-	}
-
-	template<IsState State>
 	requires (struct_has_size<into_blocks_static_t, State>())
 	[[nodiscard]]
 	constexpr auto align(State state) const noexcept {
@@ -819,18 +781,6 @@ public:
 	using sub_structure_t = T;
 	template<IsState State>
 	using sub_state_t = decltype(impl::sub_state(std::declval<State>(), std::declval<sub_structure_t>()));
-
-	template<IsState State>
-	static consteval bool has_size() noexcept {
-		return struct_has_size<sub_structure_t, sub_state_t<State>>();
-	}
-
-	template<IsState State>
-	requires (struct_has_size<merge_blocks_t, State>())
-	[[nodiscard]]
-	constexpr auto size(State state) const noexcept {
-		return struct_size(sub_structure(), sub_state(state));
-	}
 
 	template<IsState State>
 	requires (struct_has_size<merge_blocks_t, State>())

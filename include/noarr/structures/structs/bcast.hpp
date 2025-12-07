@@ -47,19 +47,6 @@ struct bcast_t : strict_contain<T> {
 	using signature = function_sig<Dim, dynamic_arg_length, typename T::signature>;
 
 	template<IsState State>
-	[[nodiscard]]
-	static consteval bool has_size() noexcept {
-		return struct_has_size<sub_structure_t, sub_state_t<State>>();
-	}
-
-	template<IsState State>
-	requires (struct_has_size<bcast_t, State>())
-	[[nodiscard]]
-	constexpr auto size(State state) const noexcept {
-		return struct_size(sub_structure(), sub_state(state));
-	}
-
-	template<IsState State>
 	requires (struct_has_size<bcast_t, State>())
 	[[nodiscard]]
 	constexpr auto align(State state) const noexcept {

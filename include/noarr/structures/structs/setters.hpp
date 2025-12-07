@@ -87,19 +87,6 @@ public:
 	using clean_state_t = decltype(impl::clean_state(std::declval<State>()));
 
 	template<IsState State>
-	[[nodiscard]]
-	static consteval bool has_size() noexcept {
-		return struct_has_size<sub_structure_t, sub_state_t<State>>();
-	}
-
-	template<IsState State>
-	requires (struct_has_size<fix_t, State>())
-	[[nodiscard]]
-	constexpr auto size(State state) const noexcept {
-		return struct_size(sub_structure(), sub_state(state));
-	}
-
-	template<IsState State>
 	requires (struct_has_size<fix_t, State>())
 	[[nodiscard]]
 	constexpr auto align(State state) const noexcept {
@@ -221,19 +208,6 @@ public:
 	using sub_state_t = decltype(impl::sub_state(std::declval<State>(), std::declval<LenT>()));
 	template<IsState State>
 	using clean_state_t = decltype(impl::clean_state(std::declval<State>()));
-
-	template<IsState State>
-	[[nodiscard]]
-	static consteval bool has_size() noexcept {
-		return struct_has_size<sub_structure_t, sub_state_t<State>>();
-	}
-
-	template<IsState State>
-	requires (struct_has_size<set_length_t, State>())
-	[[nodiscard]]
-	constexpr auto size(State state) const noexcept {
-		return struct_size(sub_structure(), sub_state(state));
-	}
 
 	template<IsState State>
 	requires (struct_has_size<set_length_t, State>())

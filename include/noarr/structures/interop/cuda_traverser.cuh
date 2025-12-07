@@ -85,19 +85,6 @@ struct cuda_fix_t : strict_contain<T> {
 	using clean_state_t = std::remove_cvref_t<decltype(clean_state(std::declval<State>()))>;
 
 	template<IsState State>
-	[[nodiscard]]
-	static consteval bool has_size() noexcept {
-		return struct_has_size<sub_structure_t, sub_state_t<State>>();
-	}
-
-	template<IsState State>
-	requires (struct_has_size<cuda_fix_t, State>())
-	[[nodiscard]]
-	__device__ inline auto size(State state) const noexcept {
-		return struct_size(sub_structure(), sub_state(state));
-	}
-
-	template<IsState State>
 	requires (struct_has_size<cuda_fix_t, State>())
 	[[nodiscard]]
 	constexpr auto align(State state) const noexcept {
