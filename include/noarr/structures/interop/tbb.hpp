@@ -45,7 +45,8 @@ inline void tbb_reduce(const Traverser &t, const FNeut &f_neut, const FAcc &f_ac
                        const OutStruct &out_struct, void *out_ptr) {
 	constexpr auto top_dim = helpers::traviter_top_dim<decltype(t.get_struct() ^ t.get_order())>;
 	using range_t = decltype(t.range());
-	if constexpr (OutStruct::signature::template all_accept<top_dim>) {
+	if constexpr (OutStruct::signature::template any_accept<top_dim> &&
+	              OutStruct::signature::template all_accept<top_dim>) {
 		// parallel writes will go to different offsets => out_ptr may be shared
 		tbb::parallel_for(t.range(), [&f_acc, out_ptr](const range_t &subrange) {
 			subrange.for_each([f_acc, out_ptr](auto state) { f_acc(state, out_ptr); });

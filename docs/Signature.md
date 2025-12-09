@@ -106,7 +106,7 @@ For quick access to some oft-used properties, there are also some built-in utili
 - `::dependent` is a `static constexpr bool`. `true` for `dep_function_sig`, `false` for `function_sig`, absent for `scalar_sig`.
 - `::template any_accept<Dim>` and `::template all_accept<Dim>` are `static constexpr bool`s. They detect whether the signature contains a `Dim` at any level.
   These two differ in the treatment of Dependent function signatures (tuples):
-  `all_accept` requires that there is a `Dim` in every component, for `any_accept` just one such component is enough.
+  `all_accept` requires that there is a `Dim` in every component (given there is any), for `any_accept` just one such component is enough.
 - `::template replace<Replacement, Dim>` is a typedef (`Replacement` must be a type template that takes a signature and results in a signature).
   It finds an occurrence of `Dim` (either `function_sig<Dim, *>` or `dep_function_sig<Dim, *>`) and replaces the whole matching signature (`S`) with `Replacement<S>::type`.
   See [the example of a replacer](#implementing-a-replacer). In case of tuples, the replacement is done in each component.

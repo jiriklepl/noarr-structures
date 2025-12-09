@@ -3,7 +3,6 @@
 
 #include <cstddef>
 
-#include <concepts>
 #include <type_traits>
 
 #include "contain.hpp"
@@ -14,8 +13,15 @@ namespace noarr {
 template<class T>
 concept IsTag = requires(T a) {
 	requires IsDimSequence<typename T::dims>;
-	{ T::template all_accept<dim_accepter> } -> std::convertible_to<bool>;
-	{ T::template any_accept<dim_accepter> } -> std::convertible_to<bool>;
+
+	requires static_cast<bool>(T::template all_accept<dim_accepter>);
+	requires static_cast<bool>(T::template any_accept<dim_accepter>) ||
+				 !static_cast<bool>(T::template any_accept<dim_accepter>);
+
+	requires static_cast<bool>(T::template all_accept<dim_pred_not<dim_accepter>>) ||
+				 !static_cast<bool>(T::template all_accept<dim_pred_not<dim_accepter>>);
+	requires !static_cast<bool>(T::template any_accept<dim_pred_not<dim_accepter>>);
+
 	typename T::template map<dim_identity_mapper>;
 };
 

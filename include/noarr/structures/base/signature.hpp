@@ -73,10 +73,10 @@ public:
 
 	template<auto QDim>
 	requires IsDim<decltype(QDim)>
-	static constexpr bool all_accept = (Dim == QDim || RetSig::template all_accept<QDim>);
+	static constexpr bool all_accept = Dim == QDim || RetSig::template all_accept<QDim>;
 	template<auto QDim>
 	requires IsDim<decltype(QDim)>
-	static constexpr bool any_accept = (Dim == QDim || RetSig::template any_accept<QDim>);
+	static constexpr bool any_accept = Dim == QDim || RetSig::template any_accept<QDim>;
 
 	static constexpr bool dependent = false;
 };
@@ -130,10 +130,10 @@ struct scalar_sig {
 
 	template<auto QDim>
 	requires IsDim<decltype(QDim)>
-	static constexpr bool all_accept = false;
+	static constexpr bool all_accept = true; // universal quantification over empty set is true
 	template<auto QDim>
 	requires IsDim<decltype(QDim)>
-	static constexpr bool any_accept = false;
+	static constexpr bool any_accept = false; // existential quantification over empty set is false
 };
 
 template<class T>

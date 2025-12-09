@@ -38,10 +38,10 @@ struct cuda_stripe_index {
 	using dims = dim_sequence<>;
 
 	template<class Pred>
-	static constexpr bool all_accept = true;
+	static constexpr bool all_accept = true; // universal quantification over empty set is true
 
 	template<class Pred>
-	static constexpr bool any_accept = false;
+	static constexpr bool any_accept = false; // existential quantification over empty set is false
 
 	template<class Fn>
 	using map = cuda_stripe_index;
