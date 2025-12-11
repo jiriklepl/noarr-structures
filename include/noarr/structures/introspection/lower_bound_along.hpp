@@ -62,7 +62,7 @@ public:
 		}
 	}
 
-	static constexpr auto lower_bound(Structure structure, State state) noexcept
+	static constexpr auto lower_bound([[maybe_unused]] Structure structure, [[maybe_unused]] State state) noexcept
 	requires value
 	{
 		using namespace constexpr_arithmetic;
@@ -74,7 +74,8 @@ public:
 		}
 	}
 
-	static constexpr auto lower_bound(Structure structure, State state, auto min, auto end) noexcept
+	static constexpr auto lower_bound([[maybe_unused]] Structure structure, [[maybe_unused]] State state,
+	                                  [[maybe_unused]] auto min, [[maybe_unused]] auto end) noexcept
 	requires value
 	{
 		using namespace constexpr_arithmetic;
@@ -86,7 +87,7 @@ public:
 		}
 	}
 
-	static constexpr auto lower_bound_at(Structure structure, State state) noexcept
+	static constexpr auto lower_bound_at([[maybe_unused]] Structure structure, [[maybe_unused]] State state) noexcept
 	requires value
 	{
 		using namespace constexpr_arithmetic;
@@ -99,7 +100,8 @@ public:
 		}
 	}
 
-	static constexpr auto lower_bound_at(Structure structure, State state, auto min, auto end) noexcept
+	static constexpr auto lower_bound_at([[maybe_unused]] Structure structure, [[maybe_unused]] State state, auto min,
+	                                     [[maybe_unused]] auto end) noexcept
 	requires value
 	{
 		using namespace constexpr_arithmetic;
@@ -161,7 +163,7 @@ public:
 		}
 	}
 
-	static constexpr auto lower_bound(Structure structure, State state) noexcept
+	static constexpr auto lower_bound([[maybe_unused]] Structure structure, [[maybe_unused]] State state) noexcept
 	requires value
 	{
 		if constexpr (state_contains<State, index_in<Dim>>) {
@@ -178,7 +180,7 @@ public:
 		}
 	}
 
-	static constexpr auto lower_bound(Structure structure, State state, auto min, auto end) noexcept
+	static constexpr auto lower_bound(Structure structure, State state, auto min, [[maybe_unused]] auto end) noexcept
 	requires value && requires {
 		decltype(min)::value;
 		requires ((decltype(min)::value) < sizeof...(Ts));
@@ -202,7 +204,7 @@ public:
 		}
 	}
 
-	static constexpr auto lower_bound_at(Structure structure, State state) noexcept
+	static constexpr auto lower_bound_at([[maybe_unused]] Structure structure, [[maybe_unused]] State state) noexcept
 	requires value
 	{
 		if constexpr (state_contains<State, index_in<Dim>>) {
@@ -219,7 +221,8 @@ public:
 		}
 	}
 
-	static constexpr auto lower_bound_at(Structure structure, State state, auto min, auto end) noexcept
+	static constexpr auto lower_bound_at([[maybe_unused]] Structure structure, [[maybe_unused]] State state, auto min,
+	                                     [[maybe_unused]] auto end) noexcept
 	requires value && requires {
 		decltype(min)::value;
 		requires ((decltype(min)::value) < sizeof...(Ts));
@@ -277,7 +280,7 @@ public:
 		}
 	}
 
-	static constexpr auto lower_bound(Structure structure, State state) noexcept
+	static constexpr auto lower_bound([[maybe_unused]] Structure structure, [[maybe_unused]] State state) noexcept
 	requires value
 	{
 		using namespace constexpr_arithmetic;
@@ -289,7 +292,7 @@ public:
 		}
 	}
 
-	static constexpr auto lower_bound(Structure structure, State state, auto min, auto end) noexcept
+	static constexpr auto lower_bound(Structure structure, State state, auto min, [[maybe_unused]] auto end) noexcept
 	requires value
 	{
 		using namespace constexpr_arithmetic;
@@ -301,7 +304,7 @@ public:
 		}
 	}
 
-	static constexpr auto lower_bound_at(Structure structure, State state) noexcept
+	static constexpr auto lower_bound_at([[maybe_unused]] Structure structure, [[maybe_unused]] State state) noexcept
 	requires value
 	{
 		using namespace constexpr_arithmetic;
@@ -314,7 +317,8 @@ public:
 		}
 	}
 
-	static constexpr auto lower_bound_at(Structure structure, State state, auto min, auto end) noexcept
+	static constexpr auto lower_bound_at([[maybe_unused]] Structure structure, [[maybe_unused]] State state, auto min,
+	                                     [[maybe_unused]] auto end) noexcept
 	requires value
 	{
 		using namespace constexpr_arithmetic;
@@ -930,7 +934,7 @@ public:
 		}
 	}
 
-	static constexpr auto lower_bound(Structure structure, State state) noexcept
+	static constexpr auto lower_bound([[maybe_unused]] Structure structure, [[maybe_unused]] State state) noexcept
 	requires value
 	{
 		using namespace constexpr_arithmetic;
@@ -1072,7 +1076,7 @@ public:
 		}
 	}
 
-	static constexpr auto lower_bound(Structure structure, State state) noexcept
+	static constexpr auto lower_bound([[maybe_unused]] Structure structure, [[maybe_unused]] State state) noexcept
 	requires value
 	{
 		using namespace constexpr_arithmetic;
@@ -1088,7 +1092,8 @@ public:
 		}
 	}
 
-	static constexpr auto lower_bound(Structure structure, State state, auto min, auto end) noexcept
+	static constexpr auto lower_bound([[maybe_unused]] Structure structure, [[maybe_unused]] State state,
+	                                  [[maybe_unused]] auto min, [[maybe_unused]] auto end) noexcept
 	requires value
 	{
 		using namespace constexpr_arithmetic;
@@ -1107,7 +1112,7 @@ public:
 		}
 	}
 
-	static constexpr auto lower_bound_at(Structure structure, State state) noexcept
+	static constexpr auto lower_bound_at([[maybe_unused]] Structure structure, [[maybe_unused]] State state) noexcept
 	requires value
 	{
 		using namespace constexpr_arithmetic;
@@ -1230,7 +1235,7 @@ public:
 		}
 	}
 
-	static constexpr auto lower_bound(Structure structure, State state) noexcept
+	static constexpr auto lower_bound([[maybe_unused]] Structure structure, [[maybe_unused]] State state) noexcept
 	requires value
 	{
 		using namespace constexpr_arithmetic;
@@ -1246,7 +1251,8 @@ public:
 		}
 	}
 
-	static constexpr auto lower_bound(Structure structure, State state, auto min, auto end) noexcept
+	static constexpr auto lower_bound([[maybe_unused]] Structure structure, [[maybe_unused]] State state,
+	                                  [[maybe_unused]] auto min, [[maybe_unused]] auto end) noexcept
 	requires value
 	{
 		using namespace constexpr_arithmetic;
@@ -1265,7 +1271,7 @@ public:
 		}
 	}
 
-	static constexpr auto lower_bound_at(Structure structure, State state) noexcept
+	static constexpr auto lower_bound_at([[maybe_unused]] Structure structure, [[maybe_unused]] State state) noexcept
 	requires value
 	{
 		using namespace constexpr_arithmetic;
