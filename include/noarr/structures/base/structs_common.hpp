@@ -97,24 +97,24 @@ concept defines_has_size = IsState<State> && requires {
 template<class Structure, class State>
 concept defines_size = IsState<State> && requires(Structure structure, State state) { structure.size(state); };
 
-template<class StructInner, class StructOuter, class State>
+template<class StructOuter, class StructInner, class State>
 concept defines_has_strict_offset_of = requires {
 	requires static_cast<bool>(StructOuter::template has_strict_offset_of<StructInner, State>()) ||
 				 !static_cast<bool>(StructOuter::template has_strict_offset_of<StructInner, State>());
 } || requires { StructOuter::template has_strict_offset_of<StructInner, State>(); };
 
-template<class StructInner, class StructOuter, class State, class Start>
+template<class StructOuter, class StructInner, class State, class Start>
 concept defines_strict_offset_of = IsState<State> && requires(StructOuter structure, State state, Start start) {
 	structure.template strict_offset_of<StructInner>(state, start);
 };
 
-template<class StructInner, class StructOuter, class State>
+template<class StructOuter, class StructInner, class State>
 concept defines_has_strict_state_at = requires {
 	requires static_cast<bool>(StructOuter::template has_strict_state_at<StructInner, State>()) ||
 				 !static_cast<bool>(StructOuter::template has_strict_state_at<StructInner, State>());
 } || requires { StructOuter::template has_strict_state_at<StructInner, State>(); };
 
-template<class StructInner, class StructOuter, class State>
+template<class StructOuter, class StructInner, class State>
 concept defines_strict_state_at = IsState<State> && requires(StructOuter structure, State state) {
 	structure.template strict_state_at<StructInner>(state);
 };
@@ -182,7 +182,7 @@ constexpr auto struct_size_impl(Structure structure, State state) noexcept {
 }
 
 template<IsStruct StructInner, IsStruct StructOuter, IsState State>
-requires defines_has_strict_offset_of<StructInner, StructOuter, State>
+requires defines_has_strict_offset_of<StructOuter, StructInner, State>
 consteval bool has_offset_of_impl() noexcept {
 	return StructOuter::template has_strict_offset_of<StructInner, State>();
 }
@@ -194,7 +194,7 @@ consteval bool has_offset_of_impl() noexcept {
 }
 
 template<IsStruct StructInner, IsStruct StructOuter, IsState State, class Start = constexpr_arithmetic::make_const<0>>
-requires defines_strict_offset_of<StructInner, StructOuter, State, Start>
+requires defines_strict_offset_of<StructOuter, StructInner, State, Start>
 constexpr auto offset_of_impl(StructOuter structure, State state, Start start = Start{}) noexcept {
 	return structure.template strict_offset_of<StructInner>(state, start);
 }
@@ -205,7 +205,7 @@ constexpr auto offset_of_impl(StructOuter structure, State state, Start start = 
 }
 
 template<IsStruct StructInner, IsStruct StructOuter, IsState State>
-requires defines_has_strict_state_at<StructInner, StructOuter, State>
+requires defines_has_strict_state_at<StructOuter, StructInner, State>
 consteval bool has_state_at_impl() noexcept {
 	return StructOuter::template has_strict_state_at<StructInner, State>();
 }
@@ -217,7 +217,7 @@ consteval bool has_state_at_impl() noexcept {
 }
 
 template<IsStruct StructInner, IsStruct StructOuter, IsState State>
-requires defines_strict_state_at<StructInner, StructOuter, State>
+requires defines_strict_state_at<StructOuter, StructInner, State>
 constexpr auto state_at_impl(StructOuter structure, State state) noexcept {
 	return structure.template strict_state_at<StructInner>(state);
 }
