@@ -108,7 +108,7 @@ struct union_t : strict_contain<Structs...> {
 	using base::base;
 
 	using is = std::index_sequence_for<Structs...>;
-	using signature = typename helpers::sig_union<typename to_struct<Structs>::type::signature...>::type;
+	using signature = typename helpers::sig_union<typename to_struct_t<Structs>::signature...>::type;
 
 	template<std::size_t Index>
 	[[nodiscard("returns a copy of the underlying struct")]]
@@ -123,7 +123,7 @@ private:
 	template<auto Dim, std::size_t I>
 	[[nodiscard("returns the index of the first struct that accepts the dimension")]]
 	static constexpr std::size_t find_first_match() noexcept {
-		using sub_sig = typename to_struct<sub_structure_t<I>>::type::signature;
+		using sub_sig = typename to_struct_t<sub_structure_t<I>>::signature;
 		if constexpr (sub_sig::template any_accept<Dim>) {
 			return I;
 		} else if constexpr (I < sizeof...(Structs) - 1) {

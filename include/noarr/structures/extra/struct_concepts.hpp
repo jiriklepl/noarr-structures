@@ -13,7 +13,7 @@ template<class T, auto... Dims>
 requires IsDimPack<decltype(Dims)...>
 struct has_dims {
 private:
-	using struct_type = typename to_struct<T>::type;
+	using struct_type = to_struct_t<T>;
 	using dim_tree_helper = sig_dim_tree<typename struct_type::signature>;
 
 public:
@@ -24,7 +24,7 @@ public:
 
 template<class T, auto... Dims>
 concept HasDims =
-	IsDimPack<decltype(Dims)...> && requires { typename to_struct<T>::type; } && helpers::has_dims<T, Dims...>::value;
+	IsDimPack<decltype(Dims)...> && requires { typename to_struct_t<T>; } && helpers::has_dims<T, Dims...>::value;
 
 } // namespace noarr
 
