@@ -142,7 +142,8 @@ public:
 	[[nodiscard]]
 	static consteval bool has_length() noexcept {
 		if constexpr (first_match<Dim> < sizeof...(Structs)) {
-			return sub_structure_t<first_match<Dim>>::template has_length<Dim, State>();
+			using structure = to_struct_t<sub_structure_t<first_match<Dim>>>;
+			return struct_has_length<Dim, structure, State>();
 		} else {
 			return false;
 		}
@@ -152,7 +153,7 @@ public:
 	requires (has_length<QDim, State>())
 	[[nodiscard("returns the length of the first struct that accepts the dimension")]]
 	constexpr auto length(State state) const noexcept {
-		return sub_structure<first_match<QDim>>().template length<QDim>(state);
+		return struct_length<QDim>(convert_to_struct(sub_structure<first_match<QDim>>()), state);
 	}
 };
 
@@ -257,7 +258,7 @@ private:
 		if constexpr (dim_sig::dependent) {
 			for_each_impl_dep<Dim, Branches...>(f, state, std::index_sequence_for<Branches...>());
 		} else {
-			const std::size_t len = top_struct().template length<Dim>(state);
+			const std::size_t len = struct_length<Dim>(top_struct(), state);
 			for (std::size_t i = 0; i < len; i++) {
 				for_each_impl(Branches()..., f, state.template with<index_in<Dim>>(i));
 			}

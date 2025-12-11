@@ -236,8 +236,8 @@ private:
 	using indexless_state = decltype(std::declval<State>().template remove<index_in<DimMajor>, index_in<DimMinor>>());
 
 	static constexpr bool get_value() noexcept {
-		if constexpr (Structure::template has_length<DimMajor, indexless_state>() &&
-		              Structure::template has_length<DimMinor, indexless_state>()) {
+		if constexpr (struct_has_length<DimMajor, Structure, indexless_state>() &&
+		              struct_has_length<DimMinor, Structure, indexless_state>()) {
 			if constexpr (state_contains<State, index_in<DimMinor>> && !state_contains<State, index_in<DimMajor>>) {
 				return false;
 			} else {
@@ -261,8 +261,8 @@ private:
 	using indexless_state = decltype(std::declval<State>().template remove<index_in<DimMajor>, index_in<DimMinor>>());
 
 	static constexpr bool get_value() noexcept {
-		if constexpr (Structure::template has_length<DimMajor, indexless_state>() &&
-		              Structure::template has_length<DimMinor, indexless_state>()) {
+		if constexpr (struct_has_length<DimMajor, Structure, indexless_state>() &&
+		              struct_has_length<DimMinor, Structure, indexless_state>()) {
 			if constexpr (state_contains<State, index_in<DimMinor>> && !state_contains<State, index_in<DimMajor>>) {
 				return false;
 			} else {
@@ -290,8 +290,8 @@ private:
 
 	static constexpr bool get_value() noexcept {
 		if constexpr (state_contains<State, index_in<DimIsBorder>>) {
-			if constexpr (Structure::template has_length<DimMajor, indexless_state>() &&
-			              Structure::template has_length<DimMinor, indexless_state>()) {
+			if constexpr (struct_has_length<DimMajor, Structure, indexless_state>() &&
+			              struct_has_length<DimMinor, Structure, indexless_state>()) {
 				if constexpr (state_contains<State, index_in<DimMinor>> && !state_contains<State, index_in<DimMajor>>) {
 					return false;
 				} else {

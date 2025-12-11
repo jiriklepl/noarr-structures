@@ -169,7 +169,7 @@ private:
 		if constexpr (QDim == DimMinor) {
 			return is_uniform_along<Dim, sub_structure_t, sub_state_t>::value;
 		} else if constexpr (QDim == DimMajor) {
-			if constexpr (Structure::template has_length<DimMinor, State>()) {
+			if constexpr (struct_has_length<DimMinor, Structure, State>()) {
 				return is_uniform_along<Dim, sub_structure_t, sub_state_t>::value;
 			} else {
 				return false;

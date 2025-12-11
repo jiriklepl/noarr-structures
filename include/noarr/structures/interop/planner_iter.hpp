@@ -266,7 +266,7 @@ struct planner_range_t<Dim, union_t<Structs...>, Order, Ending> : flexible_conta
 template<IsDim auto Dim, class... Structs, class Order, class Ending>
 constexpr auto range(const planner_t<union_t<Structs...>, Order, Ending> &planner) {
 	return planner_range_t<Dim, union_t<Structs...>, Order, Ending>(
-		planner, planner.top_struct().template length<Dim>(empty_state));
+		planner, struct_length<Dim>(planner.top_struct(), empty_state));
 }
 
 template<class... Structs, class Order, class Ending>
@@ -285,7 +285,7 @@ template<class... Structs, class Order, class Ending>
 constexpr auto end(const planner_t<union_t<Structs...>, Order, Ending> &planner) {
 	constexpr auto dim = helpers::traviter_top_dim<decltype(planner.top_struct())>;
 	return planner_iterator_t<dim, union_t<Structs...>, Order, Ending>(
-		planner, planner.top_struct().template length<dim>(empty_state));
+		planner, struct_length<dim>(planner.top_struct(), empty_state));
 }
 
 } // namespace noarr

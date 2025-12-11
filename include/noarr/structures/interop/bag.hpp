@@ -201,7 +201,7 @@ public:
 	requires IsDim<decltype(Dim)>
 	[[nodiscard]]
 	static consteval bool has_length() noexcept {
-		return structure_t::template has_length<Dim, State>();
+		return struct_has_length<Dim, structure_t, State>();
 	}
 
 	/**
@@ -210,10 +210,10 @@ public:
 	 * @tparam Dim: the dimension name
 	 */
 	template<auto Dim, IsState State = state<>>
-	requires (has_length<Dim, State>())
+	requires (struct_has_length<Dim, structure_t, State>())
 	[[nodiscard]]
 	constexpr auto length(State state = empty_state) const noexcept {
-		return noarr::get_length<Dim>(state)(structure());
+		return struct_length<Dim>(structure(), state);
 	}
 
 	template<IsState State = state<>>
@@ -259,6 +259,12 @@ public:
 
 template<class T>
 concept IsBag = IsSpecialization<T, bag_t>;
+
+template<auto QDIm, IsBag Bag, IsState State = state<>>
+requires IsDim<decltype(QDIm)>
+consteval bool struct_has_length() noexcept {
+	return struct_has_length<QDIm, typename Bag::structure_t, State>();
+}
 
 template<IsBag T>
 struct to_struct<T> : std::true_type {

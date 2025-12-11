@@ -15,15 +15,15 @@ namespace noarr {
 template<auto Dim, class State>
 requires IsDim<decltype(Dim)> && IsState<State>
 constexpr auto has_length() noexcept {
-	return []<class Struct>(Struct /*unused*/) constexpr noexcept { return Struct::template has_length<Dim, State>(); };
+	return []<class Struct>(Struct /*unused*/) constexpr noexcept { return struct_has_length<Dim, Struct, State>(); };
 }
 
 template<auto Dim, class State>
 requires IsDim<decltype(Dim)> && IsState<State>
 constexpr auto get_length(State state) noexcept {
 	return [state]<class Struct>
-	requires (Struct::template has_length<Dim, State>())
-	(Struct structure) constexpr noexcept { return structure.template length<Dim>(state); };
+	requires (struct_has_length<Dim, Struct, State>())
+	(Struct structure) constexpr noexcept { return struct_length<Dim>(structure, state); };
 }
 
 /**

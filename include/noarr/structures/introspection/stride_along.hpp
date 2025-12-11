@@ -362,7 +362,7 @@ private:
 			// the stride of the minor dimension is the stride of Dim in the substructure
 			return has_stride_along<Dim, sub_structure_t, sub_state_t>::value;
 		} else if constexpr (QDim == DimMajor) {
-			if constexpr (Structure::template has_length<DimMinor, State>()) {
+			if constexpr (struct_has_length<DimMinor, Structure, State>()) {
 				// the stride of the major dimension is the length of the minor dimension multiplied by the stride of
 				// Dim in the substructure
 				return has_stride_along<Dim, sub_structure_t, sub_state_t>::value;
@@ -385,7 +385,7 @@ private:
 			return has_stride_along<Dim, sub_structure_t, sub_state_t>::stride(structure.sub_structure(),
 			                                                                   structure.sub_state(state));
 		} else if constexpr (QDim == DimMajor) {
-			const auto minor_len = structure.template length<DimMinor>(state);
+			const auto minor_len = struct_length<DimMinor>(structure, state);
 			return minor_len * has_stride_along<Dim, sub_structure_t, sub_state_t>::stride(structure.sub_structure(),
 			                                                                               structure.sub_state(state));
 		} else {
@@ -418,7 +418,7 @@ private:
 		if constexpr (QDim == DimMinor) {
 			return has_stride_along<Dim, sub_structure_t, sub_state_t>::value;
 		} else if constexpr (QDim == DimMajor) {
-			if constexpr (Structure::template has_length<DimMinor, State>()) {
+			if constexpr (struct_has_length<DimMinor, Structure, State>()) {
 				return has_stride_along<Dim, sub_structure_t, sub_state_t>::value;
 			} else {
 				return false;
@@ -442,7 +442,7 @@ public:
 			return has_stride_along<Dim, sub_structure_t, sub_state_t>::stride(structure.sub_structure(),
 			                                                                   structure.sub_state(state));
 		} else if constexpr (QDim == DimMajor) {
-			const auto minor_len = structure.template length<DimMinor>(state);
+			const auto minor_len = struct_length<DimMinor>(structure, state);
 			return minor_len * has_stride_along<Dim, sub_structure_t, sub_state_t>::stride(structure.sub_structure(),
 			                                                                               structure.sub_state(state));
 		} else {
@@ -465,7 +465,7 @@ private:
 		if constexpr (QDim == DimMinor) {
 			return has_stride_along<Dim, sub_structure_t, sub_state_t>::value;
 		} else if constexpr (QDim == DimMajor) {
-			if constexpr (Structure::template has_length<DimMinor, State>()) {
+			if constexpr (struct_has_length<DimMinor, Structure, State>()) {
 				return has_stride_along<Dim, sub_structure_t, sub_state_t>::value;
 			} else {
 				return false;
@@ -491,7 +491,7 @@ public:
 			return has_stride_along<Dim, sub_structure_t, sub_state_t>::stride(structure.sub_structure(),
 			                                                                   structure.sub_state(state));
 		} else if constexpr (QDim == DimMajor) {
-			const auto minor_len = structure.template length<DimMinor>(state);
+			const auto minor_len = struct_length<DimMinor>(structure, state);
 			return minor_len * has_stride_along<Dim, sub_structure_t, sub_state_t>::stride(structure.sub_structure(),
 			                                                                               structure.sub_state(state));
 		} else if constexpr (QDim == DimIsPresent) {

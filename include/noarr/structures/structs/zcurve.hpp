@@ -197,7 +197,7 @@ private:
 				const auto index_general = index >> SpecialLevel * sizeof...(Dims);
 				const auto index_special = index & ((1U << SpecialLevel * sizeof...(Dims)) - 1U);
 				const auto indices = helpers::zc_general<GeneralLevel - SpecialLevel>(
-					index_general, (sub_structure.template length<Dims>(tmp_state) >> SpecialLevel)...);
+					index_general, (struct_length<Dims>(sub_structure, tmp_state) >> SpecialLevel)...);
 				return tmp_state.template with<index_in<Dims>...>(
 					((std::get<DimsI>(indices) << SpecialLevel) +
 				     helpers::zc_special<sizeof...(Dims), DimsI>(index_special))...);
@@ -243,20 +243,20 @@ public:
 		if constexpr (state_contains<State, index_in<QDim>>) {
 			return false;
 		} else if constexpr (QDim == Dim) {
-			return (... && sub_structure_t::template has_length<Dims, sub_state_t<State>>());
+			return (... && struct_has_length<Dims, sub_structure_t, sub_state_t<State>>());
 		} else {
-			return sub_structure_t::template has_length<QDim, sub_state_t<State>>();
+			return struct_has_length<QDim, sub_structure_t, sub_state_t<State>>();
 		}
 	}
 
 	template<auto QDim, IsState State>
-	requires (has_length<QDim, State>())
+	requires (struct_has_length<QDim, merge_zcurve_t, State>())
 	[[nodiscard]]
 	constexpr auto length(State state) const noexcept {
 		if constexpr (QDim == Dim) {
-			return (... * sub_structure().template length<Dims>(sub_state(state)));
+			return (... * struct_length<Dims>(sub_structure(), sub_state(state)));
 		} else {
-			return sub_structure().template length<QDim>(sub_state(state));
+			return struct_length<QDim>(sub_structure(), sub_state(state));
 		}
 	}
 };

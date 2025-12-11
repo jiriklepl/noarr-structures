@@ -24,16 +24,16 @@ TEST_CASE("Traverser trivial", "[traverser]") {
 	u2t u2;
 	u3t u3;
 
-	REQUIRE(u1.length<'x'>(state<>()) == 20);
-	REQUIRE(u1.length<'y'>(state<>()) == 30);
+	REQUIRE(struct_length<'x'>(u1, state<>()) == 20);
+	REQUIRE(struct_length<'y'>(u1, state<>()) == 30);
 
-	REQUIRE(u2.length<'x'>(state<>()) == 20);
-	REQUIRE(u2.length<'y'>(state<>()) == 30);
-	REQUIRE(u2.length<'z'>(state<>()) == 40);
+	REQUIRE(struct_length<'x'>(u2, state<>()) == 20);
+	REQUIRE(struct_length<'y'>(u2, state<>()) == 30);
+	REQUIRE(struct_length<'z'>(u2, state<>()) == 40);
 
-	REQUIRE(u3.length<'x'>(state<>()) == 20);
-	REQUIRE(u3.length<'y'>(state<>()) == 30);
-	REQUIRE(u3.length<'z'>(state<>()) == 40);
+	REQUIRE(struct_length<'x'>(u3, state<>()) == 20);
+	REQUIRE(struct_length<'y'>(u3, state<>()) == 30);
+	REQUIRE(struct_length<'z'>(u3, state<>()) == 40);
 
 	STATIC_REQUIRE(std::is_same_v<u1t::signature, at::signature>);
 	STATIC_REQUIRE(std::is_same_v<u2t::signature, xt::signature>);
@@ -87,16 +87,16 @@ TEST_CASE("Traverser ordered", "[traverser]") {
 	u2t u2;
 	u3t u3;
 
-	REQUIRE(u1.length<'x'>(state<>()) == 20);
-	REQUIRE(u1.length<'y'>(state<>()) == 30);
+	REQUIRE(struct_length<'x'>(u1, state<>()) == 20);
+	REQUIRE(struct_length<'y'>(u1, state<>()) == 30);
 
-	REQUIRE(u2.length<'x'>(state<>()) == 20);
-	REQUIRE(u2.length<'y'>(state<>()) == 30);
-	REQUIRE(u2.length<'z'>(state<>()) == 40);
+	REQUIRE(struct_length<'x'>(u2, state<>()) == 20);
+	REQUIRE(struct_length<'y'>(u2, state<>()) == 30);
+	REQUIRE(struct_length<'z'>(u2, state<>()) == 40);
 
-	REQUIRE(u3.length<'x'>(state<>()) == 20);
-	REQUIRE(u3.length<'y'>(state<>()) == 30);
-	REQUIRE(u3.length<'z'>(state<>()) == 40);
+	REQUIRE(struct_length<'x'>(u3, state<>()) == 20);
+	REQUIRE(struct_length<'y'>(u3, state<>()) == 30);
+	REQUIRE(struct_length<'z'>(u3, state<>()) == 40);
 
 	STATIC_REQUIRE(std::is_same_v<u1t::signature, at::signature>);
 	STATIC_REQUIRE(std::is_same_v<u2t::signature, xt::signature>);
@@ -168,16 +168,16 @@ TEST_CASE("Traverser ordered renamed", "[traverser]") {
 	u2t u2;
 	u3t u3;
 
-	REQUIRE(u1.length<'x'>(state<>()) == 20);
-	REQUIRE(u1.length<'y'>(state<>()) == 30);
+	REQUIRE(struct_length<'x'>(u1, state<>()) == 20);
+	REQUIRE(struct_length<'y'>(u1, state<>()) == 30);
 
-	REQUIRE(u2.length<'x'>(state<>()) == 20);
-	REQUIRE(u2.length<'y'>(state<>()) == 30);
-	REQUIRE(u2.length<'z'>(state<>()) == 40);
+	REQUIRE(struct_length<'x'>(u2, state<>()) == 20);
+	REQUIRE(struct_length<'y'>(u2, state<>()) == 30);
+	REQUIRE(struct_length<'z'>(u2, state<>()) == 40);
 
-	REQUIRE(u3.length<'x'>(state<>()) == 20);
-	REQUIRE(u3.length<'y'>(state<>()) == 30);
-	REQUIRE(u3.length<'z'>(state<>()) == 40);
+	REQUIRE(struct_length<'x'>(u3, state<>()) == 20);
+	REQUIRE(struct_length<'y'>(u3, state<>()) == 30);
+	REQUIRE(struct_length<'z'>(u3, state<>()) == 40);
 
 	STATIC_REQUIRE(std::is_same_v<u1t::signature, at::signature>);
 	STATIC_REQUIRE(std::is_same_v<u2t::signature, xt::signature>);
@@ -352,16 +352,16 @@ TEST_CASE("Traverser sections", "[traverser]") {
 	u2t u2;
 	u3t u3;
 
-	REQUIRE(u1.length<'x'>(state<>()) == 20);
-	REQUIRE(u1.length<'y'>(state<>()) == 30);
+	REQUIRE(struct_length<'x'>(u1, state<>()) == 20);
+	REQUIRE(struct_length<'y'>(u1, state<>()) == 30);
 
-	REQUIRE(u2.length<'x'>(state<>()) == 20);
-	REQUIRE(u2.length<'y'>(state<>()) == 30);
-	REQUIRE(u2.length<'z'>(state<>()) == 40);
+	REQUIRE(struct_length<'x'>(u2, state<>()) == 20);
+	REQUIRE(struct_length<'y'>(u2, state<>()) == 30);
+	REQUIRE(struct_length<'z'>(u2, state<>()) == 40);
 
-	REQUIRE(u3.length<'x'>(state<>()) == 20);
-	REQUIRE(u3.length<'y'>(state<>()) == 30);
-	REQUIRE(u3.length<'z'>(state<>()) == 40);
+	REQUIRE(struct_length<'x'>(u3, state<>()) == 20);
+	REQUIRE(struct_length<'y'>(u3, state<>()) == 30);
+	REQUIRE(struct_length<'z'>(u3, state<>()) == 40);
 
 	STATIC_REQUIRE(std::is_same_v<u1t::signature, at::signature>);
 	STATIC_REQUIRE(std::is_same_v<u2t::signature, xt::signature>);

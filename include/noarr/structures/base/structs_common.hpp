@@ -97,6 +97,16 @@ concept defines_has_size = IsState<State> && requires {
 template<class Structure, class State>
 concept defines_size = IsState<State> && requires(Structure structure, State state) { structure.size(state); };
 
+template<class Structure, auto Dim, class State>
+concept defines_has_length = IsState<State> && IsDim<decltype(Dim)> && requires {
+	requires static_cast<bool>(Structure::template has_length<Dim, State>()) ||
+				 !static_cast<bool>(Structure::template has_length<Dim, State>());
+};
+
+template<class Structure, auto Dim, class State>
+concept defines_length = IsState<State> && IsDim<decltype(Dim)> &&
+                         requires(Structure structure, State state) { structure.template length<Dim>(state); };
+
 template<class StructOuter, class StructInner, class State>
 concept defines_has_strict_offset_of = requires {
 	requires static_cast<bool>(StructOuter::template has_strict_offset_of<StructInner, State>()) ||
@@ -124,6 +134,14 @@ consteval bool struct_has_size() noexcept;
 
 template<IsStruct Structure, IsState State>
 constexpr auto struct_size(Structure structure, State state) noexcept;
+
+template<auto Dim, IsStruct Structure, IsState State>
+requires IsDim<decltype(Dim)>
+consteval bool struct_has_length() noexcept;
+
+template<auto Dim, IsStruct Structure, IsState State>
+requires IsDim<decltype(Dim)>
+constexpr auto struct_length(Structure structure, State state) noexcept;
 
 template<IsStruct StructInner, IsStruct StructOuter, IsState State>
 consteval bool has_offset_of() noexcept;
@@ -179,6 +197,30 @@ constexpr auto struct_size_impl(Structure structure, State state) noexcept {
 template<IsStruct Structure, IsState State>
 constexpr auto struct_size_impl(Structure structure, State state) noexcept {
 	return struct_size(structure.sub_structure(state), structure.sub_state(state));
+}
+
+template<auto Dim, IsStruct Structure, IsState State>
+requires IsDim<decltype(Dim)> && defines_has_length<Structure, Dim, State>
+consteval bool struct_has_length_impl() noexcept {
+	return Structure::template has_length<Dim, State>();
+}
+
+template<auto Dim, IsStruct Structure, IsState State>
+requires IsDim<decltype(Dim)>
+consteval bool struct_has_length_impl() noexcept {
+	return struct_has_length<Dim, struct_sub_structure_t<Structure, State>, struct_sub_state_t<Structure, State>>();
+}
+
+template<auto Dim, IsStruct Structure, IsState State>
+requires IsDim<decltype(Dim)> && defines_length<Structure, Dim, State>
+constexpr auto struct_length_impl(Structure structure, State state) noexcept {
+	return structure.template length<Dim>(state);
+}
+
+template<auto Dim, IsStruct Structure, IsState State>
+requires IsDim<decltype(Dim)>
+constexpr auto struct_length_impl(Structure structure, State state) noexcept {
+	return struct_length<Dim>(structure.sub_structure(state), structure.sub_state(state));
 }
 
 template<IsStruct StructInner, IsStruct StructOuter, IsState State>
@@ -239,6 +281,20 @@ template<IsStruct Structure, IsState State>
 constexpr auto struct_size(Structure structure, State state) noexcept {
 	using struct_t = std::remove_cvref_t<Structure>;
 	return helpers::struct_size_impl<struct_t, State>(structure, state);
+}
+
+template<auto Dim, IsStruct Structure, IsState State>
+requires IsDim<decltype(Dim)>
+consteval bool struct_has_length() noexcept {
+	using struct_t = std::remove_cvref_t<Structure>;
+	return helpers::struct_has_length_impl<Dim, struct_t, State>();
+}
+
+template<auto Dim, IsStruct Structure, IsState State>
+requires IsDim<decltype(Dim)>
+constexpr auto struct_length(Structure structure, State state) noexcept {
+	using struct_t = std::remove_cvref_t<Structure>;
+	return helpers::struct_length_impl<Dim, struct_t, State>(structure, state);
 }
 
 template<IsStruct StructInner, IsStruct StructOuter, IsState State>

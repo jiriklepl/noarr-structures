@@ -60,18 +60,18 @@ struct bcast_t : strict_contain<T> {
 		if constexpr (QDim == Dim) {
 			return state_contains<State, length_in<Dim>> && !state_contains<State, index_in<Dim>>;
 		} else {
-			return sub_structure_t::template has_length<QDim, sub_state_t<State>>();
+			return struct_has_length<QDim, sub_structure_t, sub_state_t<State>>();
 		}
 	}
 
 	template<auto QDim, IsState State>
-	requires (has_length<QDim, State>())
+	requires (struct_has_length<QDim, bcast_t, State>())
 	[[nodiscard]]
 	constexpr auto length(State state) const noexcept {
 		if constexpr (QDim == Dim) {
 			return state.template get<length_in<Dim>>();
 		} else {
-			return sub_structure().template length<QDim>(sub_state(state));
+			return struct_length<QDim>(sub_structure(), sub_state(state));
 		}
 	}
 };

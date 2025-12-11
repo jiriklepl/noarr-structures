@@ -249,7 +249,7 @@ template<class Struct, class Order>
 template<auto Dim>
 requires IsDim<decltype(Dim)>
 constexpr auto traverser_t<Struct, Order>::range() const noexcept {
-	return traverser_range_t<Dim, Struct, Order>(*this, top_struct().template length<Dim>(empty_state));
+	return traverser_range_t<Dim, Struct, Order>(*this, struct_length<Dim>(top_struct(), empty_state));
 }
 
 // declared in traverser.hpp
@@ -272,7 +272,7 @@ template<class Struct, class Order>
 constexpr auto traverser_t<Struct, Order>::end() const noexcept {
 	// same as range().end()
 	constexpr auto dim = helpers::traviter_top_dim<decltype(top_struct())>;
-	return traverser_iterator_t<dim, Struct, Order>(*this, top_struct().template length<dim>(empty_state));
+	return traverser_iterator_t<dim, Struct, Order>(*this, struct_length<dim>(top_struct(), empty_state));
 }
 
 } // namespace noarr

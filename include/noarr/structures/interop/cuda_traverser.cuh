@@ -108,14 +108,14 @@ struct cuda_fix_t : strict_contain<T> {
 	requires IsDim<decltype(QDim)>
 	[[nodiscard]]
 	static consteval bool has_length() noexcept {
-		return sub_structure_t::template has_length<QDim, sub_state_t<State>>();
+		return struct_has_length<QDim, sub_structure_t, sub_state_t<State>>();
 	}
 
 	template<IsDim auto QDim, IsState State>
-	requires (has_length<QDim, State>())
+	requires (struct_has_length<QDim, cuda_fix_t, State>())
 	[[nodiscard]]
 	__device__ inline auto length(State state) const noexcept {
-		return sub_structure().template length<QDim>(sub_state(state));
+		return struct_length<QDim>(sub_structure(), sub_state(state));
 	}
 
 	template<class Sub, IsState State>
@@ -172,19 +172,19 @@ struct cuda_traverser_t<Struct, Order, dim_sequence<DimsB...>, dim_sequence<Dims
 	[[nodiscard]]
 	constexpr dim3 grid_dim() const noexcept {
 		const auto full = this->top_struct();
-		return {static_cast<uint>(full.template length<DimsB>(empty_state))...};
+		return {static_cast<uint>(struct_length<DimsB>(full, empty_state))...};
 	}
 
 	[[nodiscard]]
 	constexpr dim3 block_dim() const noexcept {
 		const auto full = this->top_struct();
-		return {static_cast<uint>(full.template length<DimsT>(empty_state))...};
+		return {static_cast<uint>(struct_length<DimsT>(full, empty_state))...};
 	}
 
 	[[nodiscard]]
 	explicit constexpr operator bool() const noexcept {
 		const auto full = this->top_struct();
-		return (... && full.template length<DimsT>(empty_state)) && (... && full.template length<DimsB>(empty_state));
+		return (... && struct_length<DimsT>(full, empty_state)) && (... && struct_length<DimsB>(full, empty_state));
 	}
 
 	[[nodiscard]]

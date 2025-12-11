@@ -192,14 +192,14 @@ struct reorder_t : strict_contain<T> {
 	[[nodiscard]]
 	static consteval bool has_length() noexcept {
 		return (complete || signature::template any_accept<QDim>) &&
-		       sub_structure_t::template has_length<QDim, sub_state_t<State>>();
+		       struct_has_length<QDim, sub_structure_t, sub_state_t<State>>();
 	}
 
 	template<auto QDim, IsState State>
-	requires (has_length<QDim, State>())
+	requires (struct_has_length<QDim, reorder_t, State>())
 	[[nodiscard]]
 	constexpr auto length(State state) const noexcept {
-		return sub_structure().template length<QDim>(state);
+		return struct_length<QDim>(sub_structure(), state);
 	}
 };
 
@@ -281,14 +281,14 @@ public:
 	requires IsDim<decltype(QDim)>
 	[[nodiscard]]
 	static consteval bool has_length() noexcept {
-		return sub_structure_t::template has_length<QDim, sub_state_t<State>>();
+		return struct_has_length<QDim, sub_structure_t, sub_state_t<State>>();
 	}
 
 	template<auto QDim, IsState State>
-	requires (has_length<QDim, State>())
+	requires (struct_has_length<QDim, hoist_t, State>())
 	[[nodiscard]]
 	constexpr auto length(State state) const noexcept {
-		return sub_structure().template length<QDim>(state);
+		return struct_length<QDim>(sub_structure(), state);
 	}
 };
 
@@ -493,15 +493,15 @@ public:
 	requires IsDim<decltype(QDim)>
 	[[nodiscard]]
 	static consteval bool has_length() noexcept {
-		return sub_structure_t::template has_length<helpers::rename_dim<QDim, external, internal>::dim,
-		                                            sub_state_t<State>>();
+		return struct_has_length<helpers::rename_dim<QDim, external, internal>::dim, sub_structure_t,
+		                         sub_state_t<State>>();
 	}
 
 	template<auto QDim, IsState State>
-	requires (has_length<QDim, State>())
+	requires (struct_has_length<QDim, rename_t, State>())
 	[[nodiscard]]
 	constexpr auto length(State state) const noexcept {
-		return sub_structure().template length<helpers::rename_dim<QDim, external, internal>::dim>(sub_state(state));
+		return struct_length<helpers::rename_dim<QDim, external, internal>::dim>(sub_structure(), sub_state(state));
 	}
 };
 
@@ -575,15 +575,15 @@ public:
 		constexpr bool has_index = state_contains<State, index_in<Dim>>;
 		constexpr bool has_length = state_contains<State, length_in<Dim>>;
 
-		static_assert(!(sub_structure_t::template has_length<DimA, clean_state_t<State>>() ^
-		                sub_structure_t::template has_length<DimB, clean_state_t<State>>()),
+		static_assert(!(struct_has_length<DimA, sub_structure_t, clean_state_t<State>>() ^
+		                struct_has_length<DimB, sub_structure_t, clean_state_t<State>>()),
 		              "Both dimensions must be either sized or unsized");
 
 		if constexpr (has_index && has_length) {
 			const auto index = state.template get<index_in<Dim>>();
 			const auto length = state.template get<length_in<Dim>>();
-			static_assert(!sub_structure_t::template has_length<DimA, clean_state_t<State>>() &&
-			                  !sub_structure_t::template has_length<DimB, clean_state_t<State>>(),
+			static_assert(!struct_has_length<DimA, sub_structure_t, clean_state_t<State>>() &&
+			                  !struct_has_length<DimB, sub_structure_t, clean_state_t<State>>(),
 			              "Cannot set joined dimension length on an already sized structure");
 			return clean_state(state).template with<index_in<DimA>, index_in<DimB>, length_in<DimA>, length_in<DimB>>(
 				index, index, length, length);
@@ -592,8 +592,8 @@ public:
 			return clean_state(state).template with<index_in<DimA>, index_in<DimB>>(index, index);
 		} else if constexpr (has_length) {
 			const auto length = state.template get<length_in<Dim>>();
-			static_assert(!sub_structure_t::template has_length<DimA, clean_state_t<State>>() &&
-			                  !sub_structure_t::template has_length<DimB, clean_state_t<State>>(),
+			static_assert(!struct_has_length<DimA, sub_structure_t, clean_state_t<State>>() &&
+			                  !struct_has_length<DimB, sub_structure_t, clean_state_t<State>>(),
 			              "Cannot set joined dimension length on an already sized structure");
 			return clean_state(state).template with<length_in<DimA>, length_in<DimB>>(length, length);
 		} else {
@@ -615,14 +615,14 @@ public:
 	requires IsDim<decltype(QDim)>
 	[[nodiscard]]
 	static consteval bool has_length() noexcept {
-		return sub_structure_t::template has_length<QDim, sub_state_t<State>>();
+		return struct_has_length<QDim, sub_structure_t, sub_state_t<State>>();
 	}
 
 	template<auto QDim, IsState State>
-	requires (has_length<QDim, State>())
+	requires (struct_has_length<QDim, join_t, State>())
 	[[nodiscard]]
 	constexpr auto length(State state) const noexcept {
-		return sub_structure().template length<QDim>(sub_state(state));
+		return struct_length<QDim>(sub_structure(), sub_state(state));
 	}
 };
 

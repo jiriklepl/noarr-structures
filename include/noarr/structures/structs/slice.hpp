@@ -133,15 +133,15 @@ public:
 			if constexpr (state_contains<State, length_in<Dim>>) {
 				return true;
 			} else {
-				return sub_structure_t::template has_length<Dim, sub_state_t<State>>();
+				return struct_has_length<Dim, sub_structure_t, sub_state_t<State>>();
 			}
 		} else {
-			return sub_structure_t::template has_length<QDim, sub_state_t<State>>();
+			return struct_has_length<QDim, sub_structure_t, sub_state_t<State>>();
 		}
 	}
 
 	template<auto QDim, IsState State>
-	requires (has_length<QDim, State>())
+	requires (struct_has_length<QDim, shift_t, State>())
 	[[nodiscard]]
 	constexpr auto length(State state) const noexcept {
 		using namespace constexpr_arithmetic;
@@ -149,10 +149,10 @@ public:
 			if constexpr (state_contains<State, length_in<Dim>>) {
 				return state.template get<length_in<Dim>>();
 			} else {
-				return sub_structure().template length<Dim>(sub_state(state)) - start();
+				return struct_length<Dim>(sub_structure(), sub_state(state)) - start();
 			}
 		} else {
-			return sub_structure().template length<QDim>(sub_state(state));
+			return struct_length<QDim>(sub_structure(), sub_state(state));
 		}
 	}
 };
@@ -288,17 +288,17 @@ public:
 	requires IsDim<decltype(QDim)>
 	[[nodiscard]]
 	static consteval bool has_length() noexcept {
-		return sub_structure_t::template has_length<QDim, sub_state_t<State>>();
+		return struct_has_length<QDim, sub_structure_t, sub_state_t<State>>();
 	}
 
 	template<auto QDim, IsState State>
-	requires (has_length<QDim, State>())
+	requires (struct_has_length<QDim, slice_t, State>())
 	[[nodiscard]]
 	constexpr auto length(State state) const noexcept {
 		if constexpr (QDim == Dim) {
 			return len();
 		} else {
-			return sub_structure().template length<QDim>(sub_state(state));
+			return struct_length<QDim>(sub_structure(), sub_state(state));
 		}
 	}
 };
@@ -427,18 +427,18 @@ public:
 	requires IsDim<decltype(QDim)>
 	[[nodiscard]]
 	static consteval bool has_length() noexcept {
-		return sub_structure_t::template has_length<QDim, sub_state_t<State>>();
+		return struct_has_length<QDim, sub_structure_t, sub_state_t<State>>();
 	}
 
 	template<auto QDim, IsState State>
-	requires (has_length<QDim, State>())
+	requires (struct_has_length<QDim, span_t, State>())
 	[[nodiscard]]
 	constexpr auto length(State state) const noexcept {
 		using namespace constexpr_arithmetic;
 		if constexpr (QDim == Dim) {
 			return end() - start();
 		} else {
-			return sub_structure().template length<QDim>(sub_state(state));
+			return struct_length<QDim>(sub_structure(), sub_state(state));
 		}
 	}
 };
@@ -569,19 +569,19 @@ public:
 	requires IsDim<decltype(QDim)>
 	[[nodiscard]]
 	static consteval bool has_length() noexcept {
-		return sub_structure_t::template has_length<QDim, sub_state_t<State>>();
+		return struct_has_length<QDim, sub_structure_t, sub_state_t<State>>();
 	}
 
 	template<auto QDim, IsState State>
-	requires (has_length<QDim, State>())
+	requires (struct_has_length<QDim, step_t, State>())
 	[[nodiscard]]
 	constexpr auto length(State state) const noexcept {
 		using namespace constexpr_arithmetic;
 		if constexpr (QDim == Dim) {
-			const auto sub_length = sub_structure().template length<Dim>(state);
+			const auto sub_length = struct_length<Dim>(sub_structure(), state);
 			return (sub_length + stride() - start() - make_const<1>()) / stride();
 		} else {
-			return sub_structure().template length<QDim>(sub_state(state));
+			return struct_length<QDim>(sub_structure(), sub_state(state));
 		}
 	}
 };
@@ -674,8 +674,8 @@ private:
 			if constexpr (state_contains<State, index_in<Dim>>) {
 				const auto tmp_state = state.template remove<index_in<Dim>>();
 
-				if constexpr (sub_structure_t::template has_length<Dim, decltype(tmp_state)>()) {
-					return tmp_state.template with<index_in<Dim>>(sub_structure.template length<Dim>(tmp_state) -
+				if constexpr (struct_has_length<Dim, sub_structure_t, decltype(tmp_state)>()) {
+					return tmp_state.template with<index_in<Dim>>(struct_length<Dim>(sub_structure, tmp_state) -
 					                                              make_const<1>() -
 					                                              state.template get<index_in<Dim>>());
 				} else {
@@ -719,14 +719,14 @@ public:
 	requires IsDim<decltype(QDim)>
 	[[nodiscard]]
 	static consteval bool has_length() noexcept {
-		return sub_structure_t::template has_length<QDim, sub_state_t<State>>();
+		return struct_has_length<QDim, sub_structure_t, sub_state_t<State>>();
 	}
 
 	template<auto QDim, IsState State>
-	requires (has_length<QDim, State>())
+	requires (struct_has_length<QDim, reverse_t, State>())
 	[[nodiscard]]
 	constexpr auto length(State state) const noexcept {
-		return sub_structure().template length<QDim>(sub_state(state));
+		return struct_length<QDim>(sub_structure(), sub_state(state));
 	}
 };
 
