@@ -56,9 +56,9 @@ public:
 	template<class NewOrder>
 	[[nodiscard]]
 	constexpr auto order(NewOrder /*new_order*/) const noexcept {
-		using signature = typename decltype(sigholder_t() ^ std::declval<NewOrder>())::signature;
+		using new_signature = typename decltype(sigholder_t() ^ std::declval<NewOrder>())::signature;
 
-		return planner_ending_elem_t<signature, F>(base::get());
+		return planner_ending_elem_t<new_signature, F>(base::get());
 	}
 
 	template<class Planner>
@@ -106,9 +106,9 @@ public:
 	template<class NewOrder>
 	[[nodiscard]]
 	constexpr auto order(NewOrder /*new_order*/) const noexcept {
-		using signature = typename decltype(sigholder_t() ^ std::declval<NewOrder>())::signature;
+		using new_signature = typename decltype(sigholder_t() ^ std::declval<NewOrder>())::signature;
 
-		return planner_ending_t<signature, F>(base::get());
+		return planner_ending_t<new_signature, F>(base::get());
 	}
 
 	template<class Planner>
@@ -262,9 +262,9 @@ public:
 	template<class NewOrder>
 	[[nodiscard]]
 	constexpr auto order(NewOrder /*new_order*/) const noexcept {
-		using signature = typename decltype(sigholder_t() ^ std::declval<NewOrder>())::signature;
+		using new_signature = typename decltype(sigholder_t() ^ std::declval<NewOrder>())::signature;
 
-		return planner_sections_t<signature, F>(base::get());
+		return planner_sections_t<new_signature, F>(base::get());
 	}
 
 	template<class Planner>
