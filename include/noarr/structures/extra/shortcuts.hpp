@@ -48,7 +48,8 @@ constexpr auto vectors(Lengths... lengths) noexcept {
 
 template<auto... Dims, class... Lengths>
 requires IsDimPack<decltype(Dims)...> && (sizeof...(Dims) == sizeof...(Lengths))
-[[deprecated("Use vectors instead")]] constexpr auto sized_vectors(Lengths... lengths) noexcept {
+[[deprecated("Use vectors instead")]]
+constexpr auto sized_vectors(Lengths... lengths) noexcept {
 	return (... ^ vector<Dims>(lengths));
 }
 
