@@ -8,6 +8,7 @@
 
 #include "structures.hpp"
 
+#include "structures/structs/bcast.hpp"
 #include "structures/structs/blocks.hpp"
 #include "structures/structs/setters.hpp"
 #include "structures/structs/slice.hpp"
