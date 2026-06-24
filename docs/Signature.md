@@ -81,8 +81,8 @@ struct foo;
 template<auto Dim, class ArgLength, class RetSig>
 struct foo<noarr::function_sig<Dim, ArgLength, RetSig>> {
 	// Inspect Dim, ArgLength, and RetSig:
-	static constexpr bool xxx = ArgLength::is_known; // true for false for dynamic_arg_length and static_arg_length, false for dynamic_arg_length
-	static constexpr bool yyy = ArgLength::is_static; // true for false for static_arg_length, false for dynamic_arg_length and dynamic_arg_length
+	static constexpr bool xxx = ArgLength::valid_arg_length; // true for dynamic_arg_length and static_arg_length
+	static constexpr bool yyy = ArgLength::is_static; // true for static_arg_length, false for dynamic_arg_length
 	static constexpr bool zzz = ArgLength::value; // Beware! only valid if ::is_static, i.e. if ArgLength is static_arg_length<N> (::value is the N)
 	using example_recursion = foo<RetSig>;
 };
@@ -288,7 +288,7 @@ Among other, a signature describes the items that the structure expects to recei
 
 Roughly speaking, the state should contain an `noarr::index_in<Dim>` for each dimension mentioned in the signature.
 It should also contain a `noarr::length_in<Dim>` for each dimension that has `ArgLength = noarr::dynamic_arg_length`.
-It should not contain any `noarr::length_in<Dim>` for dimensions of `noarr::dynamic_arg_length` and `noarr::static_arg_length`.
+It should not contain any `noarr::length_in<Dim>` for dimensions of `noarr::static_arg_length`.
 In some cases, these items can be omitted.
 For example, indices are not needed when computing the size, or when computing an index in an unrelated branch of tuple.
 

@@ -613,7 +613,7 @@ public:
 				return make_const<1>();
 			}
 		} else {
-			static_assert(QDim != Dim, "Index in this dimension is overriden by a substructure");
+			static_assert(QDim != Dim, "Index in this dimension is overridden by a substructure");
 			return struct_length<QDim>(sub_structure(), sub_state(state));
 		}
 	}

@@ -105,7 +105,7 @@ Both also incur some overhead:
 - When using `into_blocks_dynamic` on a CPU, it should never be done in the innermost loop. In other words, there should always be at least one dimension below `DimIsPresent`.
   (`DimMajor` and `DimMinor` cannot be used for this because they are dependencies for `DimIsPresent`.)
   If you don't ensure this, there will be a conditional statement in each iteration of the inner loop, leading to missed optimizations, especially vectorization.
-  On GPU, `into_blocks_dynamic` is the recommend option: `DimMajor` and `DimMinor` can be [bound to cpu threads](../Traverser.md#cuda-integration) and `DimIsPresent` checked inside the kernel.
+  On GPU, `into_blocks_dynamic` is the recommended option: `DimMajor` and `DimMinor` can be [bound to CUDA threads](../Traverser.md#cuda-integration) and `DimIsPresent` checked inside the kernel.
 
 Note that the order of dimensions in the two structures is different: this reflects the fact that the dependencies go in opposite ways
 (`DimMajor` and `DimMinor` depend on `DimIsBorder`, while `DimIsPresent` depends on `DimMajor` and `DimMinor`).

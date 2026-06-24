@@ -20,7 +20,7 @@ constexpr proto noarr::step(auto start, auto step);
 ## Description
 
 A `step_t` structure is similar to its wrapped `T` structure, except that it may be shorter in dimension `Dim`.
-Some elements elements are omitted from the resulting view. Namely, only the elements with the index (*a*·*k* + *b*) in `Dim` are preserved,
+Some elements are omitted from the resulting view. Namely, only the elements with the index (*a*·*k* + *b*) in `Dim` are preserved,
 where *a* and *b* are the parameters of the structure, and *k* is a nonnegative integer. *k* becomes the new index in `Dim` for the element.
 
 The length of the new structure in `Dim` depends on both parameters and the original length.

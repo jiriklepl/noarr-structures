@@ -8,7 +8,7 @@ In general, noarr supports two ways to represent indices/lengths/offsets/sizes:
 - **dynamic** values are only known at runtime (they may depend e.g. on program arguments or input).
   They are always represented using the `std::size_t` type.
   They occupy the necessary amount of bytes (usually 8) and cannot be derived from the type.
-  Note that numeric literals are also considered dynamic unless marked otherwise (this is a property of C++ and cannot be overriden by noarr).
+  Note that numeric literals are also considered dynamic unless marked otherwise (this is a property of C++ and cannot be overridden by noarr).
 - **static** values are already known at compile time (but may be used at runtime).
   They are represented using the `std::integral_constant<std::size_t, N>` family of types.
   They usually take no space at all, since all the necessary information is stored in its type.
@@ -117,7 +117,7 @@ The lambda body is specialized for each possible index.
 
 ## Unknown length dimensions
 
-The length is not known and the structure itself has no way of computing it. It to be set from outside.
+The length is not known and the structure itself has no way of computing it. It has to be set from outside.
 
 The simplest way to create a structure with such a dimension is [`noarr::vector`](structs/vector.md):
 

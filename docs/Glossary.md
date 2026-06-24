@@ -13,12 +13,12 @@ The `|` operator was chosen for its visual similarity with the shell pipeline sy
 
 ### bag
 
-An object that remembers both the structure [structure](#structure) and a pointer to data. See [the section on bag in Basic Usage](BasicUsage.md#bag).
+An object that remembers both the [structure](#structure) and a pointer to data. See [the section on bag in Basic Usage](BasicUsage.md#bag).
 
 ### dimension
 
 A [structure](#structure) can have multiple dimensions. Unlike multidimensional arrays in C++ or C, each dimension is named -- identified by a `char` (e.g. `'x'`, `'y'`) or an object of `noarr::dim<auto TAG>`.
-Like in C++ or C arrays, to get the memory offset of an element, one must specify the [index](#index) for each dimension0.
+Like in C++ or C arrays, to get the memory offset of an element, one must specify the [index](#index) for each dimension.
 The [lengths](#length) (index ranges) can be [queried/set](BasicUsage.md#lengths) on the structure,
 and the dimensions themselves can be inspected at compile time using the structure's [signature](#signature).
 See also [Dimension Kinds](DimensionKinds.md).

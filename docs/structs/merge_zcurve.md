@@ -83,7 +83,7 @@ noarr::traverser(matrix).order(noarr::merge_zcurve<'i', 'j', 'z'>::maxlen_alignm
 
 ### The general case
 
-If the upper bound or the divisibility (or neither) is not know, you can use one (or both) of the following parameters:
+If the upper bound or the divisibility (or neither) is not known, you can use one (or both) of the following parameters:
 
 - `Alignment = 1` - all possible lengths are divisible by 1, and 1 is a power of two
 - `MaxLen = 1 + (~std::size_t(0) >> 1)` largest representable power of two, `2**63` on 64bit platforms

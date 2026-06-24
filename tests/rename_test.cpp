@@ -52,7 +52,7 @@ TEST_CASE("Rename in tuple", "[rename]") {
 	REQUIRE((structure | offset<'t', 'x', 'y'>(lit<1>, 3, 5)) == (structure_renamed2 | offset<'s', 'y', 'x'>(lit<1>, 3, 5)));
 }
 
-TEST_CASE("Rename ignores overriden dimensions", "[rename]") {
+TEST_CASE("Rename ignores overridden dimensions", "[rename]") {
 	using namespace noarr;
 
 	auto structure = array_t<'x', 10, array_t<'y', 20, scalar<int>>>();
