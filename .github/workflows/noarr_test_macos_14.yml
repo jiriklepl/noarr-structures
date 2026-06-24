@@ -13,7 +13,7 @@ jobs:
       matrix:
         os: [macos-14]
         BUILD_TYPE: [Debug, Release]
-        compiler: [clang++14, clang++15, g++-11, g++-12]
+        compiler: [clang++14, clang++15, g++-13, g++-14, g++-15]
         include:
           - compiler: clang++14
             install: brew update && brew install llvm@14
@@ -21,12 +21,15 @@ jobs:
           - compiler: clang++15
             install: brew update && brew install llvm@15
             alias: $(brew --prefix llvm@15)/bin/clang++
-          - compiler: g++-11
-            install: brew update && brew install gcc@11
-            alias: g++-11
-          - compiler: g++-12
-            install: brew update && brew install gcc@12
-            alias: g++-12
+          - compiler: g++-13
+            install: brew update && brew install gcc@13
+            alias: g++-13
+          - compiler: g++-14
+            install: brew update && brew install gcc@14
+            alias: g++-14
+          - compiler: g++-15
+            install: brew update && brew install gcc@15
+            alias: g++-15
 
     runs-on: ${{matrix.os}}
 
