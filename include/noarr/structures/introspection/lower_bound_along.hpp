@@ -15,8 +15,6 @@
 #include "../structs/slice.hpp"
 #include "../structs/views.hpp"
 
-// TODO: could be more elegant to define min_state and end_state instead of min and end
-
 namespace noarr {
 
 namespace helpers {

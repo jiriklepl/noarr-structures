@@ -10,9 +10,12 @@
 - [`rename`](rename.md): assigns different names to zero or more dimensions (swapping names is allowed)
 - [`shift`](shift.md): makes the specified dimension start at the specified index, making the prefix of each row/column inaccessible
 - [`slice`](slice.md): makes the specified dimension start at some index and end at another index, making a prefix and a suffix inaccessible
+- [`span`](span.md): makes the specified dimension cover the half-open range between two indices
+- [`reverse`](reverse.md): reverses indexing in the specified dimension
 - [`into_blocks`](into_blocks.md): splits one dimension into two dimensions, one of which becomes the index of a block, and the other the index within a block
 - [`merge_blocks`](merge_blocks.md): the inverse of `into_blocks` - takes two existing dimensions and merges them into one dimension, making one of the original dimensions the index of a block and the other the index within a block
 - [`merge_zcurve`](merge_zcurve.md): like `merge_blocks`, but does not compose the dimensions using blocks but a z-order curve instead (this structure also supports any number of dimensions, not just two)
+- [`join`](join.md): replaces two dimensions of the same length with one dimension whose index is used for both original dimensions
 - [`bcast`](bcast.md): introduces a dynamic dimension that is ignored
 - [`step`](step.md): selects every (a+bi)th element according to the specified dimension
 - [`cuda_step`](cuda_step.md): splits a structure among cuda threads (using `noarr::step`)
