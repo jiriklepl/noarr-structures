@@ -3,6 +3,7 @@
 
 #include <cstddef>
 
+#include <concepts>
 #include <type_traits>
 #include <utility>
 
@@ -108,11 +109,9 @@ concept defines_length = IsState<State> && IsDim<decltype(Dim)> &&
                          requires(Structure structure, State state) { structure.template length<Dim>(state); };
 
 template<class StructOuter, class StructInner, class State>
-concept defines_has_strict_offset_of =
-	requires { StructOuter::template has_strict_offset_of<StructInner, State>(); } || requires {
-		requires static_cast<bool>(StructOuter::template has_strict_offset_of<StructInner, State>()) ||
-					 !static_cast<bool>(StructOuter::template has_strict_offset_of<StructInner, State>());
-	};
+concept defines_has_strict_offset_of = requires {
+	{ StructOuter::template has_strict_offset_of<StructInner, State>() } -> std::convertible_to<bool>;
+};
 
 template<class StructOuter, class StructInner, class State, class Start>
 concept defines_strict_offset_of = IsState<State> && requires(StructOuter structure, State state, Start start) {
@@ -120,11 +119,9 @@ concept defines_strict_offset_of = IsState<State> && requires(StructOuter struct
 };
 
 template<class StructOuter, class StructInner, class State>
-concept defines_has_strict_state_at =
-	requires { StructOuter::template has_strict_state_at<StructInner, State>(); } || requires {
-		requires static_cast<bool>(StructOuter::template has_strict_state_at<StructInner, State>()) ||
-					 !static_cast<bool>(StructOuter::template has_strict_state_at<StructInner, State>());
-	};
+concept defines_has_strict_state_at = requires {
+	{ StructOuter::template has_strict_state_at<StructInner, State>() } -> std::convertible_to<bool>;
+};
 
 template<class StructOuter, class StructInner, class State>
 concept defines_strict_state_at = IsState<State> && requires(StructOuter structure, State state) {
