@@ -14,6 +14,36 @@
 
 namespace noarr {
 
+namespace helpers {
+
+template<class ArgLength, class StartT, class EndT>
+struct span_arg_length {
+	using type = dynamic_arg_length;
+};
+
+template<std::size_t L, std::size_t S, std::size_t E>
+struct span_arg_length<static_arg_length<L>, std::integral_constant<std::size_t, S>,
+                       std::integral_constant<std::size_t, E>> {
+	static_assert(S <= E, "Span start must not be greater than end");
+	static_assert(E <= L, "Span end must not be greater than the original length");
+	using type = static_arg_length<E - S>;
+};
+
+template<class ArgLength, class StartT, class StrideT>
+struct step_arg_length {
+	using type = dynamic_arg_length;
+};
+
+template<std::size_t L, std::size_t S, std::size_t Stride>
+struct step_arg_length<static_arg_length<L>, std::integral_constant<std::size_t, S>,
+                       std::integral_constant<std::size_t, Stride>> {
+	static_assert(Stride != 0, "Step stride must not be zero");
+	static_assert(S < Stride, "Step start must be less than stride");
+	using type = static_arg_length<(S < L) ? ((L + Stride - S - 1U) / Stride) : 0U>;
+};
+
+} // namespace helpers
+
 template<IsDim auto Dim, class T, class StartT>
 struct shift_t : strict_contain<T, StartT> {
 	using strict_contain<T, StartT>::strict_contain;
@@ -360,7 +390,7 @@ private:
 
 	template<class ArgLength, class RetSig>
 	struct dim_replacement<function_sig<Dim, ArgLength, RetSig>> {
-		using type = function_sig<Dim, arg_length_from_t<EndT>, RetSig>;
+		using type = function_sig<Dim, typename helpers::span_arg_length<ArgLength, StartT, EndT>::type, RetSig>;
 	};
 
 	template<class... RetSigs>
@@ -500,7 +530,7 @@ private:
 
 	template<class ArgLength, class RetSig>
 	struct dim_replacement<function_sig<Dim, ArgLength, RetSig>> {
-		using type = function_sig<Dim, arg_length_from_t<StrideT>, RetSig>;
+		using type = function_sig<Dim, typename helpers::step_arg_length<ArgLength, StartT, StrideT>::type, RetSig>;
 	};
 
 	template<class... RetSigs>
@@ -579,7 +609,16 @@ public:
 		using namespace constexpr_arithmetic;
 		if constexpr (QDim == Dim) {
 			const auto sub_length = struct_length<Dim>(sub_structure(), state);
-			return (sub_length + stride() - start() - make_const<1>()) / stride();
+			using sub_length_t = std::remove_cvref_t<decltype(sub_length)>;
+			if constexpr (requires { sub_length_t::value; } && requires { StartT::value; }) {
+				if constexpr (sub_length_t::value <= StartT::value) {
+					return make_const<0>();
+				} else {
+					return (sub_length + stride() - start() - make_const<1U>()) / stride();
+				}
+			} else {
+				return (sub_length + stride() - start() - make_const<1U>()) / stride();
+			}
 		} else {
 			return struct_length<QDim>(sub_structure(), sub_state(state));
 		}

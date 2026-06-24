@@ -1,7 +1,15 @@
 #include <noarr_test/macros.hpp>
 
+#include <type_traits>
+
 #include <noarr/structures_extended.hpp>
 #include <noarr/structures/structs/slice.hpp>
+
+namespace {
+
+using float_sig = noarr::scalar_sig<float>;
+
+} // namespace
 
 TEST_CASE("Step", "[step]") {
 	auto m = noarr::scalar<float>() ^ noarr::array<'x', 10>();
@@ -25,6 +33,16 @@ TEST_CASE("Step", "[step]") {
 	REQUIRE((m3 | noarr::offset<'x'>(1)) == 7 * sizeof(float));
 	REQUIRE((m0 | noarr::offset<'x'>(2)) == 8 * sizeof(float));
 	REQUIRE((m1 | noarr::offset<'x'>(2)) == 9 * sizeof(float));
+}
+
+TEST_CASE("Step and span static signatures", "[step]") {
+	const auto span = noarr::scalar<float>() ^ noarr::array<'x', 10>() ^ noarr::span<'x'>(noarr::lit<3>, noarr::lit<6>);
+	const auto step = noarr::scalar<float>() ^ noarr::array<'x', 10>() ^ noarr::step<'x'>(noarr::lit<1>, noarr::lit<4>);
+	using span_sig = decltype(span)::signature;
+	using step_sig = decltype(step)::signature;
+
+	STATIC_REQUIRE(std::is_same_v<span_sig, noarr::function_sig<'x', noarr::static_arg_length<3>, float_sig>>);
+	STATIC_REQUIRE(std::is_same_v<step_sig, noarr::function_sig<'x', noarr::static_arg_length<3>, float_sig>>);
 }
 
 TEST_CASE("Auto step", "[step]") {
