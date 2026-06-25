@@ -115,9 +115,10 @@ concept defines_has_strict_offset_of = IsState<State> && IsStruct<StructInner> &
 };
 
 template<class StructOuter, class StructInner, class State, class Start>
-concept defines_strict_offset_of = IsState<State> && IsStruct<StructInner> && requires(StructOuter structure, State state, Start start) {
-	structure.template strict_offset_of<StructInner>(state, start);
-};
+concept defines_strict_offset_of =
+	IsState<State> && IsStruct<StructInner> && requires(StructOuter structure, State state, Start start) {
+		structure.template strict_offset_of<StructInner>(state, start);
+	};
 
 template<class StructOuter, class StructInner, class State>
 concept defines_has_strict_state_at = IsState<State> && IsStruct<StructInner> && requires {
@@ -126,9 +127,9 @@ concept defines_has_strict_state_at = IsState<State> && IsStruct<StructInner> &&
 };
 
 template<class StructOuter, class StructInner, class State>
-concept defines_strict_state_at = IsState<State> && IsStruct<StructInner> && requires(StructOuter structure, State state) {
-	structure.template strict_state_at<StructInner>(state);
-};
+concept defines_strict_state_at =
+	IsState<State> && IsStruct<StructInner> &&
+	requires(StructOuter structure, State state) { structure.template strict_state_at<StructInner>(state); };
 
 template<IsStruct Structure, IsState State>
 consteval bool struct_has_size() noexcept;
