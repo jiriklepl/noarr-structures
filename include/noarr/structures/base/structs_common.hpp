@@ -109,22 +109,24 @@ concept defines_length = IsState<State> && IsDim<decltype(Dim)> &&
                          requires(Structure structure, State state) { structure.template length<Dim>(state); };
 
 template<class StructOuter, class StructInner, class State>
-concept defines_has_strict_offset_of = requires {
-	{ StructOuter::template has_strict_offset_of<StructInner, State>() } -> std::convertible_to<bool>;
+concept defines_has_strict_offset_of = IsState<State> && IsStruct<StructInner> && requires {
+	requires static_cast<bool>(StructOuter::template has_strict_offset_of<StructInner, State>()) ||
+				 !static_cast<bool>(StructOuter::template has_strict_offset_of<StructInner, State>());
 };
 
 template<class StructOuter, class StructInner, class State, class Start>
-concept defines_strict_offset_of = IsState<State> && requires(StructOuter structure, State state, Start start) {
+concept defines_strict_offset_of = IsState<State> && IsStruct<StructInner> && requires(StructOuter structure, State state, Start start) {
 	structure.template strict_offset_of<StructInner>(state, start);
 };
 
 template<class StructOuter, class StructInner, class State>
-concept defines_has_strict_state_at = requires {
-	{ StructOuter::template has_strict_state_at<StructInner, State>() } -> std::convertible_to<bool>;
+concept defines_has_strict_state_at = IsState<State> && IsStruct<StructInner> && requires {
+	requires static_cast<bool>(StructOuter::template has_strict_state_at<StructInner, State>()) ||
+				 !static_cast<bool>(StructOuter::template has_strict_state_at<StructInner, State>());
 };
 
 template<class StructOuter, class StructInner, class State>
-concept defines_strict_state_at = IsState<State> && requires(StructOuter structure, State state) {
+concept defines_strict_state_at = IsState<State> && IsStruct<StructInner> && requires(StructOuter structure, State state) {
 	structure.template strict_state_at<StructInner>(state);
 };
 
