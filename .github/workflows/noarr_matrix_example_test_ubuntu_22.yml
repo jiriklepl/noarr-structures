@@ -13,7 +13,7 @@ jobs:
       matrix:
         os: [ubuntu-22.04]
         BUILD_TYPE: [Debug]
-        compiler: [g++-10, g++-11, g++-12, clang++-14, clang++-15]
+        compiler: [g++-10, g++-11, g++-12, clang++-13, clang++-14, clang++-15]
         include:
           - compiler: g++-10
             install: sudo apt-get update && sudo apt-get install -y g++-10
@@ -21,6 +21,8 @@ jobs:
             install: sudo apt-get update && sudo apt-get install -y g++-11
           - compiler: g++-12
             install: sudo apt-get update && sudo apt-get install -y g++-12
+          - compiler: clang++-13
+            install: sudo apt-get update && sudo apt-get install -y clang-13
           - compiler: clang++-14
             install: sudo apt-get update && sudo apt-get install -y clang-14
           - compiler: clang++-15

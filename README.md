@@ -3,7 +3,7 @@
 [![Windows-latest](../../actions/workflows/noarr_test_winl.yml/badge.svg)](../../actions/workflows/noarr_test_winl.yml)
 [![macOS-14](../../actions/workflows/noarr_test_macos_14.yml/badge.svg)](../../actions/workflows/noarr_test_macos_14.yml)
 
-> GCC 10-14, Clang 14-18, and MSVC 17 on Ubuntu, macOS, and Windows GitHub runners.
+> GCC 10-14, Clang 13-18, and MSVC 17 on Ubuntu, macOS, and Windows GitHub runners.
 
 [![Docs check - Ubuntu](../../actions/workflows/noarr_docs_check_ubuntu.yml/badge.svg)](../../actions/workflows/noarr_docs_check_ubuntu.yml)
 [![Docs check - Windows](../../actions/workflows/noarr_docs_check_windows.yml/badge.svg)](../../actions/workflows/noarr_docs_check_windows.yml)
