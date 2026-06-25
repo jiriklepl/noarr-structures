@@ -36,13 +36,22 @@ TEST_CASE("Step", "[step]") {
 }
 
 TEST_CASE("Step and span static signatures", "[step]") {
+	const auto shift = noarr::scalar<float>() ^ noarr::array<'x', 10>() ^ noarr::shift<'x'>(noarr::lit<3>);
+	const auto slice = noarr::scalar<float>() ^ noarr::array<'x', 10>() ^ noarr::slice<'x'>(noarr::lit<3>, noarr::lit<6>);
 	const auto span = noarr::scalar<float>() ^ noarr::array<'x', 10>() ^ noarr::span<'x'>(noarr::lit<3>, noarr::lit<6>);
 	const auto step = noarr::scalar<float>() ^ noarr::array<'x', 10>() ^ noarr::step<'x'>(noarr::lit<1>, noarr::lit<4>);
+	const auto empty_step = noarr::scalar<float>() ^ noarr::array<'x', 3>() ^ noarr::step<'x'>(noarr::lit<5>, noarr::lit<6>);
+	using shift_sig = decltype(shift)::signature;
+	using slice_sig = decltype(slice)::signature;
 	using span_sig = decltype(span)::signature;
 	using step_sig = decltype(step)::signature;
+	using empty_step_sig = decltype(empty_step)::signature;
 
+	STATIC_REQUIRE(std::is_same_v<shift_sig, noarr::function_sig<'x', noarr::static_arg_length<7>, float_sig>>);
+	STATIC_REQUIRE(std::is_same_v<slice_sig, noarr::function_sig<'x', noarr::static_arg_length<6>, float_sig>>);
 	STATIC_REQUIRE(std::is_same_v<span_sig, noarr::function_sig<'x', noarr::static_arg_length<3>, float_sig>>);
 	STATIC_REQUIRE(std::is_same_v<step_sig, noarr::function_sig<'x', noarr::static_arg_length<3>, float_sig>>);
+	STATIC_REQUIRE(std::is_same_v<empty_step_sig, noarr::function_sig<'x', noarr::static_arg_length<0>, float_sig>>);
 }
 
 TEST_CASE("Auto step", "[step]") {

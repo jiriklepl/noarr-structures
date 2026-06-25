@@ -16,6 +16,30 @@ namespace noarr {
 
 namespace helpers {
 
+template<class ArgLength, class StartT>
+struct shift_arg_length {
+	using type = dynamic_arg_length;
+};
+
+template<std::size_t L, std::size_t S>
+struct shift_arg_length<static_arg_length<L>, std::integral_constant<std::size_t, S>> {
+	static_assert(S <= L, "Shift start must not be greater than the original length");
+	using type = static_arg_length<L - S>;
+};
+
+template<class ArgLength, class StartT, class LenT>
+struct slice_arg_length {
+	using type = arg_length_from_t<LenT>;
+};
+
+template<std::size_t L, std::size_t S, std::size_t Len>
+struct slice_arg_length<static_arg_length<L>, std::integral_constant<std::size_t, S>,
+                        std::integral_constant<std::size_t, Len>> {
+	static_assert(S <= L, "Slice start must not be greater than the original length");
+	static_assert(Len <= L - S, "Slice length must not extend past the original length");
+	using type = static_arg_length<Len>;
+};
+
 template<class ArgLength, class StartT, class EndT>
 struct span_arg_length {
 	using type = dynamic_arg_length;
@@ -39,7 +63,8 @@ struct step_arg_length<static_arg_length<L>, std::integral_constant<std::size_t,
                        std::integral_constant<std::size_t, Stride>> {
 	static_assert(Stride != 0, "Step stride must not be zero");
 	static_assert(S < Stride, "Step start must be less than stride");
-	using type = static_arg_length<(S < L) ? ((L + Stride - S - 1U) / Stride) : 0U>;
+	static constexpr std::size_t value = (Stride == 0 || S >= L) ? 0U : (L + Stride - S - 1U) / Stride;
+	using type = static_arg_length<value>;
 };
 
 } // namespace helpers
@@ -73,17 +98,7 @@ private:
 
 	template<class ArgLength, class RetSig>
 	struct dim_replacement<function_sig<Dim, ArgLength, RetSig>> {
-		template<class L, class S>
-		struct subtract {
-			using type = dynamic_arg_length;
-		};
-
-		template<std::size_t L, std::size_t S>
-		struct subtract<static_arg_length<L>, std::integral_constant<std::size_t, S>> {
-			using type = static_arg_length<L - S>;
-		};
-
-		using type = function_sig<Dim, typename subtract<ArgLength, StartT>::type, RetSig>;
+		using type = function_sig<Dim, typename helpers::shift_arg_length<ArgLength, StartT>::type, RetSig>;
 	};
 
 	template<class... RetSigs>
@@ -91,6 +106,7 @@ private:
 		using original = dep_function_sig<Dim, RetSigs...>;
 		static_assert(requires { StartT::value; }, "Cannot shift a tuple dimension dynamically");
 		static constexpr std::size_t start = StartT::value;
+		static_assert(start <= sizeof...(RetSigs), "Shift start must not be greater than the tuple length");
 		static constexpr std::size_t len = sizeof...(RetSigs) - start;
 
 		template<class Indices = std::make_index_sequence<len>>
@@ -251,7 +267,7 @@ private:
 
 	template<class ArgLength, class RetSig>
 	struct dim_replacement<function_sig<Dim, ArgLength, RetSig>> {
-		using type = function_sig<Dim, arg_length_from_t<LenT>, RetSig>;
+		using type = function_sig<Dim, typename helpers::slice_arg_length<ArgLength, StartT, LenT>::type, RetSig>;
 	};
 
 	template<class... RetSigs>
@@ -261,6 +277,8 @@ private:
 		static_assert(requires { LenT::value; }, "Cannot slice a tuple dimension dynamically");
 		static constexpr std::size_t start = StartT::value;
 		static constexpr std::size_t len = LenT::value;
+		static_assert(start <= sizeof...(RetSigs), "Slice start must not be greater than the tuple length");
+		static_assert(len <= sizeof...(RetSigs) - start, "Slice length must not extend past the tuple length");
 
 		template<class Indices = std::make_index_sequence<len>>
 		struct pack_helper;
@@ -400,6 +418,8 @@ private:
 		static_assert(requires { EndT::value; }, "Cannot span a tuple dimension dynamically");
 		static constexpr std::size_t start = StartT::value;
 		static constexpr std::size_t end = EndT::value;
+		static_assert(start <= end, "Span start must not be greater than end");
+		static_assert(end <= sizeof...(RetSigs), "Span end must not be greater than the tuple length");
 
 		template<class Indices = std::make_index_sequence<end - start>>
 		struct pack_helper;
@@ -541,8 +561,12 @@ private:
 		static constexpr std::size_t start = StartT::value;
 		static constexpr std::size_t stride = StrideT::value;
 		static constexpr std::size_t sub_length = sizeof...(RetSigs);
+		static_assert(stride != 0, "Step stride must not be zero");
+		static_assert(start < stride, "Step start must be less than stride");
+		static constexpr std::size_t len =
+			(stride == 0 || start >= sub_length) ? 0U : (sub_length + stride - start - 1U) / stride;
 
-		template<class Indices = std::make_index_sequence<(sub_length + stride - start - 1) / stride>>
+		template<class Indices = std::make_index_sequence<len>>
 		struct pack_helper;
 
 		template<std::size_t... Indices>
