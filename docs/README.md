@@ -1,6 +1,6 @@
-# User documentation for Noarr Structures
+# User documentation for Noarr
 
-Noarr Structures is a header-only library that facilitates the creation of many data structures and provides a layout-agnostic way of accessing the values stored in them.
+Noarr is a header-only library that facilitates the creation of many data structures and provides a layout-agnostic way of accessing the values stored in them.
 
 
 ## Data modeling in Noarr

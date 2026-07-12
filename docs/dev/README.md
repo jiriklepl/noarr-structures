@@ -1,4 +1,4 @@
-# Developer documentation for Noarr Structures
+# Developer documentation for Noarr
 
 This directory contains sections that are interesting mostly or exclusively to noarr developers.
 

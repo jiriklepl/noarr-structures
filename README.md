@@ -9,9 +9,9 @@
 [![Docs check - Windows](../../actions/workflows/noarr_docs_check_windows.yml/badge.svg)](../../actions/workflows/noarr_docs_check_windows.yml)
 
 
-# Noarr Structures
+# Noarr
 
-Noarr Structures is a header-only library that facilitates the creation of many data structures and provides a layout-agnostic way of accessing stored values.
+Noarr is a header-only library that facilitates the creation of many data structures and provides a layout-agnostic way of accessing stored values.
 
 It is free software and distributed using the MIT [license](LICENSE).
 
@@ -101,12 +101,10 @@ traverser | [&](auto idx) {
 
 ## Using the library
 
-Noarr Structures is a header-only library - to use it, simply include one of the following headers in your project:
+Noarr is a header-only library - to use it, simply include one of the following headers in your project:
 
 ```cpp
-#include <noarr/structures_extended.hpp>
-// Or (to include the traversers as well)
-#include <noarr/traversers.hpp>
+#include <noarr/noarr.hpp>
 ```
 
 To use the library in your project, you need to include the `include` directory in your project's include directories. If you are using CMake, you can do this by adding the following line to your `CMakeLists.txt` file:

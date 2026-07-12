@@ -3,7 +3,7 @@
 First, we have to `#include` the `noarr` library:
 
 ```cpp
-#include <noarr/structures_extended.hpp>
+#include <noarr/noarr.hpp>
 ```
 
 We start by modeling the layout. For example, each of the following two equivalent definitions describes a list of floats (indexed by some `'i'`):

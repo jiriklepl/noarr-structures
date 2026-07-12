@@ -1,4 +1,4 @@
-# Noarr Structures tests outline
+# Noarr tests outline
 
 - [compile_test.cpp](compile_test.cpp): contains the code snippets from the root [README.md](../README.md).
 - [containers_dots_test.cpp](containers_dots_test.cpp): checks that the `set_length` method correctly sets the lengths of wrapped vectors and arrays
