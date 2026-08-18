@@ -9,13 +9,28 @@ on:
 
 jobs:
   build:
+    name: ${{matrix.compiler}} (${{matrix.BUILD_TYPE}})
     runs-on: windows-latest
     strategy:
+      fail-fast: false
       matrix:
         BUILD_TYPE: [Debug, Release]
+        compiler: [msvc, clang, clang-cl, mingw-gcc]
+        include:
+          - compiler: msvc
+            cxx: cl
+          - compiler: clang
+            cxx: clang++
+          - compiler: clang-cl
+            cxx: clang-cl
+          - compiler: mingw-gcc
+            cxx: g++
 
     steps:
     - uses: actions/checkout@v7
+
+    - name: Activate the Developer Command Prompt for VS
+      uses: ilammy/msvc-dev-cmd@v1
 
     - name: Create Build Environment
       shell: powershell
@@ -25,12 +40,12 @@ jobs:
     - name: Configure CMake
       shell: powershell
       working-directory: ${{github.workspace}}\tests\build
-      run: cmake .. -DCMAKE_CONFIGURATION_TYPES=${{matrix.BUILD_TYPE}}
+      run: cmake .. -G "Ninja Multi-Config" -DCMAKE_CONFIGURATION_TYPES=${{matrix.BUILD_TYPE}} -DCMAKE_CXX_COMPILER=${{matrix.cxx}}
 
     - name: Build
       working-directory: ${{github.workspace}}\tests\build
       shell: powershell
-      run: cmake --build . --config ${{matrix.BUILD_TYPE}} -j
+      run: cmake --build . --config ${{matrix.BUILD_TYPE}} -j 4
 
     - name: Test
       working-directory: ${{github.workspace}}\tests\build
