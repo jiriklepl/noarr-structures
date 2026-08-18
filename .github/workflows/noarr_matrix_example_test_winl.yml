@@ -9,8 +9,10 @@ on:
 
 jobs:
   build:
+    name: msvc (${{matrix.BUILD_TYPE}})
     runs-on: windows-latest
     strategy:
+      fail-fast: false
       matrix:
         BUILD_TYPE: [Debug]
 
@@ -28,7 +30,7 @@ jobs:
     - name: Build
       working-directory: ${{github.workspace}}\examples\matrix\build
       shell: powershell
-      run: cmake --build . --config ${{matrix.BUILD_TYPE}}
+      run: cmake --build . --config ${{matrix.BUILD_TYPE}} -j 4
 
     - name: Test
       working-directory: ${{github.workspace}}\examples\matrix\build\Debug

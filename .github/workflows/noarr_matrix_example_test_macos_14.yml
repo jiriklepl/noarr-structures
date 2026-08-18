@@ -9,7 +9,9 @@ on:
 
 jobs:
   build:
+    name: ${{matrix.compiler}} (${{matrix.BUILD_TYPE}})
     strategy:
+      fail-fast: false
       matrix:
         os: [macos-14]
         BUILD_TYPE: [Debug, Release]
@@ -53,7 +55,7 @@ jobs:
     - name: Build
       working-directory: ${{github.workspace}}/examples/matrix/build
       shell: bash
-      run: cmake --build . --config ${{matrix.BUILD_TYPE}} -j
+      run: cmake --build . --config ${{matrix.BUILD_TYPE}} -j 4
 
     - name: Test
       working-directory: ${{github.workspace}}/examples/matrix/build
