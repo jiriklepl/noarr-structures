@@ -15,7 +15,7 @@ jobs:
         BUILD_TYPE: [Debug, Release]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Create Build Environment
       shell: powershell
