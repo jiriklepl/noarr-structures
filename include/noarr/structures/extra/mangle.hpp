@@ -178,6 +178,7 @@ struct mangle_expr_helpers {
 		} while (u /= 10);
 		if (neg) {
 			*--ptr = '-';
+			sz++;
 		}
 		out.append(ptr, sz);
 	}

@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 
+#include <limits>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -42,4 +43,11 @@ TEST_CASE("Mangle expr", "[mangle]") {
 	static_assert(std::is_same_v<decltype(structure), decltype(structure_pretty)>, "Test sanity check");
 
 	REQUIRE(expected == actual);
+}
+
+TEST_CASE("Mangle negative integral values", "[mangle][regression]") {
+	REQUIRE(noarr::mangle_expr<std::string>(std::int32_t{-123}) == "int32_t{-123}");
+	REQUIRE(noarr::mangle_expr<std::string>(std::int32_t{-1}) == "int32_t{-1}");
+	REQUIRE(noarr::mangle_expr<std::string>(std::numeric_limits<std::int32_t>::min()) ==
+	        "int32_t{-2147483648}");
 }
