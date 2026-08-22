@@ -80,7 +80,11 @@ substitutions: dict[tuple[str, int], dict[str, str | Callable[[re.Match[str]], s
     ('docs/structs/vector.md', 0): {'struct vector;': 'struct vector_t;'},
     ('docs/structs/slice.md', 6): {_PROLOG: '#if __cplusplus >= 202002L\n', 'lit': 'noarr::lit', _EPILOG: '#endif\n'},
     ('docs/structs/tuple.md', 0): {r'/\*\.\.\.\*/': 'noarr::scalar<int>'},
-    ('docs/structs/tuple.md', 4): {'num_edges': '1024', 'data_ptr': '(void*)nullptr'},
+    ('docs/structs/tuple.md', 4): {
+        _PROLOG: 'auto tuple_storage = std::make_unique<char[]>(edges_soa | noarr::get_size());',
+        'num_edges': '1024',
+        'data_ptr': 'tuple_storage.get()',
+    },
 }
 
 def convert_synopsis(code: str) -> str:
