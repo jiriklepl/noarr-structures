@@ -179,7 +179,11 @@ private:
 		helpers::rename_dim<QDim, typename Structure::external, typename Structure::internal>::dim;
 
 	static constexpr bool get_value() noexcept {
-		return has_offset_along<QDimNew, sub_structure_t, sub_state_t>::value;
+		if constexpr (Structure::internal::template contains<QDim> && !Structure::external::template contains<QDim>) {
+			return false;
+		} else {
+			return has_offset_along<QDimNew, sub_structure_t, sub_state_t>::value;
+		}
 	}
 
 public:
