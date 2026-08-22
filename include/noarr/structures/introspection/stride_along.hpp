@@ -313,9 +313,13 @@ public:
 	{
 		using namespace constexpr_arithmetic;
 
-		return has_stride_along<QDim, sub_structure_t, sub_state_t>::stride(structure.sub_structure(),
-		                                                                    structure.sub_state(state)) *
-		       structure.stride();
+		const auto sub_stride = has_stride_along<QDim, sub_structure_t, sub_state_t>::stride(
+			structure.sub_structure(), structure.sub_state(state));
+		if constexpr (QDim == Dim) {
+			return sub_stride * structure.stride();
+		} else {
+			return sub_stride;
+		}
 	}
 };
 

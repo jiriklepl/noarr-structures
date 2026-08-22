@@ -176,7 +176,7 @@ TEST_CASE("step_t", "[stride_along]") {
 	STATIC_REQUIRE(stride_along<'x'>(scalar<int>() ^ vector<'x'>() ^ step<'x'>(4, 6) ^ step<'x'>(0, 2), state<state_item<length_in<'x'>, std::size_t>>(42)) == 2 * 6 * sizeof(int));
 	STATIC_REQUIRE(HasStrideAlong<step_t<'y', vector_t<'x', scalar<int>>, std::size_t, std::size_t>, 'x',
 								state<state_item<length_in<'x'>, std::size_t>>>);
-	STATIC_REQUIRE(stride_along<'x'>(scalar<int>() ^ vector<'x'>() ^ step<'y'>(4, 8), state<state_item<length_in<'x'>, std::size_t>>(42)) == 8 * sizeof(int));
+	STATIC_REQUIRE(stride_along<'x'>(scalar<int>() ^ vector<'x'>() ^ step<'y'>(4, 8), state<state_item<length_in<'x'>, std::size_t>>(42)) == sizeof(int));
 	STATIC_REQUIRE(!HasStrideAlong<step_t<'x', vector_t<'x', scalar<int>>, std::size_t, std::size_t>, 'y',
 								state<state_item<length_in<'x'>, std::size_t>>>);
 	STATIC_REQUIRE(HasStrideAlong<step_t<'x', set_length_t<'x', vector_t<'x', scalar<int>>, std::size_t>, std::size_t, std::size_t>, 'x',
