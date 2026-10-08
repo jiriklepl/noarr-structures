@@ -50,3 +50,30 @@ TEST_CASE("Shift inner constexpr arithmetic", "[cearithm]") {
 	STATIC_REQUIRE((s | get_length<'y'>()).value == 20);
 	STATIC_REQUIRE((s | offset<'y', 'x'>(lit<15>, lit<2>)).value == (15*10 + 5) * sizeof(int));
 }
+
+TEST_CASE("Constexpr arithmetic multiplication by make_const<1>", "[cearithm]") {
+	using namespace noarr::constexpr_arithmetic;
+	int val = 42;
+	REQUIRE(make_const<1>() * val == 42);
+	REQUIRE(val * make_const<1>() == 42);
+	STATIC_REQUIRE((make_const<1>() * 42) == 42);
+	STATIC_REQUIRE((42 * make_const<1>()) == 42);
+
+	STATIC_REQUIRE(noarr::is_integral_constant_v<make_const<1>>);
+	STATIC_REQUIRE(noarr::is_integral_constant_v<std::integral_constant<int, 5>>);
+	STATIC_REQUIRE(!noarr::is_integral_constant_v<int>);
+}
+
+TEST_CASE("Constexpr arithmetic min and max", "[cearithm]") {
+	using namespace noarr::constexpr_arithmetic;
+	STATIC_REQUIRE(std::is_same_v<decltype(max(make_const<4>(), make_const<8>())), make_const<8>>);
+	STATIC_REQUIRE(std::is_same_v<decltype(max(make_const<8>(), make_const<4>())), make_const<8>>);
+	STATIC_REQUIRE(std::is_same_v<decltype(min(make_const<4>(), make_const<8>())), make_const<4>>);
+	STATIC_REQUIRE(std::is_same_v<decltype(min(make_const<8>(), make_const<4>())), make_const<4>>);
+
+	std::size_t val = 6;
+	REQUIRE(max(make_const<4>(), val) == 6);
+	REQUIRE(max(val, make_const<8>()) == 8);
+	REQUIRE(min(make_const<4>(), val) == 4);
+	REQUIRE(min(val, make_const<8>()) == 6);
+}

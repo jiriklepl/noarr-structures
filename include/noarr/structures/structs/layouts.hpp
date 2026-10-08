@@ -188,7 +188,8 @@ private:
 	template<IsState State, std::size_t I, std::size_t... IS>
 	[[nodiscard]]
 	constexpr auto align_inner(std::index_sequence<I, IS...> /*is*/, State sub_state) const noexcept {
-		return std::max(sub_structure<I>().align(sub_state), align_inner(std::index_sequence<IS...>(), sub_state));
+		return constexpr_arithmetic::max(sub_structure<I>().align(sub_state),
+		                                 align_inner(std::index_sequence<IS...>(), sub_state));
 	}
 };
 

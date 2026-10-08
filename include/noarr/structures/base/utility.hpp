@@ -528,6 +528,16 @@ constexpr make_const<0> operator*(T /*lhs*/, make_const<0> /*rhs*/) noexcept {
 	return {};
 }
 
+template<std::integral T>
+constexpr T operator*(make_const<1> /*lhs*/, T rhs) noexcept {
+	return rhs;
+}
+
+template<std::integral T>
+constexpr T operator*(T lhs, make_const<1> /*rhs*/) noexcept {
+	return lhs;
+}
+
 template<std::size_t A, std::size_t B>
 constexpr make_const<A / B> operator/(make_const<A> /*lhs*/, make_const<B> /*rhs*/) noexcept {
 	return {};
@@ -546,6 +556,36 @@ constexpr make_const<A % B> operator%(make_const<A> /*lhs*/, make_const<B> /*rhs
 template<std::integral T>
 constexpr make_const<0> operator%(make_const<0> /*lhs*/, T /*rhs*/) noexcept {
 	return {};
+}
+
+template<std::size_t A, std::size_t B>
+constexpr make_const<(A > B ? A : B)> max(make_const<A> /*lhs*/, make_const<B> /*rhs*/) noexcept {
+	return {};
+}
+
+template<std::size_t A, std::integral T>
+constexpr std::size_t max(make_const<A> lhs, T rhs) noexcept {
+	return std::cmp_greater(lhs.value, rhs) ? lhs.value : static_cast<std::size_t>(rhs);
+}
+
+template<std::integral T, std::size_t B>
+constexpr std::size_t max(T lhs, make_const<B> rhs) noexcept {
+	return max(rhs, lhs);
+}
+
+template<std::size_t A, std::size_t B>
+constexpr make_const<(A < B ? A : B)> min(make_const<A> /*lhs*/, make_const<B> /*rhs*/) noexcept {
+	return {};
+}
+
+template<std::size_t A, std::integral T>
+constexpr std::size_t min(make_const<A> lhs, T rhs) noexcept {
+	return std::cmp_less(lhs.value, rhs) ? lhs.value : static_cast<std::size_t>(rhs);
+}
+
+template<std::integral T, std::size_t B>
+constexpr std::size_t min(T lhs, make_const<B> rhs) noexcept {
+	return min(rhs, lhs);
 }
 
 } // namespace constexpr_arithmetic
