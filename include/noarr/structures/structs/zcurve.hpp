@@ -48,12 +48,12 @@ struct zc_constexpr {
 };
 
 template<std::size_t... I, class F>
-constexpr void zc_static_for(std::index_sequence<I...> /*is*/, F f) noexcept {
+constexpr void zc_static_for(std::index_sequence<I...> /*is*/, [[maybe_unused]] F f) noexcept {
 	(..., f(zc_constexpr<I>()));
 }
 
 template<std::size_t... I, class F>
-constexpr auto zc_product_static_for(std::index_sequence<I...> /*is*/, F f) noexcept {
+constexpr auto zc_product_static_for(std::index_sequence<I...> /*is*/, [[maybe_unused]] F f) noexcept {
 	return (... * f(zc_constexpr<I>()));
 }
 
