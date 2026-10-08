@@ -51,3 +51,15 @@ TEST_CASE("Mangle negative integral values", "[mangle][regression]") {
 	REQUIRE(noarr::mangle_expr<std::string>(std::numeric_limits<std::int32_t>::min()) ==
 	        "int32_t{-2147483648}");
 }
+
+TEST_CASE("Mangle dim tag and negative value param", "[mangle]") {
+	using neg_val = noarr::helpers::mangle_value<int, -42>;
+	REQUIRE(cp2a(neg_val{}) == "-42");
+
+	using neg_seq = typename noarr::helpers::mangle_param<noarr::value_param<-42>>::type;
+	REQUIRE(cp2a(neg_seq{}) == "(" + int_name + ")-42");
+
+	using dim_seq = typename noarr::helpers::mangle_param<noarr::dim_param<noarr::dim<'x'>{}>>::type;
+	REQUIRE(cp2a(dim_seq{}).find("dim<") == 0);
+	REQUIRE(cp2a(dim_seq{}).find("120") != std::string::npos);
+}

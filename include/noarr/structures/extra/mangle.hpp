@@ -63,6 +63,16 @@ struct mangle_integral<T, V, std::integer_sequence<char, Acc...>> {
 	using type = std::integer_sequence<char, static_cast<char>(V % 10) + '0', Acc...>;
 };
 
+template<class T, char... Acc, T V>
+requires (std::is_signed_v<T> && V < 0)
+struct mangle_integral<T, V, std::integer_sequence<char, Acc...>> {
+	using u_type = std::make_unsigned_t<T>;
+	static constexpr u_type pos_val = 0 - static_cast<u_type>(V);
+	using type = integer_sequence_concat<
+		std::integer_sequence<char, '-'>,
+		typename mangle_integral<u_type, pos_val, std::integer_sequence<char, Acc...>>::type>;
+};
+
 template<class T, T V>
 requires (std::is_integral_v<T>)
 struct mangle_value_impl<T, V> : mangle_integral<T, V> {};
@@ -146,6 +156,14 @@ struct mangle_param<value_param<V>> {
 template<char Dim>
 struct mangle_param<dim_param<Dim>> {
 	using type = integer_sequence_concat<std::integer_sequence<char, '\'', Dim, '\''>>;
+};
+
+template<auto Dim>
+requires (!std::is_same_v<decltype(Dim), char>)
+struct mangle_param<dim_param<Dim>> {
+	using type = integer_sequence_concat<std::integer_sequence<char, 'd', 'i', 'm', '<'>,
+	                                     typename mangle_param<value_param<Dim.tag>>::type,
+	                                     std::integer_sequence<char, '>'>>;
 };
 
 template<const char Name[], std::size_t... Indices, class... Params>
