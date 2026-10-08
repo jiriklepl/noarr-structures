@@ -77,3 +77,17 @@ TEST_CASE("Likes with state", "[shortcut]") {
 	REQUIRE((sb | noarr::offset<'x', 'y'>(0, 1)) == (re_sb | noarr::offset<'x', 'y'>(0, 1)));
 	REQUIRE((sb | noarr::offset<'x', 'y'>(1, 0)) == (re_sb | noarr::offset<'x', 'y'>(1, 0)));
 }
+
+TEST_CASE("Likes empty pack", "[shortcut]") {
+	auto scalar = noarr::scalar<float>();
+	auto s = scalar ^ noarr::vectors<>();
+	STATIC_REQUIRE(std::is_same_v<decltype(s), decltype(scalar)>);
+
+	auto l = noarr::lengths_like<>(s, noarr::empty_state);
+	auto s2 = s ^ l;
+	STATIC_REQUIRE(std::is_same_v<decltype(s2), decltype(scalar)>);
+
+	auto l2 = noarr::lengths_like<>(s);
+	auto s3 = s ^ l2;
+	STATIC_REQUIRE(std::is_same_v<decltype(s3), decltype(scalar)>);
+}

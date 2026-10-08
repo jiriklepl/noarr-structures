@@ -26,7 +26,11 @@ namespace noarr {
 template<auto... Dims>
 requires IsDimPack<decltype(Dims)...>
 constexpr auto vectors() noexcept {
-	return (... ^ vector<Dims>());
+	if constexpr (sizeof...(Dims) == 0) {
+		return neutral_proto();
+	} else {
+		return (... ^ vector<Dims>());
+	}
 }
 
 template<IsDim auto Dim, class Length>
@@ -85,7 +89,11 @@ constexpr auto length_like(Struct structure) noexcept {
 template<auto... Dims, class Struct, class State>
 requires IsDimPack<decltype(Dims)...> && IsStruct<Struct> && IsState<State>
 constexpr auto lengths_like(Struct structure, State state) noexcept {
-	return (... ^ length_like<Dims>(structure, state));
+	if constexpr (sizeof...(Dims) == 0) {
+		return neutral_proto();
+	} else {
+		return (... ^ length_like<Dims>(structure, state));
+	}
 }
 
 template<auto... Dims, class Struct>
@@ -314,7 +322,11 @@ private:
 	template<auto Dim, class... Branches>
 	requires (sizeof...(Branches) != 1)
 	static constexpr std::size_t get_impl(dim_tree<Dim, Branches...> /*dt*/, Struct structure) noexcept {
-		return (... + get_impl(Branches{}, structure));
+		if constexpr (sizeof...(Branches) == 0) {
+			return 0;
+		} else {
+			return (... + get_impl(Branches{}, structure));
+		}
 	}
 
 	template<auto Dim, class Branch>
