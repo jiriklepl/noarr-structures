@@ -194,13 +194,22 @@ private:
 			const auto tmp_state = clean_state(state);
 			if constexpr (state_contains<State, index_in<Dim>>) {
 				const std::size_t index = state.template get<index_in<Dim>>();
-				const auto index_general = index >> SpecialLevel * sizeof...(Dims);
-				const auto index_special = index & ((1U << SpecialLevel * sizeof...(Dims)) - 1U);
-				const auto indices = helpers::zc_general<GeneralLevel - SpecialLevel>(
-					index_general, (struct_length<Dims>(sub_structure, tmp_state) >> SpecialLevel)...);
-				return tmp_state.template with<index_in<Dims>...>(
-					((std::get<DimsI>(indices) << SpecialLevel) +
-					 helpers::zc_special<sizeof...(Dims), DimsI>(index_special))...);
+				constexpr std::size_t shift = SpecialLevel * sizeof...(Dims);
+				if constexpr (shift >= sizeof(std::size_t) * 8) {
+					const auto indices = helpers::zc_general<GeneralLevel - SpecialLevel>(
+						0, (struct_length<Dims>(sub_structure, tmp_state) >> SpecialLevel)...);
+					return tmp_state.template with<index_in<Dims>...>(
+						((std::get<DimsI>(indices) << SpecialLevel) +
+						 helpers::zc_special<sizeof...(Dims), DimsI>(index))...);
+				} else {
+					const auto index_general = index >> shift;
+					const auto index_special = index & ((static_cast<std::size_t>(1) << shift) - 1U);
+					const auto indices = helpers::zc_general<GeneralLevel - SpecialLevel>(
+						index_general, (struct_length<Dims>(sub_structure, tmp_state) >> SpecialLevel)...);
+					return tmp_state.template with<index_in<Dims>...>(
+						((std::get<DimsI>(indices) << SpecialLevel) +
+						 helpers::zc_special<sizeof...(Dims), DimsI>(index_special))...);
+				}
 			} else {
 				return tmp_state;
 			}

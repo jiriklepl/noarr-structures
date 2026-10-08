@@ -77,3 +77,44 @@ TEST_CASE("Z curve misaligned", "[zcurve]") {
 	REQUIRE((z | noarr::offset<'z'>(34)) == (a | noarr::offset<'x', 'y'>(4, 5)));
 	REQUIRE((z | noarr::offset<'z'>(35)) == (a | noarr::offset<'x', 'y'>(5, 5)));
 }
+
+TEST_CASE("Z curve 32-bit shift", "[zcurve]") {
+	// 2D Morton with SpecialLevel 16 (shift = 16 * 2 = 32 bits)
+	// Exercises that shift == 32 does not overflow 32-bit uint (1U << 32 UB)
+	auto s = noarr::scalar<int>() ^ noarr::vector<'y'>() ^ noarr::vector<'x'>()
+	       ^ noarr::set_length<'y'>(1ULL << 16) ^ noarr::set_length<'x'>(1ULL << 16)
+	       ^ noarr::merge_zcurve<'y', 'x', 'z'>::maxlen_alignment<(1ULL << 16), (1ULL << 16)>();
+
+	// Test z = 0b1001 (x bit 0 = 1, y bit 0 = 0, x bit 1 = 0, y bit 1 = 1 -> x = 1, y = 2)
+	auto st1 = s.sub_state(noarr::empty_state.with<noarr::index_in<'z'>>(0b1001ULL));
+	REQUIRE(st1.get<noarr::index_in<'x'>>() == 1);
+	REQUIRE(st1.get<noarr::index_in<'y'>>() == 2);
+
+	// Test with bits near bit 30 and 31 (within 32-bit special level):
+	// bit 30 = x bit 15
+	// bit 31 = y bit 15
+	std::size_t z_high = (1ULL << 31) | (1ULL << 30) | 0b1001ULL;
+	auto st2 = s.sub_state(noarr::empty_state.with<noarr::index_in<'z'>>(z_high));
+	REQUIRE(st2.get<noarr::index_in<'x'>>() == ((1ULL << 15) | 1ULL));
+	REQUIRE(st2.get<noarr::index_in<'y'>>() == ((1ULL << 15) | 2ULL));
+}
+
+TEST_CASE("Z curve 64-bit shift constexpr branch", "[zcurve]") {
+	// 2D Morton with SpecialLevel 32 (shift = 32 * 2 = 64 bits >= 64)
+	auto s = noarr::scalar<int>() ^ noarr::vector<'y'>() ^ noarr::vector<'x'>()
+	       ^ noarr::set_length<'y'>(1ULL << 32) ^ noarr::set_length<'x'>(1ULL << 32)
+	       ^ noarr::merge_zcurve<'y', 'x', 'z'>::maxlen_alignment<(1ULL << 32), (1ULL << 32)>();
+
+	// Test lower bits
+	auto st1 = s.sub_state(noarr::empty_state.with<noarr::index_in<'z'>>(0b1001ULL));
+	REQUIRE(st1.get<noarr::index_in<'x'>>() == 1);
+	REQUIRE(st1.get<noarr::index_in<'y'>>() == 2);
+
+	// Test upper bits near bit 62 and 63:
+	// bit 62 = x bit 31
+	// bit 63 = y bit 31
+	std::size_t z_high = (1ULL << 63) | (1ULL << 62) | 0b1001ULL;
+	auto st2 = s.sub_state(noarr::empty_state.with<noarr::index_in<'z'>>(z_high));
+	REQUIRE(st2.get<noarr::index_in<'x'>>() == ((1ULL << 31) | 1ULL));
+	REQUIRE(st2.get<noarr::index_in<'y'>>() == ((1ULL << 31) | 2ULL));
+}
