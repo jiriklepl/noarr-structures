@@ -3,6 +3,7 @@
 #include <cstddef>
 
 #include <noarr/structures_extended.hpp>
+#include <noarr/structures/introspection/is_static.hpp>
 #include <noarr/structures/introspection/uniform_along.hpp>
 
 using namespace noarr;
@@ -144,6 +145,48 @@ TEST_CASE("merge_zcurve_t", "[uniform_along]") {
 	STATIC_REQUIRE(IsUniformAlong<decltype(zw), 'x', state<>>);
 	STATIC_REQUIRE(IsUniformAlong<decltype(zw), 'y', state<>>);
 	STATIC_REQUIRE(IsUniformAlong<decltype(zw), 'w', state<>>);
+}
+
+TEST_CASE("tuple_t", "[uniform_along]") {
+	auto tup_hetero = pack(scalar<int>(), scalar<int>() ^ array<'x', 10>()) ^ tuple<'t'>();
+	STATIC_REQUIRE(!IsUniformAlong<decltype(tup_hetero), 't', state<>>);
+	STATIC_REQUIRE(!IsUniformAlong<decltype(tup_hetero), 'x', state<>>);
+
+	auto tup_fixed0 = tup_hetero ^ fix<'t'>(lit<0>);
+	STATIC_REQUIRE(IsUniformAlong<decltype(tup_fixed0), 't', state<>>);
+	STATIC_REQUIRE(IsUniformAlong<decltype(tup_fixed0), 'x', state<>>);
+
+	auto tup_fixed1 = tup_hetero ^ fix<'t'>(lit<1>);
+	STATIC_REQUIRE(IsUniformAlong<decltype(tup_fixed1), 't', state<>>);
+	STATIC_REQUIRE(IsUniformAlong<decltype(tup_fixed1), 'x', state<>>);
+
+	auto tup_homo = pack(scalar<int>(), scalar<int>()) ^ tuple<'t'>();
+	STATIC_REQUIRE(IsUniformAlong<decltype(tup_homo), 't', state<>>);
+	STATIC_REQUIRE(IsUniformAlong<decltype(tup_homo), 'x', state<>>);
+
+	auto tup_homo_fixed = tup_homo ^ fix<'t'>(lit<0>);
+	STATIC_REQUIRE(IsUniformAlong<decltype(tup_homo_fixed), 't', state<>>);
+	STATIC_REQUIRE(IsUniformAlong<decltype(tup_homo_fixed), 'x', state<>>);
+
+	auto v1 = scalar<int>() ^ vector<'x'>() ^ set_length<'x'>(10);
+	auto v2 = scalar<int>() ^ vector<'x'>() ^ set_length<'x'>(20);
+	auto tup_dyn = pack(v1, v2) ^ tuple<'t'>();
+	STATIC_REQUIRE(!IsUniformAlong<decltype(tup_dyn), 't', state<>>);
+	STATIC_REQUIRE(!IsUniformAlong<decltype(tup_dyn), 'x', state<>>);
+
+	auto a1 = scalar<int>() ^ array<'x', 10>();
+	auto a2 = scalar<int>() ^ array<'x', 10>();
+	auto tup_arr = pack(a1, a2) ^ tuple<'t'>();
+	STATIC_REQUIRE(IsUniformAlong<decltype(tup_arr), 't', state<>>);
+	STATIC_REQUIRE(IsUniformAlong<decltype(tup_arr), 'x', state<>>);
+
+	auto empty_tup = tuple_t<'t'>();
+	STATIC_REQUIRE(IsUniformAlong<decltype(empty_tup), 't', state<>>);
+	STATIC_REQUIRE(IsUniformAlong<decltype(empty_tup), 'x', state<>>);
+
+	auto vec_hetero = tup_hetero ^ vector<'v'>();
+	STATIC_REQUIRE(!IsUniformAlong<decltype(vec_hetero), 't', state<>>);
+	STATIC_REQUIRE(IsUniformAlong<decltype(vec_hetero), 'v', state<>>);
 }
 
 TEST_CASE("reorder_t", "[uniform_along]") {

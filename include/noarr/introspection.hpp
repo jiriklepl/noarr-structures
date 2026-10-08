@@ -4,6 +4,7 @@
  *
  * This file includes the following headers:
  * - contiguous.hpp: Provides functionality for contiguous data structures.
+ * - is_static.hpp: Checks whether structures and parameters are known at compile time.
  * - lower_bound_along.hpp: Defines operations for finding lower bounds along dimensions.
  * - offset_along.hpp: Defines operations for calculating offsets along dimensions.
  * - stride_along.hpp: Contains definitions for calculating strides along dimensions.
@@ -13,6 +14,7 @@
 #define NOARR_INTROSPECTION_HPP
 
 #include "structures/introspection/contiguous.hpp"
+#include "structures/introspection/is_static.hpp"
 #include "structures/introspection/lower_bound_along.hpp"
 #include "structures/introspection/offset_along.hpp"
 #include "structures/introspection/stride_along.hpp"

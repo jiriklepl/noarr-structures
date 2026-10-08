@@ -37,6 +37,11 @@ struct arg_length_from<std::integral_constant<std::size_t, L>> {
 	using type = static_arg_length<L>;
 };
 
+template<std::size_t L>
+struct arg_length_from<lit_t<L>> {
+	using type = static_arg_length<L>;
+};
+
 } // namespace helpers
 
 template<class T>

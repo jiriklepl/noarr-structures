@@ -2,7 +2,7 @@
 #define NOARR_STRUCTURES_UNIFORM_ALONG_HPP
 
 #include <cstddef>
-
+#include <tuple>
 #include <type_traits>
 
 #include "../base/state.hpp"
@@ -17,6 +17,8 @@
 #include "../structs/slice.hpp"
 #include "../structs/views.hpp"
 #include "../structs/zcurve.hpp"
+
+#include "is_static.hpp"
 
 namespace noarr {
 
@@ -108,7 +110,16 @@ private:
 				return false;
 			}
 		} else {
-			return false;
+			using first_t = std::tuple_element_t<0, std::tuple<Ts...>>;
+			if constexpr ((std::is_same_v<first_t, Ts> && ...) && helpers::is_static<first_t, sub_state_t>::value) {
+				if constexpr (QDim == Dim) {
+					return true;
+				} else {
+					return is_uniform_along<QDim, first_t, sub_state_t>::value;
+				}
+			} else {
+				return false;
+			}
 		}
 	}
 
