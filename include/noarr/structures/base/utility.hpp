@@ -478,6 +478,15 @@ static constexpr bool is_specialization_v = is_specialization<T, Template>::valu
 template<class T, template<class...> class Template>
 concept IsSpecialization = is_specialization_v<std::remove_cvref_t<T>, Template>;
 
+template<class T>
+struct is_integral_constant : std::false_type {};
+
+template<class T, T V>
+struct is_integral_constant<std::integral_constant<T, V>> : std::true_type {};
+
+template<class T>
+static constexpr bool is_integral_constant_v = is_integral_constant<std::remove_cvref_t<T>>::value;
+
 namespace constexpr_arithmetic {
 
 template<std::size_t N>
