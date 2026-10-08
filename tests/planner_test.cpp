@@ -228,3 +228,20 @@ TEST_CASE("Planner trivial functional", "[planner]") {
 
 	REQUIRE(i == 0);
 }
+
+TEST_CASE("Planner dependent dimension", "[planner]") {
+	auto s = pack(scalar<int>(), scalar<int>()) ^ tuple<'t'>();
+	auto bag = make_bag(s);
+	int count = 0;
+	auto pl = planner(bag).for_each_elem([&count](auto /*state*/, auto &/*val*/) {
+		count++;
+	});
+	pl.execute();
+	REQUIRE(count == 2);
+
+	int count2 = 0;
+	planner(bag) ^ for_each_elem([&count2](auto /*state*/, auto &/*val*/) {
+		count2++;
+	}) | planner_execute();
+	REQUIRE(count2 == 2);
+}

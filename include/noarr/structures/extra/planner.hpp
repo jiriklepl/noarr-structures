@@ -397,6 +397,9 @@ private:
 		for_each_impl_dep<Dim, Branches...>(state, std::index_sequence<Is...>());
 	}
 
+	template<auto Dim>
+	constexpr void for_each_impl_dep(auto /*state*/, std::index_sequence<> /*is*/) const noexcept {}
+
 	template<auto Dim, class... Branches, IsState State>
 	constexpr void for_each_impl(dim_tree<Dim, Branches...> /*dt*/, State state) const {
 		if constexpr (helpers::is_activated_v<decltype(get_ending().order(
