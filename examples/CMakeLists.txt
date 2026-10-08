@@ -15,7 +15,7 @@ if(NOT TARGET Noarr::Noarr)
 		FetchContent_Declare(
 			Noarr
 			GIT_REPOSITORY https://github.com/ParaCoToUl/noarr-structures.git
-			GIT_TAG devel
+			GIT_TAG main
 		)
 		FetchContent_MakeAvailable(Noarr)
 	endif()
