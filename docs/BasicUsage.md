@@ -187,6 +187,7 @@ auto ref_bag = unique_bag.get_ref(); // Can be used on any bag type
 ```
 
 In this case, `unique_bag` remains valid and retains the ownership. `ref_bag` is only valid as long as `unique_bag` (or more precisely the data it points to).
+It is mostly useful to either serve as a pseudo-reference when passing a bag to a function, or to create a view of the original bag with a different structure (see [Renaming Dimensions](structs/rename.md)).
 
 ### Other uses
 

@@ -38,6 +38,9 @@ auto to = noarr::bag(noarr::scalar<float>() ^ noarr::vector<'x'>(42));
 // Create a view of `from` that is compatible with `to`
 auto from_view = from ^ noarr::rename<'i', 'x'>();
 
+// If `from` were a unique_bag, we could do the following instead:
+// auto from_view = from.get_ref() ^ noarr::rename<'i', 'x'>();
+
 // Copy as if they had the same structure
 noarr::traverser(to).for_each([&](auto state) {
 	to[state] = from_view[state];
