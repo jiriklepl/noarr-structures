@@ -21,6 +21,7 @@ TEST_CASE("Cuda striped - 32bit scalar array", "[cuda]") {
 
 	STATIC_REQUIRE((s | noarr::get_size()) == 1000 * nstripes * sizeof(std::uint32_t));
 	STATIC_REQUIRE(s.max_conflict_size == throughput);
+	STATIC_REQUIRE(s.align(noarr::empty_state) >= sizeof(std::uint32_t));
 
 	for(std::size_t j = 0; j < nstripes; j++) {
 		for(std::size_t i = 0; i < 100; i++) {
@@ -41,6 +42,7 @@ TEST_CASE("Cuda striped - 64bit scalar array", "[cuda]") {
 
 	REQUIRE((s | noarr::get_size()) == 1000 * nstripes * sizeof(std::uint64_t));
 	STATIC_REQUIRE(s.max_conflict_size == throughput);
+	STATIC_REQUIRE(s.align(noarr::empty_state) >= sizeof(std::uint64_t));
 
 	for(std::size_t j = 0; j < nstripes; j++) {
 		for(std::size_t i = 0; i < 100; i++) {
@@ -61,6 +63,8 @@ TEST_CASE("Cuda striped - 16bit scalar array", "[cuda]") {
 
 	STATIC_REQUIRE((s | noarr::get_size()) == 1000 * nstripes * sizeof(std::uint16_t));
 	STATIC_REQUIRE(s.max_conflict_size == throughput);
+	STATIC_REQUIRE(s.align(noarr::empty_state) >= sizeof(std::uint16_t));
+
 
 	STATIC_REQUIRE((s | noarr::offset(noarr::empty_state.with<noarr::index_in<'x'>, noarr::cuda_stripe_index>(0, 0))) == 0*period + 0*stripe_size + 0*sizeof(std::uint16_t));
 	STATIC_REQUIRE((s | noarr::offset(noarr::empty_state.with<noarr::index_in<'x'>, noarr::cuda_stripe_index>(1, 0))) == 0*period + 0*stripe_size + 1*sizeof(std::uint16_t));

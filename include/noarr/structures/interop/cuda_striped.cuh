@@ -133,7 +133,7 @@ public:
 	[[nodiscard]]
 	constexpr auto align(State state) const noexcept {
 		using namespace constexpr_arithmetic;
-		return std::max(sub_structure().align(sub_state(state), make_const<BankWidth>()));
+		return constexpr_arithmetic::max(sub_structure().align(sub_state(state)), make_const<BankWidth>());
 	}
 
 	template<class Sub, IsState State>
