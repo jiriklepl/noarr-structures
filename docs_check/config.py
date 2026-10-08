@@ -20,7 +20,7 @@ _tmp_x = "noarr::array_t<'x', 42, noarr::scalar<float>>::signature"
 _tmp_y = _tmp_x.replace('x', 'y')
 
 global_decls = '''
-#include <../tests/noarr_test_cuda_dummy.hpp>
+#include <cuda_dummy.hpp>
 #include <noarr/structures/interop/cuda_striped.cuh>
 #include <noarr/structures/interop/cuda_traverser.cuh>
 #include <iostream>

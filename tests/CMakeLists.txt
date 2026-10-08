@@ -19,12 +19,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 file(GLOB_RECURSE tests_source_files CONFIGURE_DEPENDS
     "*_test.cpp"
 )
+# The test framework has its own target below; do not compile its implementation into the runner a second time.
+list(FILTER tests_source_files EXCLUDE REGEX "/noarr-test/")
 
 add_library(noarr_test STATIC noarr-test/src/noarr_test.cpp)
 target_include_directories(noarr_test PUBLIC noarr-test/include)
 
 add_executable(test-runner ${tests_source_files})
-target_include_directories(test-runner PRIVATE ../include)
+target_include_directories(test-runner PRIVATE ../include dummy)
 
 target_link_libraries(test-runner PRIVATE noarr_test)
 

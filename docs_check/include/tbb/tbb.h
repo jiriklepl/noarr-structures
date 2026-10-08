@@ -1,20 +1,11 @@
-#include <utility>
+#ifndef DOCS_CHECK_TBB_H
+#define DOCS_CHECK_TBB_H
 
-namespace tbb {
+/**
+ * @file tbb.h
+ * @brief Forwarding header to tests/dummy/tbb/tbb.h for documentation snippet checks.
+ */
 
-struct split {};
+#include "../../../tests/dummy/tbb/tbb.h"
 
-template<class R, class F>
-inline void parallel_for(const R &range, const F &f) {
-	static_cast<void>(range.is_divisible());
-	f(range);
-}
-
-template<class T>
-struct combinable {
-	T t;
-	T &local() { return t; }
-	template<class F> void combine_each(const F &f) { f(std::as_const(t)); }
-};
-
-}
+#endif // DOCS_CHECK_TBB_H
