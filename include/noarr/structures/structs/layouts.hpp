@@ -295,18 +295,22 @@ struct vector_t : strict_contain<T> {
 	[[nodiscard]]
 	constexpr auto strict_offset_of(State state, Start start = Start{}) const noexcept {
 		using namespace constexpr_arithmetic;
-		if constexpr (!std::is_same_v<decltype(std::declval<State>().template get<length_in<Dim>>()),
-		                              std::integral_constant<std::size_t, 1>>) {
+		using index_t = std::remove_cvref_t<decltype(state.template get<index_in<Dim>>())>;
+		using length_t = std::remove_cvref_t<decltype(state.template get<length_in<Dim>>())>;
+		if constexpr (std::is_same_v<index_t, std::integral_constant<std::size_t, 0>>) {
+			return offset_of<Sub>(sub_structure(), sub_state(state), start);
+		} else if constexpr (std::is_same_v<length_t, std::integral_constant<std::size_t, 1>> &&
+		                     !is_integral_constant_v<index_t>) {
+			// Optimization: length is one and index is dynamic, thus the only valid index is zero.
+			// Assume the index is valid (caller's responsibility).
+			// offset = 0 * elem_size + offset_within_elem = offset_within_elem
+			return offset_of<Sub>(sub_structure(), sub_state(state), start);
+		} else {
 			// offset = index * elem_size + offset_within_elem
 			const auto index = state.template get<index_in<Dim>>();
 			const auto sub_struct = sub_structure();
 			const auto sub_stat = sub_state(state);
 			return offset_of<Sub>(sub_struct, sub_stat, index * struct_size(sub_struct, sub_stat) + start);
-		} else {
-			// Optimization: length is one, thus the only valid index is zero.
-			// Assume the index is valid (caller's responsibility).
-			// offset = 0 * elem_size + offset_within_elem = offset_within_elem
-			return offset_of<Sub>(sub_structure(), sub_state(state), start);
 		}
 	}
 
