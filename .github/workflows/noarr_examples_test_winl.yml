@@ -1,0 +1,39 @@
+name: Noarr examples test windows-latest
+
+on:
+  push:
+    paths:
+    - 'include/**'
+    - 'examples/**'
+    - '.github/workflows/noarr_examples_test_winl.yml'
+
+jobs:
+  build:
+    name: msvc (${{matrix.BUILD_TYPE}})
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        BUILD_TYPE: [Debug]
+
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Create Build Environment
+      run: cmake -E make_directory ${{github.workspace}}\examples\build
+
+    - name: Configure CMake
+      shell: powershell
+      working-directory: ${{github.workspace}}\examples\build
+      run: cmake ${{github.workspace}}\examples -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}}
+
+    - name: Build
+      working-directory: ${{github.workspace}}\examples\build
+      shell: powershell
+      run: cmake --build . --config ${{matrix.BUILD_TYPE}} -j 4
+
+    - name: Test
+      working-directory: ${{github.workspace}}\examples\build
+      shell: powershell
+      run: ctest -V -C ${{matrix.BUILD_TYPE}}
+

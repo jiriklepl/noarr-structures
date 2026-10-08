@@ -1,72 +1,66 @@
-# Matrix example
+# Matrix Example
 
-## Matrix example tests  <!-- Exclude this line from linear documentation -->
+Demonstrates 2D matrix representations, layout-agnostic matrix multiplication, and zero-copy transposition views using Noarr Structures.
 
-![CI status](https://github.com/ParaCoToUl/noarr-structures/workflows/Noarr%20matrix%20example%20test%20ubuntu-latest%20-%20clang/badge.svg)
-![CI status](https://github.com/ParaCoToUl/noarr-structures/workflows/Noarr%20matrix%20example%20test%20ubuntu-latest%20-%20gcc/badge.svg)
+---
 
-![CI status](https://github.com/ParaCoToUl/noarr-structures/workflows/Noarr%20matrix%20example%20test%20macosl/badge.svg)
+## Key Concepts Demonstrated
 
-![CI status](https://github.com/ParaCoToUl/noarr-structures/workflows/Noarr%20matrix%20example%20test%20Win/badge.svg)
+1. **Separation of Layout from Algorithm**:
+   Matrices are defined with named dimensions:
+   - Rows: dimension `'i'`
+   - Columns: dimension `'j'`
 
-## Installation
+   Row-major layout:
+   ```cpp
+   auto row_major = noarr::scalar<float>()
+       ^ noarr::vector<'j'>(cols)
+       ^ noarr::vector<'i'>(rows);
+   ```
 
-Make sure you are in the [examples/matrix](.) folder. In the terminal (Linux bash, Windows Cygwin, or Gitbash), run the following commands:
+   Column-major layout:
+   ```cpp
+   auto col_major = noarr::scalar<float>()
+       ^ noarr::vector<'i'>(rows)
+       ^ noarr::vector<'j'>(cols);
+   ```
 
-```sh
-# creates the build directory
-cmake -E make_directory build
+2. **Dimension Renaming & Multi-Structure Traversers**:
+   Matrix multiplication $C = A \cdot B$ contracts the inner dimension ($A_{ik} \cdot B_{kj} \to C_{ij}$). Noarr's `rename` and `traverser` allow expressing this cleanly across any layout combinations:
+   ```cpp
+   template<class BagA, class BagB, class BagC>
+   void matrix_multiply(const BagA& A, const BagB& B, BagC& C) {
+       auto A_k = A.get_ref() ^ noarr::rename<'j', 'k'>();
+       auto B_k = B.get_ref() ^ noarr::rename<'i', 'k'>();
 
-# enters the build directory
-cd build
+       noarr::traverser(C).for_each([&](auto state) { C[state] = 0; });
 
-# configures the build environment
-cmake ..
+       noarr::traverser(A_k, B_k, C).template for_dims<'i', 'j'>([&](auto inner) {
+           inner.for_each([&](auto state) {
+               C[state] += A_k[state] * B_k[state];
+           });
+       });
+   }
+   ```
 
-# builds the project according to the configuration
-cmake --build .
+3. **Zero-Copy Transposed View**:
+   Transposing a matrix without moving or copying elements:
+   ```cpp
+   auto A_T = A.get_ref() ^ noarr::rename<'i', 'j', 'j', 'i'>();
+   ```
+
+---
+
+## Building and Running
+
+```bash
+cmake -B build -S .
+cmake --build build
+
+# Run with default 4x4 matrices
+./build/matrix
+
+# Run with specific layout and size
+./build/matrix rows 6
+./build/matrix columns 6
 ```
-
-## Usage
-
-```text
-Program takes 2 parameters. 
-First, you choose one of the following layouts:
-1) rows
-2) columns
-3) z_curve (the size has to be a power of 2)
-Then you input integer matrix size. 
-The size of the matrix have to be at least one.
-(for example simplicity, only square matrices are supported)
-```
-
-Running the example on Windows:
-
-```text
-.\matrix.exe rows 7
-```
-
-Running the example on Linux or Mac:
-
-```text
-./matrix columns 10
-./matrix z_curve 8
-```
-
-## Implementation
-
-Implementation is commented on in detail. We recommend starting reading [matrix.cpp](matrix.cpp), following with [noarr_matrix_functions.hpp](noarr_matrix_functions.hpp) and [z_curve.hpp](z_curve.hpp) last.
-
-In file [matrix.cpp](matrix.cpp) basic matrix is implemented. Example first generates 2 classic matrices. Then it copies them into a noarr version. The example then performs multiplications separately. It then copies the noarr result into a normal version and compares the results if they are equal.
-
-In file [noarr_matrix_functions.hpp](noarr_matrix_functions.hpp) are implemented several matrix functions. The important function is:
-
-```cpp
-template<class Matrix, class Matrix2, class Structure3>
-auto noarr_matrix_multiply(Matrix& matrix1, Matrix2& matrix2, 
-    Structure3 structure)
-```
-
-it is given 2 matrices and it multiplies them, product matrix uses `Structure3` as its structure.
-
-You are able to choose from several layouts. The first two are modeled using basic `noarr` features. The third one is using `z_curve` implemented in [z_curve.cpp](z_curve.cpp).

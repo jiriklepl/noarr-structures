@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.18)
 
 project(Noarr
     VERSION 0.20.0
@@ -8,6 +8,11 @@ project(Noarr
 
 add_library(Noarr INTERFACE)
 
+target_compile_features(Noarr INTERFACE cxx_std_20 cuda_std_20)
+target_compile_options(Noarr INTERFACE
+    $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--expt-relaxed-constexpr>
+)
+
 set(NOARR_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_include_directories(Noarr INTERFACE
@@ -15,4 +20,17 @@ target_include_directories(Noarr INTERFACE
     $<INSTALL_INTERFACE:include>
 )
 
+add_library(Noarr::Noarr ALIAS Noarr)
+
 install(DIRECTORY include/ DESTINATION include)
+install(TARGETS Noarr EXPORT NoarrTargets)
+install(EXPORT NoarrTargets
+    FILE NoarrConfig.cmake
+    NAMESPACE Noarr::
+    DESTINATION share/cmake/Noarr
+)
+
+option(NOARR_BUILD_EXAMPLES "Build Noarr examples" OFF)
+if(NOARR_BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif()

@@ -24,7 +24,7 @@ fi
 
 if [ $# -eq 1 ] && [ "$1" == "--check" ]; then
 	echo "Checking code format..."
-	if ! find include/ \( -name '*.c' -o -name '*.h' -o -name '*.cpp' -o -name '*.hpp' -o -name '*.cu' -o -name '*.cuh' \) \
+	if ! find include/ examples/ \( -name '*.c' -o -name '*.h' -o -name '*.cpp' -o -name '*.hpp' -o -name '*.cu' -o -name '*.cuh' \) \
 		-exec clang-format --dry-run --Werror -style=file {} +; then
 		echo "Code format check failed. Please run ./format.sh to format the code." >&2
 		exit 1
@@ -44,5 +44,5 @@ if [ $# -gt 0 ]; then
 	exit 1
 fi
 
-find include/ \( -name '*.c' -o -name '*.h' -o -name '*.cpp' -o -name '*.hpp' -o -name '*.cu' -o -name '*.cuh' \) \
+find include/ examples/ \( -name '*.c' -o -name '*.h' -o -name '*.cpp' -o -name '*.hpp' -o -name '*.cu' -o -name '*.cuh' \) \
 	-exec clang-format -i -style=file {} +

@@ -101,20 +101,64 @@ traverser | [&](auto idx) {
 
 ## Using the library
 
-Noarr is a header-only library - to use it, simply include one of the following headers in your project:
+Noarr is a header-only C++20 library. To use it in your CMake project, link against the `Noarr::Noarr` interface target.
+
+If integrated using CMake or present on the compiler's include path, the library can be included in your source files as follows:
 
 ```cpp
+// Include the entire library
 #include <noarr/noarr.hpp>
-```
 
-To use the library in your project, you need to include the `include` directory in your project's include directories. If you are using CMake, you can do this by adding the following line to your `CMakeLists.txt` file:
-
-```cmake
-# the CMake line that adds the include directory
-target_include_directories(<my-app> PUBLIC <cloned-repo-path>/include)
+// or specific components:
+#include <noarr/structures_extended.hpp>
+#include <noarr/structures/interop/bag.hpp>
+#include <noarr/structures/extra/traverser.hpp>
 ```
 
 The library requires C++20 or later and supports `-fno-exceptions` and `-fno-rtti` flags.
+For CUDA, the library requires `--expt-relaxed-constexpr` flag.
+
+Noarr along with CUDA-specific components can be included as follows:
+
+```cpp
+#include <noarr/noarr_cuda.hpp>
+```
+
+To use the CMake integration, you can either install the library on your system, use the `FetchContent` module to download and integrate it automatically, or include it as a submodule or subdirectory in your project.
+
+### Option 1: System-installed package
+
+If Noarr is installed on your system:
+
+```cmake
+find_package(Noarr CONFIG REQUIRED)
+target_link_libraries(<my-app> PRIVATE Noarr::Noarr)
+```
+
+### Option 2: FetchContent
+
+To download and integrate Noarr automatically at configure time:
+
+```cmake
+include(FetchContent)
+FetchContent_Declare(
+    noarr
+    GIT_REPOSITORY https://github.com/ParaCoToUl/noarr-structures.git
+    GIT_TAG master
+)
+FetchContent_MakeAvailable(noarr)
+
+target_link_libraries(<my-app> PRIVATE Noarr::Noarr)
+```
+
+### Option 3: Subdirectory / Embedded
+
+If Noarr is included as a submodule or subdirectory:
+
+```cmake
+add_subdirectory(path/to/noarr-structures)
+target_link_libraries(<my-app> PRIVATE Noarr::Noarr)
+```
 
 
 ## Publications
@@ -157,14 +201,19 @@ Previous publications related to the library:
 
 ## Examples
 
-Examples can be found at [examples/matrix](examples/matrix "matrix example").
+Runnable, standalone examples demonstrating modern Noarr features can be found in the [examples](examples) directory:
 
+- [Matrix](examples/matrix): Layout-agnostic matrix multiplication (GEMM) and zero-copy transposition views.
+- [Histogram](examples/histogram): 2D image pixel intensity histogram calculation and reduction.
+- [Stencil](examples/stencil): 2D 5-point heat diffusion stencil smoothing using subgrid slicing.
 
-### Matrix example tests
+Each example is self-contained and demonstrates consuming Noarr as an external dependency.
 
-[![Noarr matrix example test ubuntu-22](../../actions/workflows/noarr_matrix_example_test_ubuntu_22.yml/badge.svg)](../../actions/workflows/noarr_matrix_example_test_ubuntu_22.yml) [![Noarr matrix example test ubuntu-24](../../actions/workflows/noarr_matrix_example_test_ubuntu_24.yml/badge.svg)](../../actions/workflows/noarr_matrix_example_test_ubuntu_24.yml)
+### Examples tests
 
-[![Noarr matrix example test windows-latest](../../actions/workflows/noarr_matrix_example_test_winl.yml/badge.svg)](../../actions/workflows/noarr_matrix_example_test_winl.yml)
+[![Noarr examples test ubuntu-22](../../actions/workflows/noarr_examples_test_ubuntu_22.yml/badge.svg)](../../actions/workflows/noarr_examples_test_ubuntu_22.yml) [![Noarr examples test ubuntu-24](../../actions/workflows/noarr_examples_test_ubuntu_24.yml/badge.svg)](../../actions/workflows/noarr_examples_test_ubuntu_24.yml) [![Noarr examples test macOS-14](../../actions/workflows/noarr_examples_test_macos_14.yml/badge.svg)](../../actions/workflows/noarr_examples_test_macos_14.yml)
+
+[![Noarr examples test windows-latest](../../actions/workflows/noarr_examples_test_winl.yml/badge.svg)](../../actions/workflows/noarr_examples_test_winl.yml)
 
 
 ## Running tests

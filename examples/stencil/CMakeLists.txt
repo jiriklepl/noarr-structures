@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.18)
-project(NoarrMatrixExample LANGUAGES CXX)
+project(NoarrStencilExample LANGUAGES CXX)
 
 # Find Noarr as an external dependency
 find_package(Noarr CONFIG QUIET)
@@ -19,11 +19,11 @@ if(NOT TARGET Noarr::Noarr)
 	endif()
 endif()
 
-add_executable(matrix matrix.cpp)
-target_link_libraries(matrix PRIVATE Noarr::Noarr)
+add_executable(stencil stencil.cpp)
+target_link_libraries(stencil PRIVATE Noarr::Noarr)
 
 if(MSVC)
-	target_compile_options(matrix PRIVATE /W4)
+	target_compile_options(stencil PRIVATE /W4)
 else()
-	target_compile_options(matrix PRIVATE -Wall -Wextra -pedantic)
+	target_compile_options(stencil PRIVATE -Wall -Wextra -pedantic)
 endif()

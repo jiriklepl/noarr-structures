@@ -1,280 +1,169 @@
-#include <iostream>
-#include <array>
-#include <utility>
-#include <vector>
 #include <cassert>
-#include <tuple>
+
+#include <iomanip>
 #include <iostream>
 #include <string>
-#include <cstring>
+#include <string_view>
 
-// IMPORTANT:
-// raw c++ matrix implementation is from now on a "classic matrix"
-// matrix implementation in noarr will be referred to as "noarr matrix"
-// whole example assumes int matrices
+#include <noarr/noarr.hpp>
+#include <noarr/structures/extra/traverser.hpp>
 
-#include "noarr/structures_extended.hpp"
-#include "noarr/structures/interop/bag.hpp"
-#include "noarr_matrix_functions.hpp"
+// =============================================================================
+// Matrix Layout Definitions
+// =============================================================================
+// In Noarr, composition operator (^) wraps structures from inside to outside.
+// The outermost dimension in the pipeline is the slowest varying (outer) index.
 
-// definitions of noarr layouts
-using matrix_rows = noarr::vector_t<'m', noarr::vector_t<'n', noarr::scalar<int>>>;
-using matrix_columns = noarr::vector_t<'n', noarr::vector_t<'m', noarr::scalar<int>>>;
-#if 0 // TODO z-curve
-using matrix_zcurve = noarr::z_curve<'n', 'm', noarr::vector<'a', noarr::scalar<int>>>;
-#endif
+// Row-major: 'j' (columns) is innermost (stride 1), 'i' (rows) is outer.
+template<class T>
+auto make_row_major_layout(std::size_t rows, std::size_t cols) {
+	return noarr::scalar<T>() ^ noarr::vector<'j'>(cols) ^ noarr::vector<'i'>(rows);
+}
 
-/**
- * @brief Implements matrix using raw c++ ("classic matrix").
- */
-struct classic_matrix
-{
-	// constructors
-	classic_matrix(std::size_t X, std::size_t Y, std::vector<int>&& Ary)
-		: n(X), m(Y), ary(std::move(Ary)) {};
-	classic_matrix(std::size_t X, std::size_t Y, std::vector<int>& Ary)
-		: n(X), m(Y), ary(Ary) {};
+// Column-major: 'i' (rows) is innermost (stride 1), 'j' (columns) is outer.
+template<class T>
+auto make_col_major_layout(std::size_t rows, std::size_t cols) {
+	// using an alternative, more verbose syntax to demonstrate the flexibility:
+	return noarr::scalar<T>() ^ noarr::vector<'i'>() ^ noarr::vector<'j'>() ^ noarr::set_length<'i'>(rows) ^
+	       noarr::set_length<'j'>(cols);
+}
 
-	// width
-	std::size_t n;
-	// height
-	std::size_t m;
-	// data vector (flattened matrix by rows into std::vector<int>)
-	std::vector<int> ary;
+// =============================================================================
+// Layout-Agnostic Matrix Printing
+// =============================================================================
+template<class Bag>
+void print_matrix(std::string_view name, const Bag &matrix) {
+	std::cout << name << " (" << (matrix | noarr::get_length<'i'>()) << "x" << (matrix | noarr::get_length<'j'>())
+	          << "):\n";
 
-	// element access functions (returns reference into data vector based on input indexes)
-	int& at(std::size_t n_, std::size_t m_) { return ary[n_ + m_ * n]; }
-	const int& at(std::size_t n_, std::size_t m_) const { return ary[n_ + m_ * n]; }
+	// Fix the row dimension 'i' and iterate over column dimension 'j'
+	noarr::traverser(matrix).template for_dims<'i'>([&](auto row) {
+		row.for_each([&](auto state) { std::cout << std::setw(6) << matrix[state] << " "; });
+		std::cout << "\n";
+	});
+	std::cout << "\n";
+}
 
-	// printing function which prints the whole matrix into the standard output
-	// it takes the name parameter and prints it at the beginning to make input clearer
-	void print(std::string name)
-	{
-		std::cout << name << ":" << std::endl;
+// =============================================================================
+// Zero-Copy Transposed View
+// =============================================================================
+template<class Bag>
+auto make_transposed_view(const Bag &matrix) {
+	// Reassigns dimension roles ('i' <-> 'j') without copying memory.
+	return matrix.get_ref() ^ noarr::rename<'i', 'j', 'j', 'i'>();
 
-		for (std::size_t i = 0; i < n; i++)
-		{
-			for (std::size_t j = 0; j < m; j++)
-				std::cout << at(i, j) << " ";
+	// Alternative, more flexible and verbose approach using explicit bag construction (commented out):
+	// return noarr::bag(matrix.structure() ^
+	//     noarr::rename<'i', 't'>() ^ noarr::rename<'j', 'i'>() ^ noarr::rename<'t', 'j'>(), matrix.data());
+}
 
-			std::cout << std::endl;
+// =============================================================================
+// Layout-Agnostic Matrix Multiplication (GEMM)
+// =============================================================================
+// Multiplies matrix A by matrix B and stores the result in C.
+// A has dimensions ('i', 'j'), B has dimensions ('i', 'j'), C has ('i', 'j').
+// The contracted inner dimension is renamed to 'k'.
+//
+// This single implementation works identically whether A, B, and C are
+// row-major, column-major, or any custom layout.
+template<class BagA, class BagB, class BagC>
+void matrix_multiply(const BagA &A, const BagB &B, BagC &C) {
+	assert((A | noarr::get_length<'j'>()) == (B | noarr::get_length<'i'>()));
+	assert((C | noarr::get_length<'i'>()) == (A | noarr::get_length<'i'>()));
+	assert((C | noarr::get_length<'j'>()) == (B | noarr::get_length<'j'>()));
+
+	// Create views renaming the contracting dimensions to 'k'
+	auto A_k = A.get_ref() ^ noarr::rename<'j', 'k'>();
+	auto B_k = B.get_ref() ^ noarr::rename<'i', 'k'>();
+
+	// Alternative, more flexible approach using explicit bag construction (commented out):
+	// auto A_k = noarr::bag(A.structure() ^ noarr::rename<'j', 'k'>(), A.data());
+	// auto B_k = noarr::bag(B.structure() ^ noarr::rename<'i', 'k'>(), B.data());
+
+	// Zero out accumulator C
+	noarr::traverser(C).for_each([&](auto state) { C[state] = 0; });
+
+	// Traverser joins dimensions 'i', 'j', and 'k' across all three structures.
+	// For each (i, j), iterate over k and accumulate: C(i, j) += A(i, k) * B(k, j)
+	noarr::traverser(A_k, B_k, C).template for_dims<'i', 'j'>([&](auto inner) {
+		inner.for_each([&](auto state) { C[state] += A_k[state] * B_k[state]; });
+	});
+}
+
+// =============================================================================
+// Main Demo
+// =============================================================================
+void run_demo(std::size_t size, bool use_col_major_c = false) {
+	std::cout << "Running Noarr Matrix Example (size " << size << "x" << size << ")\n";
+	std::cout << "------------------------------------------------------------\n";
+
+	// 1. Create matrix A (Row-major)
+	auto A = noarr::bag(make_row_major_layout<int>(size, size));
+	noarr::traverser(A).for_each([&](auto state) {
+		auto [i, j] = noarr::get_indices<'i', 'j'>(state);
+		A[state] = static_cast<int>(i + 2 * j + 1);
+	});
+	print_matrix("Matrix A (Row-Major)", A);
+
+	// 2. Create matrix B as an Identity matrix (Column-major)
+	auto B = noarr::bag(make_col_major_layout<int>(size, size));
+	noarr::traverser(B).for_each([&](auto state) {
+		auto [i, j] = noarr::get_indices<'i', 'j'>(state);
+		B[state] = (i == j) ? 1 : 0;
+	});
+	print_matrix("Matrix B (Identity, Column-Major)", B);
+
+	// 3. Helper to run multiplication, display, and validation
+	auto run_with_c = [&](auto C, std::string_view c_name) {
+		matrix_multiply(A, B, C);
+		print_matrix(c_name, C);
+
+		// Validate C == A (since B is Identity)
+		bool ok = true;
+		noarr::traverser(A, C).for_each([&](auto state) {
+			if (A[state] != C[state]) {
+				ok = false;
+			}
+		});
+		assert(ok && "Validation failed: A * Identity != A");
+		std::cout << "Validation successful: A * B == A (" << c_name << ")\n\n";
+	};
+
+	if (use_col_major_c) {
+		run_with_c(noarr::bag(make_col_major_layout<int>(size, size)), "Matrix C = A * B (Column-Major)");
+	} else {
+		run_with_c(noarr::bag(make_row_major_layout<int>(size, size)), "Matrix C = A * B (Row-Major)");
+	}
+
+	// 5. Demonstrate zero-copy transposed view
+	auto A_T = make_transposed_view(A);
+	print_matrix("Matrix A^T (Transposed View of A, Zero-Copy)", A_T);
+}
+
+int main(int argc, char *argv[]) {
+	std::size_t size = 4;
+	bool col_major = false;
+
+	// Support both legacy syntax ("rows 10", "columns 10") and direct size argument
+	if (argc >= 3) {
+		std::string_view layout = argv[1];
+		col_major = (layout == "columns");
+		try {
+			size = std::stoul(argv[2]);
+		} catch (...) {
+			size = 4;
 		}
-
-		std::cout << std::endl;
-	}
-};
-
-/**
- * @brief Creates random classic matrix with values in range [0 to 9] with size n x m.
- *
- * @param n: width of the matrix
- * @param m: height of the matrix
- * @return classic_matrix with values in range [0 to 9] with size n x m.
- */
-classic_matrix get_clasic_matrix(std::size_t n, std::size_t m)
-{
-	// data container initialization
-	const std::size_t length = n * m;
-	std::vector<int> ary;
-
-	// random values generation
-	for (std::size_t i = 0; i < length; i++)
-		ary.push_back(rand() % 10);
-
-	// matrix construction
-	return classic_matrix(n, m, std::move(ary));
-}
-
-/**
- * @brief Compares two classic matrices for value equality.
- *
- * @param m1: First classic matrix
- * @param m2: Second classic matrix
- * @return Value comparison result of two classic matrices
- */
-bool are_equal_classic_matrices(classic_matrix& m1, classic_matrix& m2)
-{
-	// n size must be the same
-	if (m1.n != m2.n)
-		return false;
-
-	// m size must be the same
-	if (m1.m != m2.m)
-		return false;
-
-	// data container has to be the same size, we will compare values for equality
-	const std::size_t length = m1.n * m1.m;
-	for (std::size_t i = 0; i < length; i++)
-		if (m1.ary[i] != m2.ary[i])
-			return false;
-
-	// if all tests were passed up until now the matrices have to be value-equal
-	return true;
-}
-
-
-/**
- * @brief Converts noarr matrix to classic matrix.
- *
- * @param source: noarr matrix
- * @return classic_matrix created from noarr matrix
- */
-template<class Matrix>
-classic_matrix noarr_matrix_to_clasic(Matrix& source)
-{
-	// we will cache matrix size values
-	std::size_t n_size = source.template length<'n'>();
-	std::size_t m_size = source.template length<'m'>();
-
-	// we will allocate target classic matrix
-	classic_matrix target = get_clasic_matrix(n_size, m_size);
-
-	// we will go through the matrix and copy noarr matrix into a classic matrix
-	for (std::size_t i = 0; i < n_size; i++)
-		for (std::size_t j = 0; j < m_size; j++)
-			target.at(i, j) = source.template at<'n', 'm'>(i, j);
-
-	return target;
-}
-
-/**
- * @brief Converts classic matrix to noarr matrix.
- *
- * @param source: classic_matrix
- * @tparam structure: Structure defining structure to be used by result noarr matrix
- * @return Matrix noarr matrix created from source classic_matrix
- */
-template<class Structure>
-auto clasic_matrix_to_noarr(classic_matrix& source, Structure structure)
-{
-	// we will allocate target noarr matrix
-	auto target = noarr::make_bag(structure);
-
-	// we will go through the classic matrix and copy it into noarr the matrix
-	for (std::size_t i = 0; i < source.n; i++)
-		for (std::size_t j = 0; j < source.m; j++)
-			target.template at<'n', 'm'>(i, j) = source.at(i, j);
-
-	return target;
-}
-
-/**
- * @brief Function multiplying classic matrices.
- *
- * @param matrix1: First classic matrix
- * @param matrix2: Second classic matrix
- * @return Classic matrix multiplication product
- */
-classic_matrix clasic_matrix_multiply(classic_matrix& matrix1, classic_matrix& matrix2)
-{
-	// some of the sizes have to be equal
-	assert(matrix1.n == matrix2.m);
-
-	// we will allocate result classic matrix
-	classic_matrix result = get_clasic_matrix(matrix2.n, matrix1.m);
-
-	// standart matrix multiplication
-	for (std::size_t i = 0; i < matrix2.n; i++)
-		for (std::size_t j = 0; j < matrix1.m; j++)
-		{
-			int sum = 0;
-
-			for (std::size_t k = 0; k < matrix1.n; k++)
-				sum += matrix1.at(k, j) * matrix2.at(i, k);
-
-			result.at(i, j) = sum;
+	} else if (argc == 2) {
+		try {
+			size = std::stoul(argv[1]);
+		} catch (...) {
+			size = 4;
 		}
-
-	return result;
-}
-
-/**
- * @brief The core function of the example. It multiplies classic matrices, same noarr matrices, and checks if the results produced are equal.
- *
- * @param size: size of the matrices to be used
- * @tparam structure: structure defining structure to be used by noarr matrix
- */
-template<class Structure>
-void matrix_demo(std::size_t size, Structure structure)
-{
-	// generating random classic matrix 1
-	classic_matrix classic_1 = get_clasic_matrix(size, size);
-	classic_1.print("Matrix 1");
-
-	// generating random classic matrix 2
-	classic_matrix classic_2 = get_clasic_matrix(size, size);
-	classic_2.print("Matrix 2");
-
-	// copying 2 classic matrices to 2 noarr matrices
-	auto noarr_1 = clasic_matrix_to_noarr(classic_1, structure);
-	auto noarr_2 = clasic_matrix_to_noarr(classic_2, structure);
-
-	// multiplying 2 classic matrices, result is classic matrix
-	classic_matrix classic_result = clasic_matrix_multiply(classic_1, classic_2);
-	classic_result.print("Classic multiplication result");
-
-	// multiplying 2 noarr matrices, result is noarr matrix
-	auto noarr_result = noarr_matrix_multiply(noarr_1, noarr_2, structure);
-
-	// converting noarr result matrix into a classic matrix
-	classic_matrix classic_noarr_result = noarr_matrix_to_clasic(noarr_result);
-	classic_noarr_result.print("Noarr multiplication result");
-
-	// check if noarr returned correct result
-	assert(are_equal_classic_matrices(classic_result, classic_noarr_result));
-}
-
-/**
- * @brief Prints help.
- */
-void print_help_and_exit()
-{
-	std::cout << "Program takes 2 parameters. First, you choose one of the following layouts:" << std::endl;
-	std::cout << "1) rows" << std::endl;
-	std::cout << "2) columns" << std::endl;
-	std::cout << "3) z_curve (the size has to be a power of 2)" << std::endl;
-	std::cout << "Then you input integer matrix size. The size of the matrix have to be at least one. (for example simplicity, only square matrices are supported)" << std::endl;
-
-	// exit the program
-	exit(1);
-}
-
-/**
- * @brief Main function called from command line. It parses command line arguments and runs selected layout.
- *
- * @param argc: command-line arguments count
- * @param argv: command-line arguments
- */
-int main(int argc, char *argv[])
-{
-	// there have to be two arguments
-	if (argc != 3)
-		print_help_and_exit();
-
-	// parse the second argument (size) into int
-	std::size_t size;
-	try {
-		size = std::stoi(argv[2]);
-	}
-	catch (...) {
-		print_help_and_exit();
 	}
 
-	// size has to be at least 1
-	if (size < 1)
-		print_help_and_exit();
+	if (size < 1) {
+		size = 1;
+	}
 
-	// if the first argument matches some of the supported layouts, run the example, otherwise print help
-	if (!strcmp(argv[1], "rows"))
-		matrix_demo(size, matrix_rows() ^ noarr::set_length<'n'>(size) ^ noarr::set_length<'m'>(size));
-	else if (!strcmp(argv[1], "columns"))
-		matrix_demo(size, matrix_columns() ^ noarr::set_length<'n'>(size) ^ noarr::set_length<'m'>(size));
-#if 0 // TODO z-curve
-	else if (!strcmp(argv[1], "z_curve"))
-		matrix_demo(size, matrix_zcurve(noarr::vector<'a', noarr::scalar<int>>(noarr::scalar<int>(), size * size), noarr::helpers::z_curve_bottom<'n'>(size), noarr::helpers::z_curve_bottom<'m'>(size)));
-#endif
-	else
-		print_help_and_exit();
-
-	return 0;
+	run_demo(size, col_major);
 }

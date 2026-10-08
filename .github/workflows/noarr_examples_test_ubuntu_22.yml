@@ -1,11 +1,11 @@
-name: Noarr matrix example test ubuntu-22.04
+name: Noarr examples test ubuntu-22.04
 
 on:
   push:
     paths:
     - 'include/**'
-    - 'examples/matrix/**'
-    - '.github/workflows/noarr_matrix_example_test_ubuntu_22.yml'
+    - 'examples/**'
+    - '.github/workflows/noarr_examples_test_ubuntu_22.yml'
 
 jobs:
   build:
@@ -40,20 +40,21 @@ jobs:
 
     - name: Create Build Environment
       shell: bash
-      working-directory: ${{github.workspace}}/examples/matrix
+      working-directory: ${{github.workspace}}/examples
       run: cmake -E make_directory build
 
     - name: Configure CMake
       shell: bash
-      working-directory: ${{github.workspace}}/examples/matrix/build
+      working-directory: ${{github.workspace}}/examples/build
       run: cmake .. -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} -DCMAKE_CXX_COMPILER=${{matrix.compiler}}
 
     - name: Build
-      working-directory: ${{github.workspace}}/examples/matrix/build
+      working-directory: ${{github.workspace}}/examples/build
       shell: bash
       run: cmake --build . --config ${{matrix.BUILD_TYPE}} -j 4
 
     - name: Test
-      working-directory: ${{github.workspace}}/examples/matrix/build
+      working-directory: ${{github.workspace}}/examples/build
       shell: bash
-      run: ./matrix rows 10
+      run: ctest -V -C ${{matrix.BUILD_TYPE}}
+
