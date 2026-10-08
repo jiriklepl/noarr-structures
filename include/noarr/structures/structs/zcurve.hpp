@@ -73,8 +73,8 @@ constexpr std::tuple<SizeTs...> zc_general(std::size_t z, SizeTs... sizes) noexc
 				} else {
 					constexpr std::size_t tile_size = (j::v > i::v ? 2 : 1U) * small_tile_size::v;
 					return (std::get<j::v>(size) & -tile_size) == std::get<j::v>(result)
-					           ? ((std::get<j::v>(size) - 1U) & (tile_size - 1U)) + 1U
-					           : tile_size;
+							   ? ((std::get<j::v>(size) - 1U) & (tile_size - 1U)) + 1U
+							   : tile_size;
 				}
 			});
 			const std::size_t half_volume = facet << level::v;
@@ -168,7 +168,7 @@ private:
 
 			using type =
 				typename Original::ret_sig::template replace<dim_replacer<remaining, arg_len_acc>::template replacement,
-			                                                 Dims...>;
+				                                             Dims...>;
 		};
 	};
 
@@ -200,7 +200,7 @@ private:
 					index_general, (struct_length<Dims>(sub_structure, tmp_state) >> SpecialLevel)...);
 				return tmp_state.template with<index_in<Dims>...>(
 					((std::get<DimsI>(indices) << SpecialLevel) +
-				     helpers::zc_special<sizeof...(Dims), DimsI>(index_special))...);
+					 helpers::zc_special<sizeof...(Dims), DimsI>(index_special))...);
 			} else {
 				return tmp_state;
 			}

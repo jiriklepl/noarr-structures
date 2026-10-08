@@ -55,7 +55,7 @@ struct mangle_integral;
 template<class T, char... Acc, T V>
 requires (V >= 10)
 struct mangle_integral<T, V, std::integer_sequence<char, Acc...>>
-	: mangle_integral<T, V / 10, std::integer_sequence<char, static_cast<char>(V % 10) + '0', Acc...>> {};
+    : mangle_integral<T, V / 10, std::integer_sequence<char, static_cast<char>(V % 10) + '0', Acc...>> {};
 
 template<class T, char... Acc, T V>
 requires (V < 10 && V >= 0)
@@ -68,9 +68,9 @@ requires (std::is_signed_v<T> && V < 0)
 struct mangle_integral<T, V, std::integer_sequence<char, Acc...>> {
 	using u_type = std::make_unsigned_t<T>;
 	static constexpr u_type pos_val = 0 - static_cast<u_type>(V);
-	using type = integer_sequence_concat<
-		std::integer_sequence<char, '-'>,
-		typename mangle_integral<u_type, pos_val, std::integer_sequence<char, Acc...>>::type>;
+	using type =
+		integer_sequence_concat<std::integer_sequence<char, '-'>,
+		                        typename mangle_integral<u_type, pos_val, std::integer_sequence<char, Acc...>>::type>;
 };
 
 template<class T, T V>
@@ -118,9 +118,9 @@ template<std::size_t L>
 struct scalar_name<std::integral_constant<std::size_t, L>> {
 	using type =
 		integer_sequence_concat<std::integer_sequence<char, 's', 't', 'd', ':', ':', 'i', 'n', 't', 'e', 'g', 'r', 'a',
-	                                                  'l', '_', 'c', 'o', 'n', 's', 't', 'a', 'n', 't', '<'>,
-	                            typename scalar_name<std::size_t>::type, std::integer_sequence<char, ','>,
-	                            mangle_value<int, L>, std::integer_sequence<char, '>'>>;
+		                                              'l', '_', 'c', 'o', 'n', 's', 't', 'a', 'n', 't', '<'>,
+		                        typename scalar_name<std::size_t>::type, std::integer_sequence<char, ','>,
+		                        mangle_value<int, L>, std::integer_sequence<char, '>'>>;
 };
 
 template<std::size_t L>
@@ -161,9 +161,9 @@ struct mangle_param<dim_param<Dim>> {
 template<auto Dim>
 requires (!std::is_same_v<decltype(Dim), char>)
 struct mangle_param<dim_param<Dim>> {
-	using type = integer_sequence_concat<std::integer_sequence<char, 'd', 'i', 'm', '<'>,
-	                                     typename mangle_param<value_param<Dim.tag>>::type,
-	                                     std::integer_sequence<char, '>'>>;
+	using type =
+		integer_sequence_concat<std::integer_sequence<char, 'd', 'i', 'm', '<'>,
+		                        typename mangle_param<value_param<Dim.tag>>::type, std::integer_sequence<char, '>'>>;
 };
 
 template<const char Name[], std::size_t... Indices, class... Params>

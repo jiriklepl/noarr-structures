@@ -250,8 +250,8 @@ private:
 		using ispresent_length = dynamic_arg_length;
 		using type =
 			function_sig<DimMajor, major_length,
-		                 function_sig<DimMinor, minor_length,
-		                              function_sig<DimIsPresent, ispresent_length, typename Original::ret_sig>>>;
+			             function_sig<DimMinor, minor_length,
+			                          function_sig<DimIsPresent, ispresent_length, typename Original::ret_sig>>>;
 	};
 
 	struct impl {

@@ -162,7 +162,7 @@ struct has_offset_along<QDim, fix_t<Dim, T, IdxT>, State> : generic_has_offset_a
 
 template<IsDim auto QDim, IsDim auto Dim, class T, class LenT, IsState State>
 struct has_offset_along<QDim, set_length_t<Dim, T, LenT>, State>
-	: generic_has_offset_along<QDim, set_length_t<Dim, T, LenT>, State> {};
+    : generic_has_offset_along<QDim, set_length_t<Dim, T, LenT>, State> {};
 
 template<IsDim auto QDim, IsDim auto Dim, class T, IsState State>
 struct has_offset_along<QDim, hoist_t<Dim, T>, State> : generic_has_offset_along<QDim, hoist_t<Dim, T>, State> {};
@@ -242,19 +242,19 @@ public:
 
 template<IsDim auto QDim, IsDim auto Dim, class T, class StartT, IsState State>
 struct has_offset_along<QDim, shift_t<Dim, T, StartT>, State>
-	: generic_has_offset_along<QDim, shift_t<Dim, T, StartT>, State> {};
+    : generic_has_offset_along<QDim, shift_t<Dim, T, StartT>, State> {};
 
 template<IsDim auto QDim, IsDim auto Dim, class T, class StartT, class LenT, IsState State>
 struct has_offset_along<QDim, slice_t<Dim, T, StartT, LenT>, State>
-	: generic_has_offset_along<QDim, slice_t<Dim, T, StartT, LenT>, State> {};
+    : generic_has_offset_along<QDim, slice_t<Dim, T, StartT, LenT>, State> {};
 
 template<IsDim auto QDim, IsDim auto Dim, class T, class StartT, class EndT, IsState State>
 struct has_offset_along<QDim, span_t<Dim, T, StartT, EndT>, State>
-	: generic_has_offset_along<QDim, span_t<Dim, T, StartT, EndT>, State> {};
+    : generic_has_offset_along<QDim, span_t<Dim, T, StartT, EndT>, State> {};
 
 template<IsDim auto QDim, IsDim auto Dim, class T, class StartT, class StrideT, IsState State>
 struct has_offset_along<QDim, step_t<Dim, T, StartT, StrideT>, State>
-	: generic_has_offset_along<QDim, step_t<Dim, T, StartT, StrideT>, State> {};
+    : generic_has_offset_along<QDim, step_t<Dim, T, StartT, StrideT>, State> {};
 
 template<IsDim auto QDim, IsDim auto Dim, class T, IsState State>
 struct has_offset_along<QDim, reverse_t<Dim, T>, State> : generic_has_offset_along<QDim, reverse_t<Dim, T>, State> {};

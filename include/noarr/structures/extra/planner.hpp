@@ -80,7 +80,7 @@ private:
 
 template<class Sig, class F>
 struct helpers::is_activated_impl<planner_ending_elem_t<Sig, F>>
-	: std::integral_constant<bool, planner_ending_elem_t<Sig, F>::activated> {};
+    : std::integral_constant<bool, planner_ending_elem_t<Sig, F>::activated> {};
 
 template<class Sig, class F>
 struct planner_ending_t : flexible_contain<F> {
@@ -119,7 +119,7 @@ public:
 
 template<class Sig, class F>
 struct helpers::is_activated_impl<planner_ending_t<Sig, F>>
-	: std::integral_constant<bool, planner_ending_t<Sig, F>::activated> {};
+    : std::integral_constant<bool, planner_ending_t<Sig, F>::activated> {};
 
 template<class... Endings>
 struct planner_endings;
@@ -217,7 +217,7 @@ struct planner_endings : flexible_contain<Endings...> {
 
 template<class... Endings>
 struct helpers::is_activated_impl<planner_endings<Endings...>>
-	: std::integral_constant<bool, planner_endings<Endings...>::activated> {};
+    : std::integral_constant<bool, planner_endings<Endings...>::activated> {};
 
 template<class... Endings>
 planner_endings(Endings &&...) -> planner_endings<std::remove_cvref_t<Endings>...>;
@@ -275,7 +275,7 @@ public:
 
 template<class Sig, class F>
 struct helpers::is_activated_impl<planner_sections_t<Sig, F>>
-	: std::integral_constant<bool, planner_sections_t<Sig, F>::activated> {};
+    : std::integral_constant<bool, planner_sections_t<Sig, F>::activated> {};
 
 template<class Union, class Order_, class Ending_>
 constexpr auto make_planner(Union &&union_struct, Order_ &&order, Ending_ &&ending) noexcept {

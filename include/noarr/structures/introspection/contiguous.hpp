@@ -286,7 +286,7 @@ private:
 	using Structure = into_blocks_static_t<Dim, DimIsBorder, DimMajor, DimMinor, T, MinorLenT>;
 	using indexless_state =
 		decltype(std::declval<State>()
-	                 .template remove<index_in<DimMajor>, index_in<DimMinor>, index_in<DimIsBorder>>());
+		             .template remove<index_in<DimMajor>, index_in<DimMinor>, index_in<DimIsBorder>>());
 
 	static constexpr bool get_value() noexcept {
 		if constexpr (state_contains<State, index_in<DimIsBorder>>) {

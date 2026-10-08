@@ -378,17 +378,17 @@ constexpr auto operator+(state<StateItemsA...> state_a, state<StateItemsB...> st
 	// items that are in just one of the states
 	const auto base =
 		state_a.items_restrict(typename helpers::state_remove_items<helpers::state_items_pack<StateItemsA...>,
-	                                                                typename StateItemsB::tag...>::result()) &
+		                                                            typename StateItemsB::tag...>::result()) &
 		state_b.items_restrict(typename helpers::state_remove_items<helpers::state_items_pack<StateItemsB...>,
-	                                                                typename StateItemsA::tag...>::result());
+		                                                            typename StateItemsA::tag...>::result());
 
 	return [=]<class... StateItems>(state<StateItems...> base) constexpr noexcept {
 		// items that are in both states
 		const auto added =
 			state_a.items_restrict(typename helpers::state_remove_items<helpers::state_items_pack<StateItemsA...>,
-		                                                                typename StateItems::tag...>::result()) +
+			                                                            typename StateItems::tag...>::result()) +
 			state_b.items_restrict(typename helpers::state_remove_items<helpers::state_items_pack<StateItemsA...>,
-		                                                                typename StateItems::tag...>::result());
+			                                                            typename StateItems::tag...>::result());
 
 		return added & base;
 	}(base);
@@ -417,16 +417,16 @@ template<class... StateItemsA, class... StateItemsB>
 constexpr auto operator-(state<StateItemsA...> state_a, state<StateItemsB...> state_b) noexcept {
 	const auto base =
 		state_a.items_restrict(typename helpers::state_remove_items<helpers::state_items_pack<StateItemsA...>,
-	                                                                typename StateItemsB::tag...>::result()) &
+		                                                            typename StateItemsB::tag...>::result()) &
 		-state_b.items_restrict(typename helpers::state_remove_items<helpers::state_items_pack<StateItemsB...>,
-	                                                                 typename StateItemsA::tag...>::result());
+		                                                             typename StateItemsA::tag...>::result());
 
 	return [=]<class... StateItems>(state<StateItems...> base) constexpr noexcept {
 		const auto added =
 			state_a.items_restrict(typename helpers::state_remove_items<helpers::state_items_pack<StateItemsA...>,
-		                                                                typename StateItems::tag...>::result()) -
+			                                                            typename StateItems::tag...>::result()) -
 			state_b.items_restrict(typename helpers::state_remove_items<helpers::state_items_pack<StateItemsA...>,
-		                                                                typename StateItems::tag...>::result());
+			                                                            typename StateItems::tag...>::result());
 
 		return added & base;
 	}(base);

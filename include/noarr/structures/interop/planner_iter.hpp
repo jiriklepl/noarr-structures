@@ -22,7 +22,7 @@ struct planner_iterator_t;
 
 template<IsDim auto Dim, class... Structs, class Order, class Ending>
 struct planner_iterator_t<Dim, union_t<Structs...>, Order, Ending>
-	: flexible_contain<union_t<Structs...>, Order, Ending> {
+    : flexible_contain<union_t<Structs...>, Order, Ending> {
 	using this_t = planner_iterator_t;
 	using base = flexible_contain<union_t<Structs...>, Order, Ending>;
 	std::size_t idx;

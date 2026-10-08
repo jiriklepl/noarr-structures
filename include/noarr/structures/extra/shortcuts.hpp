@@ -247,7 +247,7 @@ constexpr auto neighbor(State state, Diffs... diffs) noexcept {
 	              "Cannot shift in a dimension that is not dynamic");
 	return state.template with<index_in<Dims>...>(
 		good_diff_index_t<decltype(state.template get<index_in<Dims>>() + diffs)>(state.template get<index_in<Dims>>() +
-	                                                                              diffs)...);
+		                                                                          diffs)...);
 }
 
 template<auto... Dims, class Struct, class... StateItems>

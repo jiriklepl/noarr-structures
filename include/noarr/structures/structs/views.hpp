@@ -114,7 +114,7 @@ struct reassemble_completeness<function_sig<Dim, ArgLength, RetSig>> : reassembl
 
 template<IsDim auto Dim, class... RetSigs>
 struct reassemble_completeness<dep_function_sig<Dim, RetSigs...>>
-	: std::integral_constant<bool, (... && reassemble_completeness<RetSigs>::value)> {};
+    : std::integral_constant<bool, (... && reassemble_completeness<RetSigs>::value)> {};
 
 template<class ValueType>
 struct reassemble_completeness<scalar_sig<ValueType>> : std::true_type {};
@@ -322,7 +322,7 @@ struct rename_unzip_dim_pairs;
 template<auto... EvenAcc, auto... OddAcc, IsDim auto Even, IsDim auto Odd, auto... DimPairs>
 requires IsDimPack<decltype(DimPairs)...>
 struct rename_unzip_dim_pairs<dim_sequence<EvenAcc...>, dim_sequence<OddAcc...>, Even, Odd, DimPairs...>
-	: rename_unzip_dim_pairs<dim_sequence<EvenAcc..., Even>, dim_sequence<OddAcc..., Odd>, DimPairs...> {};
+    : rename_unzip_dim_pairs<dim_sequence<EvenAcc..., Even>, dim_sequence<OddAcc..., Odd>, DimPairs...> {};
 
 template<class EvenAcc, class OddAcc>
 struct rename_unzip_dim_pairs<EvenAcc, OddAcc> {
@@ -348,7 +348,7 @@ struct rename_dim;
 template<IsDim auto QDim, IsDim auto FromHead, auto... FromTail, IsDim auto ToHead, auto... ToTail>
 requires (QDim != FromHead)
 struct rename_dim<QDim, dim_sequence<FromHead, FromTail...>, dim_sequence<ToHead, ToTail...>>
-	: rename_dim<QDim, dim_sequence<FromTail...>, dim_sequence<ToTail...>> {};
+    : rename_dim<QDim, dim_sequence<FromTail...>, dim_sequence<ToTail...>> {};
 
 template<IsDim auto FromHead, auto... FromTail, IsDim auto ToHead, auto... ToTail>
 struct rename_dim<FromHead, dim_sequence<FromHead, FromTail...>, dim_sequence<ToHead, ToTail...>> {

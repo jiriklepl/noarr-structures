@@ -466,7 +466,7 @@ struct compose_proto;
 
 template<class... InnerProtoStructs, class OuterProtoStruct>
 struct compose_proto<pack<InnerProtoStructs...>, OuterProtoStruct>
-	: flexible_contain<pack<InnerProtoStructs...>, OuterProtoStruct> {
+    : flexible_contain<pack<InnerProtoStructs...>, OuterProtoStruct> {
 	using base = flexible_contain<pack<InnerProtoStructs...>, OuterProtoStruct>;
 	using base::base;
 

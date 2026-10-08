@@ -89,7 +89,7 @@ private:
 	// if the stripe is too narrow for even a single element, enlarge stripe just enough (at the cost of conflicts)
 	static constexpr std::size_t stripe_padded_width =
 		(tmp_stripe_padded_width < elem_size ? helpers::pad_to_multiple<elem_size, BankWidth>
-	                                         : tmp_stripe_padded_width);
+		                                     : tmp_stripe_padded_width);
 	// how many successive elements fit in the stripe width
 	static constexpr std::size_t stripe_width_elems = stripe_padded_width / elem_size;
 	// stripe width, in bytes, without stripe padding --- i.e. how many successive bytes of the original structure will

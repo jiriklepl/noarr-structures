@@ -183,7 +183,7 @@ requires (Pred::template value<v>)
 struct dim_sequence_filter_impl<dim_sequence<v, vs...>, Pred> {
 	using type =
 		typename dim_sequence_concat_impl<dim_sequence<v>,
-	                                      typename dim_sequence_filter_impl<dim_sequence<vs...>, Pred>::type>::type;
+		                                  typename dim_sequence_filter_impl<dim_sequence<vs...>, Pred>::type>::type;
 };
 
 template<auto v, auto... vs, class Pred>
@@ -214,7 +214,7 @@ static constexpr bool dim_tree_contains = dim_tree_contains_impl<v, Tree>::value
 template<auto v, auto V, class... Branches>
 requires (v != V)
 struct dim_tree_contains_impl<v, dim_tree<V, Branches...>>
-	: std::bool_constant<(... || dim_tree_contains<v, Branches>)> {};
+    : std::bool_constant<(... || dim_tree_contains<v, Branches>)> {};
 
 template<auto v, class... Branches>
 struct dim_tree_contains_impl<v, dim_tree<v, Branches...>> : std::true_type {};
@@ -453,13 +453,13 @@ concept IsSimple =
 	std::is_standard_layout_v<T> &&
 	(!std::is_empty_v<T> || std::is_trivially_default_constructible_v<T>)/* empty -> trivially_default_constructible */
 	&&(!std::is_default_constructible_v<T> ||
-       std::is_trivially_default_constructible_v<T>)/* default_constructible -> trivially_default_constructible */
+	   std::is_trivially_default_constructible_v<T>)/* default_constructible -> trivially_default_constructible */
 	&&std::is_trivially_copy_constructible_v<T> &&
 	std::is_trivially_move_constructible_v<T> &&
 	(!std::is_copy_assignable_v<T> ||
-     std::is_trivially_copy_assignable_v<T>)/* copy_assignable -> trivially_copy_assignable */
+	 std::is_trivially_copy_assignable_v<T>)/* copy_assignable -> trivially_copy_assignable */
 	&&(!std::is_move_assignable_v<T> ||
-       std::is_trivially_move_assignable_v<T>)/* move_assignable -> trivially_move_assignable */
+	   std::is_trivially_move_assignable_v<T>)/* move_assignable -> trivially_move_assignable */
 	&&std::is_trivially_destructible_v<T>;
 
 template<class T>

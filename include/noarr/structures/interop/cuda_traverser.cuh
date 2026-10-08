@@ -155,7 +155,7 @@ struct cuda_traverser_t;
 template<auto... DimsB, auto... DimsT, class... CudaDimsB, class... CudaDimsT, class Struct, class Order>
 struct cuda_traverser_t<Struct, Order, dim_sequence<DimsB...>, dim_sequence<DimsT...>,
                         helpers::cuda_dims_pack<CudaDimsB...>, helpers::cuda_dims_pack<CudaDimsT...>>
-	: traverser_t<Struct, Order> {
+    : traverser_t<Struct, Order> {
 	using base = traverser_t<Struct, Order>;
 	using base::base;
 
