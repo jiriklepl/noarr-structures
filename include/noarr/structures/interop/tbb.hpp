@@ -78,7 +78,7 @@ inline void tbb_reduce(const Traverser &t, const FNeut &f_neut, const FAcc &f_ac
 		});
 		out_ptrs.combine_each([out_struct, out_ptr, &f_join](const private_ptr &local_out_ptr) {
 			traverser(out_struct).for_each([to = out_ptr, from = local_out_ptr.raw, f_join](auto state) {
-				f_join(state, to, (const void *)from);
+				f_join(state, to, static_cast<const void *>(from));
 			});
 		});
 	}
