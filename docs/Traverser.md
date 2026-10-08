@@ -13,7 +13,7 @@ In the following example, we use a simple call to `for_each` to iterate over a 2
 ```cpp
 // Usual matrix allocation
 auto matrix_struct = noarr::scalar<float>() ^ noarr::array<'i', 300>() ^ noarr::array<'j', 400>();
-auto matrix = noarr::make_bag(matrix_struct);
+auto matrix = noarr::bag(matrix_struct);
 
 // Traverser example: zero out the matrix
 noarr::traverser(matrix).for_each([&](auto s) {
@@ -75,7 +75,7 @@ In most cases, it can be any subset of the structure dimensions, in any order (b
 The following example sketches some ways to traverse a 3D array:
 
 ```cpp
-auto a3d = noarr::make_bag(noarr::scalar<float>() ^ noarr::array<'i', 300>() ^ noarr::array<'j', 400>() ^ noarr::array<'k', 500>());
+auto a3d = noarr::bag(noarr::scalar<float>() ^ noarr::array<'i', 300>() ^ noarr::array<'j', 400>() ^ noarr::array<'k', 500>());
 
 // Iterate all possible indices for 'j'
 noarr::traverser(a3d).template for_dims<'j'>([&](auto trav) {
@@ -145,7 +145,7 @@ This allows you to use `for_dims` similarly to `for_each`. Reusing the first exa
 
 ```cpp
 auto matrix_struct = noarr::scalar<float>() ^ noarr::array<'i', 300>() ^ noarr::array<'j', 400>();
-auto matrix = noarr::make_bag(matrix_struct);
+auto matrix = noarr::bag(matrix_struct);
 
 noarr::traverser(matrix).for_each([&](auto s) {
 	matrix[s] = 0;
@@ -186,7 +186,7 @@ one using `order` and the other wrapping the structure manually.
 Note that in this simple case, splitting into blocks will not have any significant effect. It is done just for demonstration purposes.
 
 ```cpp
-auto original = noarr::make_bag(noarr::scalar<float>() ^ noarr::array<'i', 300>());
+auto original = noarr::bag(noarr::scalar<float>() ^ noarr::array<'i', 300>());
 
 // Create a proto-structure that splits dimension 'i' into blocks of size 4,
 //   the resulting structure will have dimensions 'y' (index of block) and 'x' (index of element within block)
@@ -274,17 +274,17 @@ Each dimension is iterated only once and the state will only contain one index f
 
 ```cpp
 // Structure copy, all dimensions are shared
-auto from = noarr::make_bag(noarr::scalar<float>() ^ noarr::array<'i', 300>() ^ noarr::array<'j', 400>(), from_data);
-auto to = noarr::make_bag(noarr::scalar<float>() ^ noarr::array<'j', 400>() ^ noarr::array<'i', 300>());
+auto from = noarr::bag(noarr::scalar<float>() ^ noarr::array<'i', 300>() ^ noarr::array<'j', 400>(), from_data);
+auto to = noarr::bag(noarr::scalar<float>() ^ noarr::array<'j', 400>() ^ noarr::array<'i', 300>());
 
 noarr::traverser(from, to).for_each([&](auto s) {
 	to[s] = from[s];
 });
 
 // Matrix multiplication, each dimension is shared by just two structures
-auto a = noarr::make_bag(noarr::scalar<float>() ^ noarr::array<'i', 300>() ^ noarr::array<'j', 400>(), a_data);
-auto b = noarr::make_bag(noarr::scalar<float>() ^ noarr::array<'j', 400>() ^ noarr::array<'k', 500>(), b_data);
-auto c = noarr::make_bag(noarr::scalar<float>() ^ noarr::array<'i', 300>() ^ noarr::array<'k', 500>());
+auto a = noarr::bag(noarr::scalar<float>() ^ noarr::array<'i', 300>() ^ noarr::array<'j', 400>(), a_data);
+auto b = noarr::bag(noarr::scalar<float>() ^ noarr::array<'j', 400>() ^ noarr::array<'k', 500>(), b_data);
+auto c = noarr::bag(noarr::scalar<float>() ^ noarr::array<'i', 300>() ^ noarr::array<'k', 500>());
 
 noarr::traverser(c).for_each([&](auto s) {
 	c[s] = 0;
@@ -302,7 +302,7 @@ The first example in this document could be written equivalently as:
 
 ```cpp
 auto matrix_struct = noarr::scalar<float>() ^ noarr::array<'i', 300>() ^ noarr::array<'j', 400>();
-auto matrix = noarr::make_bag(matrix_struct);
+auto matrix = noarr::bag(matrix_struct);
 
 // Note: here we passed matrix (not matrix_struct) in the first example
 noarr::traverser(matrix_struct).for_each([&](auto s) {
@@ -332,7 +332,7 @@ The loop will only use the top-most dimension and it provides an inner traverser
 For example:
 
 ```cpp
-auto matrix = noarr::make_bag(noarr::scalar<float>() ^ noarr::array<'i', 300>() ^ noarr::array<'j', 400>());
+auto matrix = noarr::bag(noarr::scalar<float>() ^ noarr::array<'i', 300>() ^ noarr::array<'j', 400>());
 
 for(auto trav : noarr::traverser(matrix)) {
 	// This code executes for each column:
@@ -355,7 +355,7 @@ To iterate over each element using just for loops, you would need to nest as man
 It is not necessary to come up with a new name every time. The following example might be packed too much, it is here just to show what is possible:
 
 ```cpp
-auto cube = noarr::make_bag(noarr::scalar<float>() ^ noarr::array<'i', 25>() ^ noarr::array<'j', 30>() ^ noarr::array<'k', 35>());
+auto cube = noarr::bag(noarr::scalar<float>() ^ noarr::array<'i', 25>() ^ noarr::array<'j', 30>() ^ noarr::array<'k', 35>());
 
 for(auto trav : noarr::traverser(cube)) for(auto trav : trav) for(auto trav : trav) {
 	cube[trav] = 0;
@@ -368,7 +368,7 @@ For loops can be used with [OpenMP](https://www.openmp.org/).
 The first traverser iterator example [above](#traverser-iterator) can be modified by simply adding an OMP pragma:
 
 ```cpp
-auto matrix = noarr::make_bag(noarr::scalar<float>() ^ noarr::array<'i', 300>() ^ noarr::array<'j', 400>());
+auto matrix = noarr::bag(noarr::scalar<float>() ^ noarr::array<'i', 300>() ^ noarr::array<'j', 400>());
 
 #pragma omp parallel for
 for(auto trav : noarr::traverser(matrix)) {
@@ -407,7 +407,7 @@ Then just replace serial code like `t.for_each([](auto state) { ... })` with `om
 The range of the topmost dimension used in the previous section can also be extracted explicitly using the `.range()` method:
 
 ```cpp
-auto matrix = noarr::make_bag(noarr::scalar<float>() ^ noarr::array<'i', 300>() ^ noarr::array<'j', 400>());
+auto matrix = noarr::bag(noarr::scalar<float>() ^ noarr::array<'i', 300>() ^ noarr::array<'j', 400>());
 
 for(auto trav : noarr::traverser(matrix).range()) {
 	/* ... */
@@ -460,9 +460,9 @@ Noarr provides a function `noarr::tbb_reduce` for parallel with non-scalar resul
 In the following example, we use it to sum the rows and columns of a matrix:
 
 ```cpp
-auto matrix = noarr::make_bag(noarr::scalar<float>() ^ noarr::array<'j', 300>() ^ noarr::array<'i', 400>(), matrix_data);
-auto row_sums = noarr::make_bag(noarr::scalar<float>() ^ noarr::array<'i', 400>()); // A column vector
-auto col_sums = noarr::make_bag(noarr::scalar<float>() ^ noarr::array<'j', 300>()); // A row vector
+auto matrix = noarr::bag(noarr::scalar<float>() ^ noarr::array<'j', 300>() ^ noarr::array<'i', 400>(), matrix_data);
+auto row_sums = noarr::bag(noarr::scalar<float>() ^ noarr::array<'i', 400>()); // A column vector
+auto col_sums = noarr::bag(noarr::scalar<float>() ^ noarr::array<'j', 300>()); // A row vector
 
 // Row sums - serial version for comparison:
 
@@ -520,9 +520,9 @@ In the following example, the input structure only has an `'i'` dimension, while
 
 ```cpp
 // Vector of values in range [0, 256), indexed by some 'i'
-auto values = noarr::make_bag(noarr::scalar<std::uint8_t>() ^ noarr::vector<'i'>(size), values_data);
+auto values = noarr::bag(noarr::scalar<std::uint8_t>() ^ noarr::vector<'i'>(size), values_data);
 // Histogram of the values, indexed by the value ('v'), gives the number of occurrences
-auto histogram = noarr::make_bag(noarr::scalar<std::size_t>() ^ noarr::array<'v', 256>());
+auto histogram = noarr::bag(noarr::scalar<std::size_t>() ^ noarr::array<'v', 256>());
 
 noarr::tbb_reduce(
 	// Input traverser
@@ -575,9 +575,9 @@ __global__ void matmul(T trav, A a, B b, C c) {
 }
 
 // a_data, b_data, c_data are pointers to memory accessible from the GPU device
-auto a = noarr::make_bag(noarr::scalar<float>() ^ noarr::array<'i', 3000>() ^ noarr::array<'j', 4000>(), a_data);
-auto b = noarr::make_bag(noarr::scalar<float>() ^ noarr::array<'j', 4000>() ^ noarr::array<'k', 5000>(), b_data);
-auto c = noarr::make_bag(noarr::scalar<float>() ^ noarr::array<'i', 3000>() ^ noarr::array<'k', 5000>(), c_data);
+auto a = noarr::bag(noarr::scalar<float>() ^ noarr::array<'i', 3000>() ^ noarr::array<'j', 4000>(), a_data);
+auto b = noarr::bag(noarr::scalar<float>() ^ noarr::array<'j', 4000>() ^ noarr::array<'k', 5000>(), b_data);
+auto c = noarr::bag(noarr::scalar<float>() ^ noarr::array<'i', 3000>() ^ noarr::array<'k', 5000>(), c_data);
 
 auto block_size = noarr::lit<8>;
 auto blk_order = noarr::into_blocks<'i', 'I', 'i'>(block_size) ^ noarr::into_blocks<'k', 'K', 'k'>(block_size);
@@ -606,9 +606,9 @@ __global__ void matmul(T trav, A a, B b, C c) {
 }
 
 // a_data, b_data, c_data are pointers to memory accessible from the GPU device
-auto a = noarr::make_bag(noarr::scalar<float>() ^ noarr::array<'i', 3500>() ^ noarr::array<'j', 4500>(), a_data);
-auto b = noarr::make_bag(noarr::scalar<float>() ^ noarr::array<'j', 4500>() ^ noarr::array<'k', 5500>(), b_data);
-auto c = noarr::make_bag(noarr::scalar<float>() ^ noarr::array<'i', 3500>() ^ noarr::array<'k', 5500>(), c_data);
+auto a = noarr::bag(noarr::scalar<float>() ^ noarr::array<'i', 3500>() ^ noarr::array<'j', 4500>(), a_data);
+auto b = noarr::bag(noarr::scalar<float>() ^ noarr::array<'j', 4500>() ^ noarr::array<'k', 5500>(), b_data);
+auto c = noarr::bag(noarr::scalar<float>() ^ noarr::array<'i', 3500>() ^ noarr::array<'k', 5500>(), c_data);
 
 auto block_size = noarr::lit<8>;
 auto blk_order = noarr::into_blocks_dynamic<'i', 'I', 'i', 'r'>(block_size) ^ noarr::into_blocks_dynamic<'k', 'K', 'k', 's'>(block_size);

@@ -27,7 +27,7 @@ Error and EOF conditions can be checked on the stream using the standard state f
 Examples:
 
 ```cpp
-auto bag = noarr::make_bag(/*...*/);
+auto bag = noarr::bag(/*...*/);
 
 if(!noarr::deserialize_data(std::ifstream("path/to/src"), bag)) {
 	std::cerr << "Input error" << std::endl;

@@ -50,7 +50,7 @@ TEST_CASE("OpenMP - omp_for_sections", "[omp]") {
 TEST_CASE("OpenMP - planner_omp_execute", "[omp]") {
 	std::vector<int> data(10, 0);
 	auto s = noarr::scalar<int>() ^ noarr::array<'x', 10>();
-	auto b = noarr::make_bag(s, data.data());
+	auto b = noarr::bag(s, data.data());
 
 	auto p = noarr::planner(b).for_each_elem([](auto state, auto &&elem) {
 		elem = static_cast<int>(state.template get<noarr::index_in<'x'>>()) * 10;

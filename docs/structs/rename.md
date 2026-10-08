@@ -32,8 +32,8 @@ In the following example, we copy a vector indexed by `'i'` into one indexed by 
 
 ```cpp
 // Let's say we cannot change these definitions
-auto from = noarr::make_bag(noarr::scalar<float>() ^ noarr::vector<'i'>(42), /*...*/);
-auto to = noarr::make_bag(noarr::scalar<float>() ^ noarr::vector<'x'>(42));
+auto from = noarr::bag(noarr::scalar<float>() ^ noarr::vector<'i'>(42), /*...*/);
+auto to = noarr::bag(noarr::scalar<float>() ^ noarr::vector<'x'>(42));
 
 // Create a view of `from` that is compatible with `to`
 auto from_view = from ^ noarr::rename<'i', 'x'>();
@@ -56,9 +56,9 @@ void matmul(ABag a, BBag b, CBag c) {
 }
 
 auto matrix_struct = noarr::scalar<float>() ^ noarr::array<'i', 3>() ^ noarr::array<'j', 3>();
-auto a = noarr::make_bag(matrix_struct, /*...*/);
-auto b = noarr::make_bag(matrix_struct, /*...*/);
-auto c = noarr::make_bag(matrix_struct, /*...*/);
+auto a = noarr::bag(matrix_struct, /*...*/);
+auto b = noarr::bag(matrix_struct, /*...*/);
+auto c = noarr::bag(matrix_struct, /*...*/);
 
 matmul(
 	a,
@@ -70,6 +70,6 @@ matmul(
 Last, renaming the dimensions can be used to change the interpretation of a structure:
 
 ```cpp
-auto a = noarr::make_bag(noarr::scalar<float>() ^ noarr::array<'i', 3>() ^ noarr::array<'j', 3>(), /*...*/);
+auto a = noarr::bag(noarr::scalar<float>() ^ noarr::array<'i', 3>() ^ noarr::array<'j', 3>(), /*...*/);
 auto a_transposed_view = a ^ noarr::rename<'i', 'j', 'j', 'i'>();
 ```

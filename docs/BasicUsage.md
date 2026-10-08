@@ -141,8 +141,8 @@ Although these two aspects could always be held separately (as demonstrated abov
 A bag is an object that remembers both. It is usually created using one of these two `make_bag` functions:
 
 ```cpp
-auto unique_bag = noarr::make_bag(my_structure_of_ten);
-auto ref_bag = noarr::make_bag(my_structure_of_ten, data_ptr);
+auto unique_bag = noarr::bag(my_structure_of_ten);
+auto ref_bag = noarr::bag(my_structure_of_ten, data_ptr);
 ```
 
 The first variant allocates the memory (according to [`get_size`](#get_size)) and deallocates the memory in the bag's destructor.

@@ -12,8 +12,8 @@ _NUL_FILE = "NUL" if sys.platform == "win32" else "/dev/null"
 _tmp_mulsc = '''
 auto sc = noarr::scalar<float>() ^ noarr::vector<'i'>(42) ^ noarr::vector<'j'>(42);
 auto sr = noarr::scalar<float>() ^ noarr::vector<'j'>(42) ^ noarr::vector<'i'>(42);
-auto bc = noarr::make_bag(sc, (void*)nullptr);
-auto br = noarr::make_bag(sr, (void*)nullptr);
+auto bc = noarr::bag(sc, (void*)nullptr);
+auto br = noarr::bag(sr, (void*)nullptr);
 '''
 
 _tmp_x = "noarr::array_t<'x', 42, noarr::scalar<float>>::signature"
