@@ -71,6 +71,10 @@ TEST_CASE("set_length_t", "[stride_along]") {
 	STATIC_REQUIRE(stride_along<'x'>(scalar<int>() ^ bcast<'x'>() ^ set_length<'x'>(0), state<>()) == 0);
 	STATIC_REQUIRE(HasStrideAlong<set_length_t<'x', vector_t<'x', scalar<int>>, std::size_t>, 'x', state<>>);
 	STATIC_REQUIRE(stride_along<'x'>(scalar<int>() ^ vector<'x'>() ^ set_length<'x'>(1), state<>()) == sizeof(int));
+
+	auto s_len1 = scalar<int>() ^ vector<'x'>() ^ set_length<'x'>(lit<1>);
+	STATIC_REQUIRE(HasStrideAlong<decltype(s_len1), 'x', state<>>);
+	STATIC_REQUIRE(stride_along<'x'>(s_len1, empty_state) == sizeof(int));
 }
 
 TEST_CASE("rename_t", "[stride_along]") {
@@ -286,4 +290,39 @@ TEST_CASE("into_blocks_dynamic_t", "[stride_along]") {
 	STATIC_REQUIRE(stride_along<'z'>(scalar<int>() ^ vector<'x'>() ^ set_length<'x'>(42) ^ into_blocks_dynamic<'x', 'y', 'z', 'w'>(), state<state_item<length_in<'z'>, std::size_t>>(7)) == sizeof(int));
 	STATIC_REQUIRE(HasStrideAlong<into_blocks_dynamic_t<'x', 'y', 'z', 'w', set_length_t<'x', vector_t<'x', scalar<int>>, std::size_t>>, 'w', state<state_item<length_in<'z'>, std::size_t>>>);
 	STATIC_REQUIRE(stride_along<'w'>(scalar<int>() ^ vector<'x'>() ^ set_length<'x'>(42) ^ into_blocks_dynamic<'x', 'y', 'z', 'w'>(), state<state_item<length_in<'z'>, std::size_t>>(7)) == 0);
+}
+
+TEST_CASE("merge_zcurve_t", "[stride_along]") {
+	auto aw = scalar<int>() ^ array<'w', 10>() ^ array<'x', 16>() ^ array<'y', 16>();
+	auto zw = aw ^ merge_zcurve<'x', 'y', 'z'>::maxlen_alignment<16, 16>();
+
+	STATIC_REQUIRE(!HasStrideAlong<decltype(zw), 'z', state<>>);
+	STATIC_REQUIRE(!HasStrideAlong<decltype(zw), 'x', state<>>);
+	STATIC_REQUIRE(!HasStrideAlong<decltype(zw), 'y', state<>>);
+	STATIC_REQUIRE(HasStrideAlong<decltype(zw), 'w', state<>>);
+	STATIC_REQUIRE(stride_along<'w'>(zw, empty_state) == sizeof(int));
+}
+
+TEST_CASE("reorder_t", "[stride_along]") {
+	auto s = scalar<int>() ^ array<'y', 20>() ^ array<'x', 10>() ^ reorder<'x', 'y'>();
+	STATIC_REQUIRE(HasStrideAlong<decltype(s), 'x', state<>>);
+	STATIC_REQUIRE(HasStrideAlong<decltype(s), 'y', state<>>);
+	STATIC_REQUIRE(stride_along<'x'>(s, empty_state) == 20 * sizeof(int));
+	STATIC_REQUIRE(stride_along<'y'>(s, empty_state) == sizeof(int));
+}
+
+TEST_CASE("tuple_t", "[stride_along]") {
+	auto a10 = scalar<int>() ^ array<'x', 10>();
+	auto a20 = scalar<int>() ^ array<'x', 20>();
+	auto t = pack(a10, a20) ^ tuple<'t'>();
+	STATIC_REQUIRE(!HasStrideAlong<decltype(t), 'x', state<>>);
+	STATIC_REQUIRE(!HasStrideAlong<decltype(t), 't', state<>>);
+
+	auto t_fixed0 = t ^ fix<'t'>(lit<0>);
+	STATIC_REQUIRE(HasStrideAlong<decltype(t_fixed0), 'x', state<>>);
+	STATIC_REQUIRE(stride_along<'x'>(t_fixed0, empty_state) == sizeof(int));
+
+	auto t_fixed1 = t ^ fix<'t'>(lit<1>);
+	STATIC_REQUIRE(HasStrideAlong<decltype(t_fixed1), 'x', state<>>);
+	STATIC_REQUIRE(stride_along<'x'>(t_fixed1, empty_state) == sizeof(int));
 }

@@ -1,6 +1,8 @@
 #ifndef NOARR_STRUCTURES_STRIDE_ALONG_HPP
 #define NOARR_STRUCTURES_STRIDE_ALONG_HPP
 
+#include <cstddef>
+
 #include <type_traits>
 #include <utility>
 
@@ -14,6 +16,7 @@
 #include "../structs/setters.hpp"
 #include "../structs/slice.hpp"
 #include "../structs/views.hpp"
+#include "../structs/zcurve.hpp"
 
 namespace noarr {
 
@@ -97,6 +100,47 @@ public:
 			return has_stride_along<QDim, sub_structure_t, sub_state_t>::stride(structure.sub_structure(),
 			                                                                    structure.sub_state(state));
 		}
+	}
+};
+
+template<IsDim auto QDim, IsDim auto Dim, class... Ts, IsState State>
+struct has_stride_along<QDim, tuple_t<Dim, Ts...>, State> {
+private:
+	using Structure = tuple_t<Dim, Ts...>;
+	using sub_state_t = struct_sub_state_t<Structure, State>;
+
+	static constexpr bool get_value() noexcept {
+		if constexpr (state_contains<State, index_in<Dim>>) {
+			using index_t = state_get_t<State, index_in<Dim>>;
+
+			if constexpr (requires {
+							  index_t::value;
+							  requires (index_t::value < sizeof...(Ts));
+						  }) {
+				if constexpr (QDim == Dim) {
+					return false;
+				} else {
+					using sub_structure_t = struct_sub_structure_t<Structure, State>;
+					return has_stride_along<QDim, sub_structure_t, sub_state_t>::value;
+				}
+			} else {
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
+
+public:
+	using value_type = bool;
+	static constexpr bool value = get_value();
+
+	static constexpr auto stride(Structure structure, State state) noexcept
+	requires value
+	{
+		using sub_structure_t = struct_sub_structure_t<Structure, State>;
+		return has_stride_along<QDim, sub_structure_t, sub_state_t>::stride(structure.sub_structure(state),
+		                                                                    structure.sub_state(state));
 	}
 };
 
@@ -191,6 +235,28 @@ public:
 	{
 		return has_stride_along<QDimNew, sub_structure_t, sub_state_t>::stride(structure.sub_structure(),
 		                                                                       structure.sub_state(state));
+	}
+};
+
+template<IsDim auto QDim, class T, auto... Dims, IsState State>
+requires IsDimPack<decltype(Dims)...>
+struct has_stride_along<QDim, reorder_t<T, Dims...>, State> {
+private:
+	using Structure = reorder_t<T, Dims...>;
+	using sub_structure_t = struct_sub_structure_t<Structure, State>;
+	using sub_state_t = struct_sub_state_t<Structure, State>;
+
+	static constexpr bool get_value() noexcept { return has_stride_along<QDim, sub_structure_t, sub_state_t>::value; }
+
+public:
+	using value_type = bool;
+	static constexpr bool value = get_value();
+
+	static constexpr auto stride(Structure structure, State state) noexcept
+	requires value
+	{
+		return has_stride_along<QDim, sub_structure_t, sub_state_t>::stride(structure.sub_structure(),
+		                                                                    structure.sub_state(state));
 	}
 };
 
@@ -507,9 +573,44 @@ public:
 	}
 };
 
+template<IsDim auto QDim, std::size_t SpecialLevel, std::size_t GeneralLevel, IsDim auto Dim, class T, auto... Dims,
+         IsState State>
+requires IsDimPack<decltype(Dims)...>
+struct has_stride_along<QDim, merge_zcurve_t<SpecialLevel, GeneralLevel, Dim, T, Dims...>, State> {
+private:
+	using Structure = merge_zcurve_t<SpecialLevel, GeneralLevel, Dim, T, Dims...>;
+	using sub_structure_t = struct_sub_structure_t<Structure, State>;
+	using sub_state_t = struct_sub_state_t<Structure, State>;
+
+	static constexpr bool get_value() noexcept {
+		if constexpr (QDim == Dim || (... || (QDim == Dims))) {
+			return false;
+		} else {
+			return has_stride_along<QDim, sub_structure_t, sub_state_t>::value;
+		}
+	}
+
+public:
+	using value_type = bool;
+	static constexpr bool value = get_value();
+
+	static constexpr auto stride(Structure structure, State state) noexcept
+	requires value
+	{
+		return has_stride_along<QDim, sub_structure_t, sub_state_t>::stride(structure.sub_structure(),
+		                                                                    structure.sub_state(state));
+	}
+};
+
 } // namespace helpers
 
-template<class T, auto Dim, class State>
+/**
+ * @brief Checks whether addressing elements along a dimension has a constant stride in memory.
+ *
+ * This inspects the reference property (memory offset progression), unlike IsUniformAlong
+ * which inspects the uniformity of produced sub-structures.
+ */
+template<class T, auto Dim, class State = state<>>
 concept HasStrideAlong = requires {
 	requires IsStruct<T>;
 	requires IsState<State>;
@@ -518,8 +619,11 @@ concept HasStrideAlong = requires {
 	requires helpers::has_stride_along<Dim, T, State>::value;
 };
 
-template<auto Dim, class T, class State>
-constexpr auto stride_along(T structure, State state) noexcept
+/**
+ * @brief Returns the stride (in bytes) between consecutive elements along a dimension.
+ */
+template<auto Dim, class T, class State = state<>>
+constexpr auto stride_along(T structure, State state = State{}) noexcept
 requires HasStrideAlong<T, Dim, State>
 {
 	return helpers::has_stride_along<Dim, T, State>::stride(structure, state);

@@ -1,6 +1,8 @@
 #ifndef NOARR_STRUCTURES_OFFSET_ALONG_HPP
 #define NOARR_STRUCTURES_OFFSET_ALONG_HPP
 
+#include <cstddef>
+
 #include <type_traits>
 
 #include "../base/state.hpp"
@@ -13,6 +15,7 @@
 #include "../structs/setters.hpp"
 #include "../structs/slice.hpp"
 #include "../structs/views.hpp"
+#include "../structs/zcurve.hpp"
 
 namespace noarr {
 
@@ -201,6 +204,11 @@ public:
 		}
 	}
 };
+
+template<IsDim auto QDim, class T, auto... Dims, IsState State>
+requires IsDimPack<decltype(Dims)...>
+struct has_offset_along<QDim, reorder_t<T, Dims...>, State>
+    : generic_has_offset_along<QDim, reorder_t<T, Dims...>, State> {};
 
 template<IsDim auto QDim, class T, auto DimA, auto DimB, auto Dim, IsState State>
 requires IsDim<decltype(DimA)> && IsDim<decltype(DimB)> && IsDim<decltype(Dim)> && (DimA != DimB)
@@ -455,9 +463,48 @@ public:
 	}
 };
 
+template<IsDim auto QDim, std::size_t SpecialLevel, std::size_t GeneralLevel, IsDim auto Dim, class T, auto... Dims,
+         IsState State>
+requires IsDimPack<decltype(Dims)...>
+struct has_offset_along<QDim, merge_zcurve_t<SpecialLevel, GeneralLevel, Dim, T, Dims...>, State> {
+private:
+	using Structure = merge_zcurve_t<SpecialLevel, GeneralLevel, Dim, T, Dims...>;
+	using sub_structure_t = struct_sub_structure_t<Structure, State>;
+	using sub_state_t = struct_sub_state_t<Structure, State>;
+
+	static constexpr bool get_value() noexcept {
+		if constexpr (QDim == Dim) {
+			return (... && has_offset_along<Dims, sub_structure_t, sub_state_t>::value);
+		} else if constexpr ((... || (QDim == Dims))) {
+			return false;
+		} else {
+			return has_offset_along<QDim, sub_structure_t, sub_state_t>::value;
+		}
+	}
+
+public:
+	using value_type = bool;
+	static constexpr bool value = get_value();
+
+	static constexpr auto offset(Structure structure, State state) noexcept
+	requires value
+	{
+		if constexpr (QDim == Dim) {
+			return (... + has_offset_along<Dims, sub_structure_t, sub_state_t>::offset(structure.sub_structure(),
+			                                                                           structure.sub_state(state)));
+		} else {
+			return has_offset_along<QDim, sub_structure_t, sub_state_t>::offset(structure.sub_structure(),
+			                                                                    structure.sub_state(state));
+		}
+	}
+};
+
 } // namespace helpers
 
-template<class T, auto Dim, class State>
+/**
+ * @brief Checks whether the offset of elements along a dimension can be queried.
+ */
+template<class T, auto Dim, class State = state<>>
 concept HasOffsetAlong = requires {
 	requires IsStruct<T>;
 	requires IsState<State>;
@@ -466,8 +513,11 @@ concept HasOffsetAlong = requires {
 	requires helpers::has_offset_along<Dim, T, State>::value;
 };
 
-template<auto Dim, class T, class State>
-constexpr auto offset_along(T structure, State state) noexcept
+/**
+ * @brief Returns the offset (in bytes) of elements along a dimension for the given state.
+ */
+template<auto Dim, class T, class State = state<>>
+constexpr auto offset_along(T structure, State state = State{}) noexcept
 requires HasOffsetAlong<T, Dim, State>
 {
 	return helpers::has_offset_along<Dim, T, State>::offset(structure, state);

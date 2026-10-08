@@ -1,6 +1,8 @@
 #ifndef NOARR_STRUCTURES_LOWER_BOUND_ALONG_HPP
 #define NOARR_STRUCTURES_LOWER_BOUND_ALONG_HPP
 
+#include <cstddef>
+
 #include <type_traits>
 #include <utility>
 
@@ -14,6 +16,7 @@
 #include "../structs/setters.hpp"
 #include "../structs/slice.hpp"
 #include "../structs/views.hpp"
+#include "../structs/zcurve.hpp"
 
 namespace noarr {
 
@@ -533,6 +536,57 @@ public:
 	requires value
 	{
 		return has_lower_bound_along<QDimNew, sub_structure_t, sub_state_t>::lower_bound_at(
+			structure.sub_structure(), structure.sub_state(state), min, end);
+	}
+};
+
+template<IsDim auto QDim, class T, auto... Dims, IsState State>
+requires IsDimPack<decltype(Dims)...>
+struct has_lower_bound_along<QDim, reorder_t<T, Dims...>, State> {
+private:
+	using Structure = reorder_t<T, Dims...>;
+	using sub_structure_t = struct_sub_structure_t<Structure, State>;
+	using sub_state_t = struct_sub_state_t<Structure, State>;
+
+	static constexpr bool get_value() noexcept {
+		return has_lower_bound_along<QDim, sub_structure_t, sub_state_t>::value;
+	}
+
+public:
+	using value_type = bool;
+	static constexpr bool value = get_value();
+
+	static constexpr bool is_monotonic() noexcept
+	requires value
+	{
+		return has_lower_bound_along<QDim, sub_structure_t, sub_state_t>::is_monotonic();
+	}
+
+	static constexpr auto lower_bound(Structure structure, State state) noexcept
+	requires value
+	{
+		return has_lower_bound_along<QDim, sub_structure_t, sub_state_t>::lower_bound(structure.sub_structure(),
+		                                                                              structure.sub_state(state));
+	}
+
+	static constexpr auto lower_bound(Structure structure, State state, auto min, auto end) noexcept
+	requires value
+	{
+		return has_lower_bound_along<QDim, sub_structure_t, sub_state_t>::lower_bound(
+			structure.sub_structure(), structure.sub_state(state), min, end);
+	}
+
+	static constexpr auto lower_bound_at(Structure structure, State state) noexcept
+	requires value
+	{
+		return has_lower_bound_along<QDim, sub_structure_t, sub_state_t>::lower_bound_at(structure.sub_structure(),
+		                                                                                 structure.sub_state(state));
+	}
+
+	static constexpr auto lower_bound_at(Structure structure, State state, auto min, auto end) noexcept
+	requires value
+	{
+		return has_lower_bound_along<QDim, sub_structure_t, sub_state_t>::lower_bound_at(
 			structure.sub_structure(), structure.sub_state(state), min, end);
 	}
 };
@@ -1410,9 +1464,70 @@ public:
 	}
 };
 
+template<IsDim auto QDim, std::size_t SpecialLevel, std::size_t GeneralLevel, IsDim auto Dim, class T, auto... Dims,
+         IsState State>
+requires IsDimPack<decltype(Dims)...>
+struct has_lower_bound_along<QDim, merge_zcurve_t<SpecialLevel, GeneralLevel, Dim, T, Dims...>, State> {
+private:
+	using Structure = merge_zcurve_t<SpecialLevel, GeneralLevel, Dim, T, Dims...>;
+	using sub_structure_t = struct_sub_structure_t<Structure, State>;
+	using sub_state_t = struct_sub_state_t<Structure, State>;
+
+	static constexpr bool get_value() noexcept {
+		if constexpr (QDim == Dim || (... || (QDim == Dims))) {
+			return false;
+		} else {
+			return has_lower_bound_along<QDim, sub_structure_t, sub_state_t>::value;
+		}
+	}
+
+public:
+	using value_type = bool;
+	static constexpr bool value = get_value();
+
+	static constexpr bool is_monotonic() noexcept
+	requires value
+	{
+		return has_lower_bound_along<QDim, sub_structure_t, sub_state_t>::is_monotonic();
+	}
+
+	static constexpr auto lower_bound(Structure structure, State state) noexcept
+	requires value
+	{
+		return has_lower_bound_along<QDim, sub_structure_t, sub_state_t>::lower_bound(structure.sub_structure(),
+		                                                                              structure.sub_state(state));
+	}
+
+	template<class F1, class F2>
+	static constexpr auto lower_bound(Structure structure, State state, F1 min, F2 end) noexcept
+	requires value
+	{
+		return has_lower_bound_along<QDim, sub_structure_t, sub_state_t>::lower_bound(
+			structure.sub_structure(), structure.sub_state(state), min, end);
+	}
+
+	static constexpr auto lower_bound_at(Structure structure, State state) noexcept
+	requires value
+	{
+		return has_lower_bound_along<QDim, sub_structure_t, sub_state_t>::lower_bound_at(structure.sub_structure(),
+		                                                                                 structure.sub_state(state));
+	}
+
+	template<class F1, class F2>
+	static constexpr auto lower_bound_at(Structure structure, State state, F1 min, F2 end) noexcept
+	requires value
+	{
+		return has_lower_bound_along<QDim, sub_structure_t, sub_state_t>::lower_bound_at(
+			structure.sub_structure(), structure.sub_state(state), min, end);
+	}
+};
+
 } // namespace helpers
 
-template<class T, auto Dim, class State>
+/**
+ * @brief Checks whether the lower bound along a dimension can be queried.
+ */
+template<class T, auto Dim, class State = state<>>
 concept HasLowerBoundAlong = requires {
 	requires IsStruct<T>;
 	requires IsState<State>;
@@ -1421,28 +1536,40 @@ concept HasLowerBoundAlong = requires {
 	requires helpers::has_lower_bound_along<Dim, T, State>::value;
 };
 
-template<auto Dim, class T, class State>
-constexpr auto lower_bound_along(T structure, State state) noexcept
+/**
+ * @brief Returns the minimum offset (in bytes) along a dimension.
+ */
+template<auto Dim, class T, class State = state<>>
+constexpr auto lower_bound_along(T structure, State state = State{}) noexcept
 requires HasLowerBoundAlong<T, Dim, State>
 {
 	return helpers::has_lower_bound_along<Dim, T, State>::lower_bound(structure, state);
 }
 
-template<auto Dim, class T, class State>
-constexpr auto lower_bound_at(T structure, State state) noexcept
+/**
+ * @brief Returns the canonical index corresponding to the lower bound along a dimension.
+ */
+template<auto Dim, class T, class State = state<>>
+constexpr auto lower_bound_at(T structure, State state = State{}) noexcept
 requires HasLowerBoundAlong<T, Dim, State>
 {
 	return helpers::has_lower_bound_along<Dim, T, State>::lower_bound_at(structure, state);
 }
 
-template<auto Dim, class T, class State>
+/**
+ * @brief Returns the minimum offset (in bytes) along a dimension within a specified index range.
+ */
+template<auto Dim, class T, class State = state<>>
 constexpr auto lower_bound_along(T structure, State state, auto min, auto end) noexcept
 requires HasLowerBoundAlong<T, Dim, State>
 {
 	return helpers::has_lower_bound_along<Dim, T, State>::lower_bound(structure, state, min, end);
 }
 
-template<auto Dim, class T, class State>
+/**
+ * @brief Returns the canonical index corresponding to the lower bound along a dimension within a specified index range.
+ */
+template<auto Dim, class T, class State = state<>>
 constexpr auto lower_bound_at(T structure, State state, auto min, auto end) noexcept
 requires HasLowerBoundAlong<T, Dim, State>
 {

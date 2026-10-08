@@ -7,7 +7,7 @@
 
 namespace noarr::helpers {
 
-TEST_CASE("bcast_t", "[contiguous]") {
+TEST_CASE("scalar", "[contiguous]") {
 	STATIC_REQUIRE(is_contiguous<scalar<int>, state<>>::value);
 }
 
@@ -86,7 +86,21 @@ TEST_CASE("span", "[contiguous]") {
 	STATIC_REQUIRE(is_contiguous<span_t<'x', vector_t<'x', scalar<int>>, std::size_t, std::size_t>,
 								state<state_item<length_in<'x'>, std::size_t>>>::value);
 	STATIC_REQUIRE(!is_contiguous<span_t<'x', vector_t<'x', scalar<int>>, std::size_t, std::size_t>, state<>>::value);
+	STATIC_REQUIRE(is_contiguous<span_t<'x', vector_t<'x', scalar<int>>, lit_t<2>, lit_t<8>>,
+								state<state_item<length_in<'x'>, std::size_t>>>::value);
 }
+
+TEST_CASE("merge_blocks", "[contiguous]") {
+	STATIC_REQUIRE(is_contiguous<merge_blocks_t<'x', 'y', 'z', array_t<'x', 10, array_t<'y', 20, scalar<int>>>>, state<>>::value);
+	STATIC_REQUIRE(!is_contiguous<merge_blocks_t<'x', 'y', 'z', vector_t<'x', vector_t<'y', scalar<int>>>>, state<>>::value);
+}
+
+TEST_CASE("merge_zcurve", "[contiguous]") {
+	auto aw = scalar<int>() ^ array<'x', 16>() ^ array<'y', 16>();
+	auto zw = aw ^ merge_zcurve<'x', 'y', 'z'>::maxlen_alignment<16, 16>();
+	STATIC_REQUIRE(is_contiguous<decltype(zw), state<>>::value);
+}
+
 
 TEST_CASE("step", "[contiguous]") {
 	STATIC_REQUIRE(

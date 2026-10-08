@@ -15,11 +15,13 @@
 #include "../structs/setters.hpp"
 #include "../structs/slice.hpp"
 #include "../structs/views.hpp"
+#include "../structs/zcurve.hpp"
 
 namespace noarr {
 
 namespace helpers {
 
+// implicitly implements specialization for all incorrect structures
 template<class T, IsState State>
 struct is_contiguous : std::false_type {};
 
@@ -187,9 +189,7 @@ struct is_contiguous<span_t<Dim, T, StartT, EndT>, State> {
 private:
 	using Structure = span_t<Dim, T, StartT, EndT>;
 
-	static constexpr bool get_value() noexcept {
-		return is_contiguous<T, struct_sub_state_t<slice_t<Dim, T, StartT, EndT>, State>>::value;
-	}
+	static constexpr bool get_value() noexcept { return is_contiguous<T, struct_sub_state_t<Structure, State>>::value; }
 
 public:
 	using value_type = bool;
@@ -310,9 +310,38 @@ public:
 	static constexpr bool value = get_value();
 };
 
+template<IsDim auto DimMajor, IsDim auto DimMinor, IsDim auto Dim, class T, IsState State>
+requires (DimMajor != DimMinor)
+struct is_contiguous<merge_blocks_t<DimMajor, DimMinor, Dim, T>, State> {
+private:
+	using Structure = merge_blocks_t<DimMajor, DimMinor, Dim, T>;
+
+	static constexpr bool get_value() noexcept { return is_contiguous<T, struct_sub_state_t<Structure, State>>::value; }
+
+public:
+	using value_type = bool;
+	static constexpr bool value = get_value();
+};
+
+template<std::size_t SpecialLevel, std::size_t GeneralLevel, IsDim auto Dim, class T, auto... Dims, IsState State>
+requires IsDimPack<decltype(Dims)...>
+struct is_contiguous<merge_zcurve_t<SpecialLevel, GeneralLevel, Dim, T, Dims...>, State> {
+private:
+	using Structure = merge_zcurve_t<SpecialLevel, GeneralLevel, Dim, T, Dims...>;
+
+	static constexpr bool get_value() noexcept { return is_contiguous<T, struct_sub_state_t<Structure, State>>::value; }
+
+public:
+	using value_type = bool;
+	static constexpr bool value = get_value();
+};
+
 } // namespace helpers
 
-template<class T, class State>
+/**
+ * @brief Checks whether the elements of a structure form a single contiguous block in memory.
+ */
+template<class T, class State = state<>>
 concept IsContiguous = requires {
 	requires IsStruct<T>;
 	requires IsState<State>;
@@ -320,18 +349,27 @@ concept IsContiguous = requires {
 	requires helpers::is_contiguous<T, State>::value;
 };
 
-template<class T, IsState State>
+/**
+ * @brief Checks whether the elements of a structure form a single contiguous block in memory.
+ */
+template<class T, IsState State = state<>>
 constexpr bool is_contiguous() noexcept {
 	return helpers::is_contiguous<T, State>::value;
 }
 
+/**
+ * @brief Creates a pipe-compatible function object to check whether a structure is contiguous.
+ */
 template<IsState State = state<>>
-constexpr auto is_contiguous(State /*unused*/) noexcept {
+constexpr auto is_contiguous(State /*unused*/ = State{}) noexcept {
 	return []<class Struct>(Struct /*unused*/) constexpr noexcept { return is_contiguous<Struct, State>(); };
 }
 
-template<class T, IsState State>
-constexpr bool is_contiguous(const T & /*unused*/, State /*unused*/) noexcept {
+/**
+ * @brief Checks whether the elements of a structure form a single contiguous block in memory.
+ */
+template<class T, IsState State = state<>>
+constexpr bool is_contiguous(const T & /*unused*/, State /*unused*/ = State{}) noexcept {
 	return is_contiguous<T, State>();
 }
 
