@@ -1,5 +1,7 @@
 #include <iomanip>
 #include <iostream>
+#include <string>
+#include <string_view>
 
 #include <noarr/noarr.hpp>
 
