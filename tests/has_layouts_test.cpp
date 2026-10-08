@@ -118,3 +118,23 @@ TEST_CASE("tuple test", "[has_test]") {
 	STATIC_REQUIRE((testee2 | has_offset()));
 	STATIC_REQUIRE((testee2 | offset()) == sizeof(int));
 }
+
+TEST_CASE("empty tuple test", "[has_test]") {
+	constexpr tuple_t<'t'> testee{};
+
+	STATIC_REQUIRE(testee | has_size());
+	STATIC_REQUIRE((testee | get_size()) == 0);
+
+	STATIC_REQUIRE(testee | has_length<'t'>());
+	STATIC_REQUIRE((testee | get_length<'t'>()) == 0);
+
+	STATIC_REQUIRE(testee.align(empty_state) == 1);
+}
+
+TEST_CASE("tuple mixed alignment", "[has_test]") {
+	constexpr auto testee = pack(scalar<char>(), scalar<double>()) ^ tuple<'x'>();
+	STATIC_REQUIRE(testee.align(empty_state) == alignof(double));
+
+	constexpr auto testee2 = pack(scalar<double>(), scalar<char>()) ^ tuple<'x'>();
+	STATIC_REQUIRE(testee2.align(empty_state) == alignof(double));
+}

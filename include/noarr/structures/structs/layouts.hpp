@@ -179,17 +179,23 @@ private:
 		return size_accumulator(std::index_sequence<IS...>(), constexpr_arithmetic::make_const<0>(), sub_state);
 	}
 
+	template<IsState State>
+	[[nodiscard]]
+	constexpr auto align_inner(std::index_sequence<> /*is*/, State /*sub_state*/) const noexcept {
+		return constexpr_arithmetic::make_const<1>();
+	}
+
 	template<IsState State, std::size_t I>
 	[[nodiscard]]
 	constexpr auto align_inner(std::index_sequence<I> /*is*/, State sub_state) const noexcept {
 		return sub_structure<I>().align(sub_state);
 	}
 
-	template<IsState State, std::size_t I, std::size_t... IS>
+	template<IsState State, std::size_t I1, std::size_t I2, std::size_t... IS>
 	[[nodiscard]]
-	constexpr auto align_inner(std::index_sequence<I, IS...> /*is*/, State sub_state) const noexcept {
-		return constexpr_arithmetic::max(sub_structure<I>().align(sub_state),
-		                                 align_inner(std::index_sequence<IS...>(), sub_state));
+	constexpr auto align_inner(std::index_sequence<I1, I2, IS...> /*is*/, State sub_state) const noexcept {
+		return constexpr_arithmetic::max(sub_structure<I1>().align(sub_state),
+		                                 align_inner(std::index_sequence<I2, IS...>(), sub_state));
 	}
 };
 
