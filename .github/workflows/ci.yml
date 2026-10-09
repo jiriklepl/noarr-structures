@@ -1,0 +1,333 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: Linux / ${{ matrix.target.os }} / ${{ matrix.target.cxx }} / ${{ matrix.preset }}
+    runs-on: ${{ matrix.target.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [release, debug]
+        target:
+          # Ubuntu 22.04 - GCC
+          - os: ubuntu-22.04
+            cxx: g++-10
+          - os: ubuntu-22.04
+            cxx: g++-11
+          - os: ubuntu-22.04
+            cxx: g++-12
+
+          # Ubuntu 22.04 - Clang
+          - os: ubuntu-22.04
+            cxx: clang++-13
+          - os: ubuntu-22.04
+            cxx: clang++-14
+          - os: ubuntu-22.04
+            cxx: clang++-15
+
+          # Ubuntu 24.04 - GCC
+          - os: ubuntu-24.04
+            cxx: g++-12
+          - os: ubuntu-24.04
+            cxx: g++-13
+          - os: ubuntu-24.04
+            cxx: g++-14
+
+          # Ubuntu 24.04 - Clang
+          - os: ubuntu-24.04
+            cxx: clang++-16
+          - os: ubuntu-24.04
+            cxx: clang++-17
+          - os: ubuntu-24.04
+            cxx: clang++-18
+
+          # Ubuntu 26.04 - GCC
+          - os: ubuntu-26.04
+            cxx: g++-13
+          - os: ubuntu-26.04
+            cxx: g++-14
+          - os: ubuntu-26.04
+            cxx: g++-15
+
+          # Ubuntu 26.04 - Clang
+          - os: ubuntu-26.04
+            cxx: clang++-20
+          - os: ubuntu-26.04
+            cxx: clang++-21
+          - os: ubuntu-26.04
+            cxx: clang++-22
+    env:
+      CXX: ${{ matrix.target.cxx }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Configure
+        run: cmake --preset ${{ matrix.preset }} -G Ninja
+
+      - name: Build
+        run: cmake --build --preset ${{ matrix.preset }} --parallel 2
+
+      - name: Run tests
+        run: ctest --preset ${{ matrix.preset }} --output-on-failure --no-tests=error --timeout 180
+
+      - name: Configure standalone examples
+        run: cmake --preset ${{ matrix.preset }} -S examples -G Ninja
+
+      - name: Build standalone examples
+        run: cmake --build examples/build/${{ matrix.preset }} --parallel 2
+
+      - name: Test standalone examples
+        run: ctest --test-dir examples/build/${{ matrix.preset }} --output-on-failure --no-tests=error --timeout 30
+
+  macos:
+    name: macOS / ${{ matrix.target.os }} / ${{ matrix.target.compiler }} / ${{ matrix.preset }}
+    runs-on: ${{ matrix.target.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [release, debug]
+        target:
+          # macOS 14
+          - os: macos-14
+            compiler: Apple Clang
+          - os: macos-14
+            compiler: LLVM 14
+            llvm: llvm@14
+          - os: macos-14
+            compiler: LLVM 15
+            llvm: llvm@15
+          - os: macos-14
+            compiler: GCC 13
+            brew: gcc@13
+            cxx: g++-13
+          - os: macos-14
+            compiler: GCC 14
+            brew: gcc@14
+            cxx: g++-14
+          - os: macos-14
+            compiler: GCC 15
+            brew: gcc@15
+            cxx: g++-15
+
+          # macOS 15
+          - os: macos-15
+            compiler: Apple Clang
+          - os: macos-15-intel
+            compiler: Apple Clang
+          - os: macos-15
+            compiler: LLVM 18
+            llvm: llvm@18
+          - os: macos-15-intel
+            compiler: LLVM 18
+            llvm: llvm@18
+
+          # macOS 26
+          - os: macos-26
+            compiler: Apple Clang
+          - os: macos-26
+            compiler: LLVM 20
+            llvm: llvm@20
+    env:
+      CXX: /usr/bin/clang++
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install Homebrew compiler
+        if: matrix.target.brew != '' || matrix.target.llvm != ''
+        run: |
+          pkg="${{ matrix.target.brew || matrix.target.llvm }}"
+          brew install "$pkg" || true
+
+      - name: Select Homebrew LLVM
+        if: matrix.target.llvm != ''
+        run: echo "CXX=$(brew --prefix ${{ matrix.target.llvm }})/bin/clang++" >> "$GITHUB_ENV"
+
+      - name: Select compiler executable
+        if: matrix.target.cxx != ''
+        run: echo "CXX=${{ matrix.target.cxx }}" >> "$GITHUB_ENV"
+
+      - name: Configure
+        run: cmake --preset ${{ matrix.preset }} -G Ninja
+
+      - name: Build
+        run: cmake --build --preset ${{ matrix.preset }} --parallel 2
+
+      - name: Run tests
+        run: ctest --preset ${{ matrix.preset }} --output-on-failure --no-tests=error --timeout 180
+
+      - name: Configure standalone examples
+        run: cmake --preset ${{ matrix.preset }} -S examples -G Ninja
+
+      - name: Build standalone examples
+        run: cmake --build examples/build/${{ matrix.preset }} --parallel 2
+
+      - name: Test standalone examples
+        run: ctest --test-dir examples/build/${{ matrix.preset }} --output-on-failure --no-tests=error --timeout 30
+
+  windows:
+    name: Windows / ${{ matrix.os }} / ${{ matrix.cxx }} / ${{ matrix.preset }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, windows-2025]
+        cxx: [cl, clang-cl]
+        preset: [release, debug]
+    env:
+      CXX: ${{ matrix.cxx }}
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Visual Studio environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Configure
+        run: cmake --preset ${{ matrix.preset }} -G Ninja
+
+      - name: Build
+        run: cmake --build --preset ${{ matrix.preset }} --parallel 2
+
+      - name: Run tests
+        run: ctest --preset ${{ matrix.preset }} --output-on-failure --no-tests=error --timeout 180
+
+      - name: Configure standalone examples
+        run: cmake --preset ${{ matrix.preset }} -S examples -G Ninja
+
+      - name: Build standalone examples
+        run: cmake --build examples/build/${{ matrix.preset }} --parallel 2
+
+      - name: Test standalone examples
+        run: ctest --test-dir examples/build/${{ matrix.preset }} --output-on-failure --no-tests=error --timeout 30
+
+  mingw:
+    name: Windows / MinGW / ${{ matrix.target.msystem }} / ${{ matrix.target.cxx }} / ${{ matrix.preset }}
+    runs-on: windows-2025
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [release, debug]
+        target:
+          - msystem: UCRT64
+            cxx: g++
+            prefix: mingw-w64-ucrt-x86_64
+            package: gcc
+          - msystem: CLANG64
+            cxx: clang++
+            prefix: mingw-w64-clang-x86_64
+            package: clang
+    env:
+      CXX: ${{ matrix.target.cxx }}
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up MinGW toolchain
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{ matrix.target.msystem }}
+          update: true
+          install: >-
+            ${{ matrix.target.prefix }}-${{ matrix.target.package }}
+            ${{ matrix.target.prefix }}-cmake
+            ${{ matrix.target.prefix }}-ninja
+
+      - name: Configure
+        run: cmake --preset ${{ matrix.preset }} -G Ninja
+
+      - name: Build
+        run: cmake --build --preset ${{ matrix.preset }} --parallel 2
+
+      - name: Run tests
+        run: ctest --preset ${{ matrix.preset }} --output-on-failure --no-tests=error --timeout 180
+
+      - name: Configure standalone examples
+        run: cmake --preset ${{ matrix.preset }} -S examples -G Ninja
+
+      - name: Build standalone examples
+        run: cmake --build examples/build/${{ matrix.preset }} --parallel 2
+
+      - name: Test standalone examples
+        run: ctest --test-dir examples/build/${{ matrix.preset }} --output-on-failure --no-tests=error --timeout 30
+
+  docs:
+    name: Docs & Format / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            runner: bash
+          - os: windows-2025
+            runner: windows
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.x'
+
+      - name: Check formatting (Linux)
+        if: matrix.runner == 'bash'
+        run: ./format.sh --check
+
+      - name: Run docs check (Linux)
+        if: matrix.runner == 'bash'
+        run: docs_check/check
+
+      - name: Set up Visual Studio environment (Windows)
+        if: matrix.runner == 'windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Run docs check (Windows)
+        if: matrix.runner == 'windows'
+        working-directory: docs_check
+        run: python check.py

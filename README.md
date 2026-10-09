@@ -1,15 +1,10 @@
-[![Ubuntu-22.04](../../actions/workflows/noarr_test_ubuntu_22.yml/badge.svg)](../../actions/workflows/noarr_test_ubuntu_22.yml)
-[![Ubuntu-24.04](../../actions/workflows/noarr_test_ubuntu_24.yml/badge.svg)](../../actions/workflows/noarr_test_ubuntu_24.yml)
-[![Windows-latest](../../actions/workflows/noarr_test_winl.yml/badge.svg)](../../actions/workflows/noarr_test_winl.yml)
-[![macOS-14](../../actions/workflows/noarr_test_macos_14.yml/badge.svg)](../../actions/workflows/noarr_test_macos_14.yml)
-
-> GCC 10-14, Clang 13-18, and MSVC 17 on Ubuntu, macOS, and Windows GitHub runners.
-
-[![Docs check - Ubuntu](../../actions/workflows/noarr_docs_check_ubuntu.yml/badge.svg)](../../actions/workflows/noarr_docs_check_ubuntu.yml)
-[![Docs check - Windows](../../actions/workflows/noarr_docs_check_windows.yml/badge.svg)](../../actions/workflows/noarr_docs_check_windows.yml)
-
-
 # Noarr
+
+[![CI](https://github.com/ParaCoToUl/noarr-structures/actions/workflows/ci.yml/badge.svg)](https://github.com/ParaCoToUl/noarr-structures/actions/workflows/ci.yml)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+
+> GCC 10-15, Clang 13-22, and MSVC on Ubuntu, macOS, and Windows GitHub runners.
+
 
 Noarr is a header-only library that facilitates the creation of many data structures and provides a layout-agnostic way of accessing stored values.
 
@@ -209,31 +204,23 @@ Runnable, standalone examples demonstrating modern Noarr features can be found i
 
 Each example is self-contained and demonstrates consuming Noarr as an external dependency.
 
-### Examples tests
-
-[![Noarr examples test ubuntu-22](../../actions/workflows/noarr_examples_test_ubuntu_22.yml/badge.svg)](../../actions/workflows/noarr_examples_test_ubuntu_22.yml) [![Noarr examples test ubuntu-24](../../actions/workflows/noarr_examples_test_ubuntu_24.yml/badge.svg)](../../actions/workflows/noarr_examples_test_ubuntu_24.yml) [![Noarr examples test macOS-14](../../actions/workflows/noarr_examples_test_macos_14.yml/badge.svg)](../../actions/workflows/noarr_examples_test_macos_14.yml)
-
-[![Noarr examples test windows-latest](../../actions/workflows/noarr_examples_test_winl.yml/badge.svg)](../../actions/workflows/noarr_examples_test_winl.yml)
-
-
 ## Running tests
 
-To ensure the library works properly on your system, you can run the tests provided in the `tests` directory (using CMake and CTest):
+To ensure the library works properly on your system, you can run the tests using CMake presets:
 
 ```sh
-# From the root of the repository:
-
-# Enter the `tests` directory
-cd tests
-
-# Configure the build environment
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
-
-# Build the `test-runner` executable according to the configuration
-cmake --build build --config Debug
-
-# Run the tests
-ctest --test-dir build -C Debug -V
+# Configure, build, and run tests via presets:
+cmake --preset release
+cmake --build --preset release
+ctest --preset release --output-on-failure
 ```
 
-Note that adding `-j<N>` to the build command might speed up the build process by allowing multiple jobs to run in parallel.
+Alternatively, you can build and run tests directly in the `tests` directory:
+
+```sh
+cd tests
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
+ctest --test-dir build -C Release --output-on-failure
+```
+

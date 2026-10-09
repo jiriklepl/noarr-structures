@@ -30,6 +30,13 @@ install(EXPORT NoarrTargets
     DESTINATION share/cmake/Noarr
 )
 
+option(NOARR_BUILD_TESTS "Build Noarr tests" OFF)
+if(NOARR_BUILD_TESTS)
+    include(CTest)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
+
 option(NOARR_BUILD_EXAMPLES "Build Noarr examples" OFF)
 if(NOARR_BUILD_EXAMPLES)
     add_subdirectory(examples)

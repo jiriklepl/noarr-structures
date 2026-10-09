@@ -1,0 +1,56 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "release",
+      "displayName": "Release",
+      "binaryDir": "${sourceDir}/build/release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "NOARR_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug",
+      "binaryDir": "${sourceDir}/build/debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "NOARR_BUILD_TESTS": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "configuration": "Release"
+    },
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "configuration": "Debug"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "configuration": "Release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}
+
