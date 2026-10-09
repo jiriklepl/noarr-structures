@@ -33,8 +33,9 @@ auto make_col_major_layout(std::size_t rows, std::size_t cols) {
 // =============================================================================
 template<class Bag>
 void print_matrix(std::string_view name, const Bag &matrix) {
-	std::cout << name << " (" << (matrix | noarr::get_length<'i'>()) << "x" << (matrix | noarr::get_length<'j'>())
-	          << "):\n";
+	auto rows = matrix | noarr::get_length<'i'>();
+	auto cols = matrix | noarr::get_length<'j'>();
+	std::cout << name << " (" << rows << "x" << cols << "):\n";
 
 	// Fix the row dimension 'i' and iterate over column dimension 'j'
 	noarr::traverser(matrix).template for_dims<'i'>([&](auto row) {

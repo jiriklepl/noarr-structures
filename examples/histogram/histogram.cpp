@@ -67,8 +67,8 @@ void print_histogram(const HistBag &hist, std::size_t bin_range) {
 		std::size_t range_low = bin_idx * bin_range;
 		std::size_t range_high = range_low + bin_range - 1;
 
-		std::cout << "[" << std::setw(3) << range_low << ".." << std::setw(3) << range_high << "] " << std::setw(5)
-		          << count << " | " << std::string(bar_len, '#') << "\n";
+		std::cout << "[" << std::setw(3) << range_low << ".." << std::setw(3) << range_high << "] ";
+		std::cout << std::setw(5) << count << " | " << std::string(bar_len, '#') << "\n";
 	});
 	std::cout << "\n";
 }

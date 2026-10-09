@@ -19,8 +19,9 @@ auto make_grid_layout(std::size_t width, std::size_t height) {
 // =============================================================================
 template<class GridBag>
 void print_grid(std::string_view name, const GridBag &grid) {
-	std::cout << name << " (" << (grid | noarr::get_length<'x'>()) << "x" << (grid | noarr::get_length<'y'>())
-	          << "):\n";
+	auto width = grid | noarr::get_length<'x'>();
+	auto height = grid | noarr::get_length<'y'>();
+	std::cout << name << " (" << width << "x" << height << "):\n";
 
 	noarr::traverser(grid).template for_dims<'y'>([&](auto row) {
 		row.for_each(
