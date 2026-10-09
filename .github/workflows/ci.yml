@@ -338,6 +338,12 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Install clang-format 23
+        run: |
+          sudo wget -qO /usr/local/bin/clang-format https://github.com/cpp-linter/clang-tools-static-binaries/releases/download/2026.09.01-5fb8802d/clang-format-23_linux-amd64
+          sudo chmod +x /usr/local/bin/clang-format
+          clang-format --version
+
       - name: Check code formatting
         run: |
           ./format.sh
