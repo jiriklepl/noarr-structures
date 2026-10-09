@@ -339,4 +339,6 @@ jobs:
           persist-credentials: false
 
       - name: Check code formatting
-        run: ./format.sh --check
+        run: |
+          ./format.sh
+          git diff --exit-code

@@ -9,6 +9,7 @@ LineEnding: LF
 
 # C++
 Language: Cpp
+Standard: c++20
 
 UseTab: AlignWithSpaces
 
