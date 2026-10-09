@@ -291,7 +291,7 @@ jobs:
         run: ctest --test-dir examples/build/${{ matrix.preset }} --output-on-failure --no-tests=error --timeout 30
 
   docs:
-    name: Docs & Format / ${{ matrix.os }}
+    name: Docs / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
@@ -313,10 +313,6 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Check formatting (Linux)
-        if: matrix.runner == 'bash'
-        run: ./format.sh --check
-
       - name: Run docs check (Linux)
         if: matrix.runner == 'bash'
         run: docs_check/check
@@ -331,3 +327,16 @@ jobs:
         if: matrix.runner == 'windows'
         working-directory: docs_check
         run: python check.py
+
+  format:
+    name: Format / ubuntu-26.04
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Check code formatting
+        run: ./format.sh --check
