@@ -144,7 +144,7 @@ include(FetchContent)
 FetchContent_Declare(
     noarr
     GIT_REPOSITORY https://github.com/ParaCoToUl/noarr-structures.git
-    GIT_TAG master
+    GIT_TAG main
 )
 FetchContent_MakeAvailable(noarr)
 
