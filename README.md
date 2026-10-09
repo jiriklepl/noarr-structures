@@ -1,6 +1,6 @@
 # Noarr
 
-[![CI](https://github.com/ParaCoToUl/noarr-structures/actions/workflows/ci.yml/badge.svg)](https://github.com/ParaCoToUl/noarr-structures/actions/workflows/ci.yml)
+[![CI](../../actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 > GCC 10-15, Clang 13-22, and MSVC on Ubuntu, macOS, and Windows GitHub runners.
