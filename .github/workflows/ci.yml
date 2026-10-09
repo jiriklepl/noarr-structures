@@ -212,7 +212,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Visual Studio environment
-        uses: ilammy/msvc-dev-cmd@v1
+        uses: TheMrMilchmann/setup-msvc-dev@v4
         with:
           arch: x64
 
@@ -319,7 +319,7 @@ jobs:
 
       - name: Set up Visual Studio environment (Windows)
         if: matrix.runner == 'windows'
-        uses: ilammy/msvc-dev-cmd@v1
+        uses: TheMrMilchmann/setup-msvc-dev@v4
         with:
           arch: x64
 
